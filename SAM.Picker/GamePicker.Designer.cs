@@ -53,6 +53,16 @@
             this._PickerStatusStrip.SuspendLayout();
             this.SuspendLayout();
             // 
+            // _ToolStripSeparator1
+            // 
+            _ToolStripSeparator1.Name = "_ToolStripSeparator1";
+            _ToolStripSeparator1.Size = new System.Drawing.Size(6, 25);
+            // 
+            // _ToolStripSeparator2
+            // 
+            _ToolStripSeparator2.Name = "_ToolStripSeparator2";
+            _ToolStripSeparator2.Size = new System.Drawing.Size(6, 25);
+            // 
             // _GameLogoImageList
             // 
             this._GameLogoImageList.ColorDepth = System.Windows.Forms.ColorDepth.Depth8Bit;
@@ -88,11 +98,6 @@
             this._RefreshGamesButton.Text = "Refresh Games";
             this._RefreshGamesButton.Click += new System.EventHandler(this.OnRefresh);
             // 
-            // _ToolStripSeparator1
-            // 
-            _ToolStripSeparator1.Name = "_ToolStripSeparator1";
-            _ToolStripSeparator1.Size = new System.Drawing.Size(6, 25);
-            // 
             // _AddGameTextBox
             // 
             this._AddGameTextBox.Name = "_AddGameTextBox";
@@ -106,11 +111,6 @@
             this._AddGameButton.Size = new System.Drawing.Size(83, 22);
             this._AddGameButton.Text = "Add Game";
             this._AddGameButton.Click += new System.EventHandler(this.OnAddGame);
-            // 
-            // _ToolStripSeparator2
-            // 
-            _ToolStripSeparator2.Name = "_ToolStripSeparator2";
-            _ToolStripSeparator2.Size = new System.Drawing.Size(6, 25);
             // 
             // _FilterDropDownButton
             // 
@@ -132,7 +132,7 @@
             this._FilterGamesMenuItem.CheckOnClick = true;
             this._FilterGamesMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
             this._FilterGamesMenuItem.Name = "_FilterGamesMenuItem";
-            this._FilterGamesMenuItem.Size = new System.Drawing.Size(152, 22);
+            this._FilterGamesMenuItem.Size = new System.Drawing.Size(142, 22);
             this._FilterGamesMenuItem.Text = "Show &games";
             this._FilterGamesMenuItem.CheckedChanged += new System.EventHandler(this.OnFilterUpdate);
             // 
@@ -140,7 +140,7 @@
             // 
             this._FilterDemosMenuItem.CheckOnClick = true;
             this._FilterDemosMenuItem.Name = "_FilterDemosMenuItem";
-            this._FilterDemosMenuItem.Size = new System.Drawing.Size(152, 22);
+            this._FilterDemosMenuItem.Size = new System.Drawing.Size(142, 22);
             this._FilterDemosMenuItem.Text = "Show &demos";
             this._FilterDemosMenuItem.CheckedChanged += new System.EventHandler(this.OnFilterUpdate);
             // 
@@ -148,7 +148,7 @@
             // 
             this._FilterModsMenuItem.CheckOnClick = true;
             this._FilterModsMenuItem.Name = "_FilterModsMenuItem";
-            this._FilterModsMenuItem.Size = new System.Drawing.Size(152, 22);
+            this._FilterModsMenuItem.Size = new System.Drawing.Size(142, 22);
             this._FilterModsMenuItem.Text = "Show &mods";
             this._FilterModsMenuItem.CheckedChanged += new System.EventHandler(this.OnFilterUpdate);
             // 
@@ -156,7 +156,7 @@
             // 
             this._FilterJunkMenuItem.CheckOnClick = true;
             this._FilterJunkMenuItem.Name = "_FilterJunkMenuItem";
-            this._FilterJunkMenuItem.Size = new System.Drawing.Size(152, 22);
+            this._FilterJunkMenuItem.Size = new System.Drawing.Size(142, 22);
             this._FilterJunkMenuItem.Text = "Show &junk";
             this._FilterJunkMenuItem.CheckedChanged += new System.EventHandler(this.OnFilterUpdate);
             // 
@@ -213,7 +213,7 @@
             this.Controls.Add(this._PickerToolStrip);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "GamePicker";
-            this.Text = "Steam Achievement Manager 6.3 | Pick a game... Any game...";
+            this.Text = "Steam Achievement Manager 7.0 | Pick a game... Any game...";
             this._PickerToolStrip.ResumeLayout(false);
             this._PickerToolStrip.PerformLayout();
             this._PickerStatusStrip.ResumeLayout(false);

@@ -63,6 +63,11 @@
             ((System.ComponentModel.ISupportInitialize)(this._StatisticsDataGridView)).BeginInit();
             this.SuspendLayout();
             // 
+            // _ToolStripSeparator1
+            // 
+            _ToolStripSeparator1.Name = "_ToolStripSeparator1";
+            _ToolStripSeparator1.Size = new System.Drawing.Size(6, 25);
+            // 
             // _MainToolStrip
             // 
             this._MainToolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -97,11 +102,6 @@
             this._ReloadButton.Text = "Refresh";
             this._ReloadButton.ToolTipText = "Refresh achievements and statistics for active game.";
             this._ReloadButton.Click += new System.EventHandler(this.OnRefresh);
-            // 
-            // _ToolStripSeparator1
-            // 
-            _ToolStripSeparator1.Name = "_ToolStripSeparator1";
-            _ToolStripSeparator1.Size = new System.Drawing.Size(6, 25);
             // 
             // _ResetButton
             // 
@@ -312,7 +312,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MinimumSize = new System.Drawing.Size(640, 50);
             this.Name = "Manager";
-            this.Text = "Steam Achievement Manager 6.3";
+            this.Text = "Steam Achievement Manager 7.0";
             this._MainToolStrip.ResumeLayout(false);
             this._MainToolStrip.PerformLayout();
             this._MainStatusStrip.ResumeLayout(false);
