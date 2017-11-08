@@ -1,0 +1,14 @@
+﻿using System;
+using System.Runtime.InteropServices;
+
+namespace SAM.API.Interfaces.Client
+{
+    [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
+    public struct UserStatsStored
+    {
+        //[MarshalAs(UnmanagedType.U8)]
+        public UInt64 m_nGameID;
+        //[MarshalAs(UnmanagedType.I4)]
+        public Int32 m_eResult;
+    }
+}

@@ -1,0 +1,14 @@
+﻿using System;
+using System.Runtime.InteropServices;
+
+namespace SAM.API.Interfaces.Client
+{
+    [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
+    public struct AppDataChanged
+    {
+        //[MarshalAs(UnmanagedType.U8)]
+        public UInt32 m_nAppID;
+        //[MarshalAs(UnmanagedType.I4)]
+        public bool m_eResult;
+    }
+}

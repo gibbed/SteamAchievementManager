@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/private/steam/!svn/ver/3/branches/SAM/SAM.API/Interfaces/Types
+END
+UserStatType.cs
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/private/steam/!svn/ver/3/branches/SAM/SAM.API/Interfaces/Types/UserStatType.cs
+END
+UserStatsStored.cs
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/private/steam/!svn/ver/3/branches/SAM/SAM.API/Interfaces/Types/UserStatsStored.cs
+END
+AppDataChanged.cs
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/private/steam/!svn/ver/3/branches/SAM/SAM.API/Interfaces/Types/AppDataChanged.cs
+END
+UserStatsReceived.cs
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/private/steam/!svn/ver/3/branches/SAM/SAM.API/Interfaces/Types/UserStatsReceived.cs
+END
+UserItemsReceived.cs
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/private/steam/!svn/ver/3/branches/SAM/SAM.API/Interfaces/Types/UserItemsReceived.cs
+END

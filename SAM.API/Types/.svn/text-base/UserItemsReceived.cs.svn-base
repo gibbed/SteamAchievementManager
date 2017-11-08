@@ -1,0 +1,13 @@
+﻿using System;
+using System.Runtime.InteropServices;
+
+namespace SAM.API.Interfaces.Client
+{
+    [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
+    public struct UserItemsReceived
+    {
+        public UInt64 m_nGameID;
+        public Int32 Unknown; // 08
+        public Int32 m_nItemCount; // 0C
+    }
+}
