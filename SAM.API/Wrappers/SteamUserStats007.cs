@@ -96,7 +96,10 @@ namespace SAM.API.Wrappers
         #region GetAchievement
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
         [return: MarshalAs(UnmanagedType.I1)]
-        private delegate bool NativeGetAchievement(IntPtr self, string name, out bool isAchieved);
+        private delegate bool NativeGetAchievement(
+            IntPtr self,
+            string name,
+            [MarshalAs(UnmanagedType.I1)] out bool isAchieved);
 
         public bool GetAchievementState(string name, out bool isAchieved)
         {
@@ -166,7 +169,7 @@ namespace SAM.API.Wrappers
         #region ResetAllStats
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
         [return: MarshalAs(UnmanagedType.I1)]
-        private delegate bool NativeResetAllStats(IntPtr self, bool achievementsToo);
+        private delegate bool NativeResetAllStats(IntPtr self, [MarshalAs(UnmanagedType.I1)] bool achievementsToo);
 
         public bool ResetAllStats(bool achievementsToo)
         {
