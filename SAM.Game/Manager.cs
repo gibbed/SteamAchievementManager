@@ -455,7 +455,7 @@ namespace SAM.Game
                     Checked = isAchieved,
                     Tag = info,
                     Text = info.Name,
-                    BackColor = (def.Permission & 2) == 0 ? Color.Black : Color.FromArgb(64, 0, 0),
+                    BackColor = (def.Permission & 3) == 0 ? Color.Black : Color.FromArgb(64, 0, 0),
                 };
 
                 info.Item = item;
@@ -828,7 +828,7 @@ namespace SAM.Game
                 return;
             }
 
-            if ((info.Permission & 2) != 0)
+            if ((info.Permission & 3) != 0)
             {
                 MessageBox.Show(
                     this,
