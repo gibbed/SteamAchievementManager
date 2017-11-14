@@ -39,6 +39,7 @@
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -50,6 +51,7 @@
     <PlatformTarget>x86</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -69,6 +71,7 @@
     <Compile Include="Callbacks\AppDataChanged.cs" />
     <Compile Include="Callbacks\UserStatsReceived.cs" />
     <Compile Include="ICallback.cs" />
+    <Compile Include="NativeStrings.cs" />
     <Compile Include="Types\CallbackMessage.cs" />
     <Compile Include="Wrappers\SteamUserStats007.cs" />
     <Compile Include="Types\AccountType.cs" />

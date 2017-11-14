@@ -40,11 +40,12 @@ namespace SAM.API.Wrappers
 
         #region GetIPCountry
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
-        private delegate string NativeGetIPCountry(IntPtr self);
+        private delegate IntPtr NativeGetIPCountry(IntPtr self);
 
         public string GetIPCountry()
         {
-            return this.Call<string, NativeGetIPCountry>(this.Functions.GetIPCountry, this.ObjectAddress);
+            var result = this.Call<IntPtr, NativeGetIPCountry>(this.Functions.GetIPCountry, this.ObjectAddress);
+            return NativeStrings.PointerToString(result);
         }
         #endregion
 

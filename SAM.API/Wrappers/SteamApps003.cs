@@ -48,7 +48,7 @@ namespace SAM.API.Wrappers
             var languagePointer = this.Call<IntPtr, NativeGetCurrentGameLanguage>(
                 this.Functions.GetCurrentGameLanguage,
                 this.ObjectAddress);
-            return Marshal.PtrToStringAnsi(languagePointer);
+            return NativeStrings.PointerToString(languagePointer);
         }
         #endregion
     }

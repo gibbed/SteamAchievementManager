@@ -42,54 +42,66 @@ namespace SAM.API.Wrappers
         #region GetStatValue (int)
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
         [return: MarshalAs(UnmanagedType.I1)]
-        private delegate bool NativeGetStatInt(IntPtr self, string name, out int data);
+        private delegate bool NativeGetStatInt(IntPtr self, IntPtr name, out int data);
 
         public bool GetStatValue(string name, out int value)
         {
-            var call = this.GetFunction<NativeGetStatInt>(this.Functions.GetStatInteger);
-            return call(this.ObjectAddress, name, out value);
+            using (var nativeName = NativeStrings.StringToStringHandle(name))
+            {
+                var call = this.GetFunction<NativeGetStatInt>(this.Functions.GetStatInteger);
+                return call(this.ObjectAddress, nativeName.Handle, out value);
+            }
         }
         #endregion
 
         #region GetStatValue (float)
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
         [return: MarshalAs(UnmanagedType.I1)]
-        private delegate bool NativeGetStatFloat(IntPtr self, string name, out float data);
+        private delegate bool NativeGetStatFloat(IntPtr self, IntPtr name, out float data);
 
         public bool GetStatValue(string name, out float value)
         {
-            var call = this.GetFunction<NativeGetStatFloat>(this.Functions.GetStatFloat);
-            return call(this.ObjectAddress, name, out value);
+            using (var nativeName = NativeStrings.StringToStringHandle(name))
+            {
+                var call = this.GetFunction<NativeGetStatFloat>(this.Functions.GetStatFloat);
+                return call(this.ObjectAddress, nativeName.Handle, out value);
+            }
         }
         #endregion
 
         #region SetStatValue (int)
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
         [return: MarshalAs(UnmanagedType.I1)]
-        private delegate bool NativeSetStatInt(IntPtr self, string name, int data);
+        private delegate bool NativeSetStatInt(IntPtr self, IntPtr name, int data);
 
         public bool SetStatValue(string name, int value)
         {
-            return this.Call<bool, NativeSetStatInt>(
-                this.Functions.SetStatInteger,
-                this.ObjectAddress,
-                name,
-                value);
+            using (var nativeName = NativeStrings.StringToStringHandle(name))
+            {
+                return this.Call<bool, NativeSetStatInt>(
+                    this.Functions.SetStatInteger,
+                    this.ObjectAddress,
+                    nativeName.Handle,
+                    value);
+            }
         }
         #endregion
 
         #region SetStatValue (float)
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
         [return: MarshalAs(UnmanagedType.I1)]
-        private delegate bool NativeSetStatFloat(IntPtr self, string name, float data);
+        private delegate bool NativeSetStatFloat(IntPtr self, IntPtr name, float data);
 
         public bool SetStatValue(string name, float value)
         {
-            return this.Call<bool, NativeSetStatFloat>(
-                this.Functions.SetStatFloat,
-                this.ObjectAddress,
-                name,
-                value);
+            using (var nativeName = NativeStrings.StringToStringHandle(name))
+            {
+                return this.Call<bool, NativeSetStatFloat>(
+                    this.Functions.SetStatFloat,
+                    this.ObjectAddress,
+                    nativeName.Handle,
+                    value);
+            }
         }
         #endregion
 
@@ -98,33 +110,45 @@ namespace SAM.API.Wrappers
         [return: MarshalAs(UnmanagedType.I1)]
         private delegate bool NativeGetAchievement(
             IntPtr self,
-            string name,
+            IntPtr name,
             [MarshalAs(UnmanagedType.I1)] out bool isAchieved);
 
         public bool GetAchievementState(string name, out bool isAchieved)
         {
-            var call = this.GetFunction<NativeGetAchievement>(this.Functions.GetAchievement);
-            return call(this.ObjectAddress, name, out isAchieved);
+            using (var nativeName = NativeStrings.StringToStringHandle(name))
+            {
+                var call = this.GetFunction<NativeGetAchievement>(this.Functions.GetAchievement);
+                return call(this.ObjectAddress, nativeName.Handle, out isAchieved);
+            }
         }
         #endregion
 
         #region SetAchievementState
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
         [return: MarshalAs(UnmanagedType.I1)]
-        private delegate bool NativeSetAchievement(IntPtr self, string name);
+        private delegate bool NativeSetAchievement(IntPtr self, IntPtr name);
 
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
         [return: MarshalAs(UnmanagedType.I1)]
-        private delegate bool NativeClearAchievement(IntPtr self, string name);
+        private delegate bool NativeClearAchievement(IntPtr self, IntPtr name);
 
         public bool SetAchievement(string name, bool state)
         {
-            if (state == false)
+            using (var nativeName = NativeStrings.StringToStringHandle(name))
             {
-                return this.Call<bool, NativeClearAchievement>(this.Functions.ClearAchievement, this.ObjectAddress, name);
-            }
+                if (state == false)
+                {
+                    return this.Call<bool, NativeClearAchievement>(
+                        this.Functions.ClearAchievement,
+                        this.ObjectAddress,
+                        nativeName.Handle);
+                }
 
-            return this.Call<bool, NativeSetAchievement>(this.Functions.SetAchievement, this.ObjectAddress, name);
+                return this.Call<bool, NativeSetAchievement>(
+                    this.Functions.SetAchievement,
+                    this.ObjectAddress,
+                    nativeName.Handle);
+            }
         }
         #endregion
 
@@ -141,28 +165,36 @@ namespace SAM.API.Wrappers
 
         #region GetAchievementIcon
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
-        private delegate int NativeGetAchievementIcon(IntPtr self, string name);
+        private delegate int NativeGetAchievementIcon(IntPtr self, IntPtr name);
 
         public int GetAchievementIcon(string name)
         {
-            return this.Call<int, NativeGetAchievementIcon>(
-                this.Functions.GetAchievementIcon,
-                this.ObjectAddress,
-                name);
+            using (var nativeName = NativeStrings.StringToStringHandle(name))
+            {
+                return this.Call<int, NativeGetAchievementIcon>(
+                    this.Functions.GetAchievementIcon,
+                    this.ObjectAddress,
+                    nativeName.Handle);
+            }
         }
         #endregion
 
         #region GetAchievementDisplayAttribute
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
-        private delegate string NativeGetAchievementDisplayAttribute(IntPtr self, string name, string key);
+        private delegate IntPtr NativeGetAchievementDisplayAttribute(IntPtr self, IntPtr name, IntPtr key);
 
         public string GetAchievementDisplayAttribute(string name, string key)
         {
-            return this.Call<string, NativeGetAchievementDisplayAttribute>(
-                this.Functions.GetAchievementDisplayAttribute,
-                this.ObjectAddress,
-                name,
-                key);
+            using (var nativeName = NativeStrings.StringToStringHandle(name))
+            using (var nativeKey = NativeStrings.StringToStringHandle(key))
+            {
+                var result = this.Call<IntPtr, NativeGetAchievementDisplayAttribute>(
+                    this.Functions.GetAchievementDisplayAttribute,
+                    this.ObjectAddress,
+                    nativeName.Handle,
+                    nativeKey.Handle);
+                return NativeStrings.PointerToString(result);
+            }
         }
         #endregion
 

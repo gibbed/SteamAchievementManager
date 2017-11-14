@@ -22,7 +22,6 @@
 
 using System;
 using System.Runtime.InteropServices;
-using System.Text;
 using SAM.API.Interfaces;
 
 namespace SAM.API.Wrappers
@@ -34,22 +33,27 @@ namespace SAM.API.Wrappers
         private delegate int NativeGetAppData(
             IntPtr self,
             uint appId,
-            string key,
-            StringBuilder valueBuffer,
+            IntPtr key,
+            IntPtr value,
             int valueLength);
 
         public string GetAppData(uint appId, string key)
         {
-            var sb = new StringBuilder();
-            sb.EnsureCapacity(1024);
-            int result = this.Call<int, NativeGetAppData>(
-                this.Functions.GetAppData,
-                this.ObjectAddress,
-                appId,
-                key,
-                sb,
-                sb.Capacity);
-            return result == 0 ? null : sb.ToString();
+            using (var nativeHandle = NativeStrings.StringToStringHandle(key))
+            {
+                const int valueLength = 1024;
+                var valuePointer = Marshal.AllocHGlobal(valueLength);
+                int result = this.Call<int, NativeGetAppData>(
+                    this.Functions.GetAppData,
+                    this.ObjectAddress,
+                    appId,
+                    nativeHandle.Handle,
+                    valuePointer,
+                    valueLength);
+                var value = result == 0 ? null : NativeStrings.PointerToString(valuePointer, valueLength);
+                Marshal.FreeHGlobal(valuePointer);
+                return value;
+            }
         }
         #endregion
     }

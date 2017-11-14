@@ -95,20 +95,23 @@ namespace SAM.API.Wrappers
 
         #region GetISteamUser
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
-        private delegate IntPtr NativeGetISteamUser(IntPtr self, int user, int pipe, string version);
+        private delegate IntPtr NativeGetISteamUser(IntPtr self, int user, int pipe, IntPtr version);
 
         private TClass GetISteamUser<TClass>(int user, int pipe, string version)
             where TClass : INativeWrapper, new()
         {
-            IntPtr address = this.Call<IntPtr, NativeGetISteamUser>(
-                this.Functions.GetISteamUser,
-                this.ObjectAddress,
-                user,
-                pipe,
-                version);
-            var result = new TClass();
-            result.SetupFunctions(address);
-            return result;
+            using (var nativeVersion = NativeStrings.StringToStringHandle(version))
+            {
+                IntPtr address = this.Call<IntPtr, NativeGetISteamUser>(
+                    this.Functions.GetISteamUser,
+                    this.ObjectAddress,
+                    user,
+                    pipe,
+                    nativeVersion.Handle);
+                var result = new TClass();
+                result.SetupFunctions(address);
+                return result;
+            }
         }
         #endregion
 
@@ -121,20 +124,23 @@ namespace SAM.API.Wrappers
 
         #region GetISteamUserStats
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
-        private delegate IntPtr NativeGetISteamUserStats(IntPtr self, int user, int pipe, string version);
+        private delegate IntPtr NativeGetISteamUserStats(IntPtr self, int user, int pipe, IntPtr version);
 
         private TClass GetISteamUserStats<TClass>(int user, int pipe, string version)
             where TClass : INativeWrapper, new()
         {
-            IntPtr address = this.Call<IntPtr, NativeGetISteamUserStats>(
-                this.Functions.GetISteamUserStats,
-                this.ObjectAddress,
-                user,
-                pipe,
-                version);
-            var result = new TClass();
-            result.SetupFunctions(address);
-            return result;
+            using (var nativeVersion = NativeStrings.StringToStringHandle(version))
+            {
+                IntPtr address = this.Call<IntPtr, NativeGetISteamUserStats>(
+                    this.Functions.GetISteamUserStats,
+                    this.ObjectAddress,
+                    user,
+                    pipe,
+                    nativeVersion.Handle);
+                var result = new TClass();
+                result.SetupFunctions(address);
+                return result;
+            }
         }
         #endregion
 
@@ -147,19 +153,22 @@ namespace SAM.API.Wrappers
 
         #region GetISteamUtils
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
-        private delegate IntPtr NativeGetISteamUtils(IntPtr self, int pipe, string version);
+        private delegate IntPtr NativeGetISteamUtils(IntPtr self, int pipe, IntPtr version);
 
         public TClass GetISteamUtils<TClass>(int pipe, string version)
             where TClass : INativeWrapper, new()
         {
-            IntPtr address = this.Call<IntPtr, NativeGetISteamUtils>(
-                this.Functions.GetISteamUtils,
-                this.ObjectAddress,
-                pipe,
-                version);
-            var result = new TClass();
-            result.SetupFunctions(address);
-            return result;
+            using (var nativeVersion = NativeStrings.StringToStringHandle(version))
+            {
+                IntPtr address = this.Call<IntPtr, NativeGetISteamUtils>(
+                    this.Functions.GetISteamUtils,
+                    this.ObjectAddress,
+                    pipe,
+                    nativeVersion.Handle);
+                var result = new TClass();
+                result.SetupFunctions(address);
+                return result;
+            }
         }
         #endregion
 
@@ -171,15 +180,22 @@ namespace SAM.API.Wrappers
         #endregion
 
         #region GetISteamApps
-        private delegate IntPtr NativeGetISteamApps(int user, int pipe, string version);
+        private delegate IntPtr NativeGetISteamApps(int user, int pipe, IntPtr version);
 
         private TClass GetISteamApps<TClass>(int user, int pipe, string version)
             where TClass : INativeWrapper, new()
         {
-            IntPtr address = this.Call<IntPtr, NativeGetISteamApps>(this.Functions.GetISteamApps, user, pipe, version);
-            var result = new TClass();
-            result.SetupFunctions(address);
-            return result;
+            using (var nativeVersion = NativeStrings.StringToStringHandle(version))
+            {
+                IntPtr address = this.Call<IntPtr, NativeGetISteamApps>(
+                    this.Functions.GetISteamApps,
+                    user,
+                    pipe,
+                    nativeVersion.Handle);
+                var result = new TClass();
+                result.SetupFunctions(address);
+                return result;
+            }
         }
         #endregion
 
