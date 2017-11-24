@@ -87,8 +87,8 @@
             this._StoreButton.Image = global::SAM.Game.Properties.Resources.Save;
             this._StoreButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this._StoreButton.Name = "_StoreButton";
-            this._StoreButton.Size = new System.Drawing.Size(54, 22);
-            this._StoreButton.Text = "Store";
+            this._StoreButton.Size = new System.Drawing.Size(120, 22);
+            this._StoreButton.Text = "Commit Changes";
             this._StoreButton.ToolTipText = "Store achievements and statistics for active game.";
             this._StoreButton.Click += new System.EventHandler(this.OnStore);
             // 
