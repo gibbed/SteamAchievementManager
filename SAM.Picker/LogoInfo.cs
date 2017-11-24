@@ -20,48 +20,19 @@
  *    distribution.
  */
 
-using System.Globalization;
-using System.Windows.Forms;
+using System.Drawing;
 
 namespace SAM.Picker
 {
-    internal class GameInfo
+    internal class LogoInfo
     {
-        public uint Id;
-        public string Type;
-        public ListViewItem Item;
+        public readonly uint Id;
+        public readonly Bitmap Bitmap;
 
-        #region public string Name;
-        public string Name
-        {
-            get { return this.Item.Text; }
-
-            set { this.Item.Text = value ?? "App " + this.Id.ToString(CultureInfo.InvariantCulture); }
-        }
-        #endregion
-
-        #region public int ImageIndex;
-        public int ImageIndex
-        {
-            get { return this.Item.ImageIndex; }
-
-            set { this.Item.ImageIndex = value; }
-        }
-        #endregion
-
-        public string Logo;
-
-        public GameInfo(uint id, string type)
+        public LogoInfo(uint id, Bitmap bitmap)
         {
             this.Id = id;
-            this.Type = type;
-            this.Item = new ListViewItem()
-            {
-                Tag = this,
-            };
-            this.Name = null;
-            this.ImageIndex = 0;
-            this.Logo = null;
+            this.Bitmap = bitmap;
         }
     }
 }

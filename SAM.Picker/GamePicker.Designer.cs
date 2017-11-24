@@ -32,7 +32,7 @@
             System.Windows.Forms.ToolStripSeparator _ToolStripSeparator1;
             System.Windows.Forms.ToolStripSeparator _ToolStripSeparator2;
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(GamePicker));
-            this._GameLogoImageList = new System.Windows.Forms.ImageList(this.components);
+            this._LogoImageList = new System.Windows.Forms.ImageList(this.components);
             this._CallbackTimer = new System.Windows.Forms.Timer(this.components);
             this._PickerToolStrip = new System.Windows.Forms.ToolStrip();
             this._RefreshGamesButton = new System.Windows.Forms.ToolStripButton();
@@ -47,6 +47,8 @@
             this._PickerStatusStrip = new System.Windows.Forms.StatusStrip();
             this._PickerStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this._DownloadStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this._LogoWorker = new System.ComponentModel.BackgroundWorker();
+            this._ListWorker = new System.ComponentModel.BackgroundWorker();
             _ToolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             _ToolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this._PickerToolStrip.SuspendLayout();
@@ -63,11 +65,11 @@
             _ToolStripSeparator2.Name = "_ToolStripSeparator2";
             _ToolStripSeparator2.Size = new System.Drawing.Size(6, 25);
             // 
-            // _GameLogoImageList
+            // _LogoImageList
             // 
-            this._GameLogoImageList.ColorDepth = System.Windows.Forms.ColorDepth.Depth8Bit;
-            this._GameLogoImageList.ImageSize = new System.Drawing.Size(184, 69);
-            this._GameLogoImageList.TransparentColor = System.Drawing.Color.Transparent;
+            this._LogoImageList.ColorDepth = System.Windows.Forms.ColorDepth.Depth8Bit;
+            this._LogoImageList.ImageSize = new System.Drawing.Size(184, 69);
+            this._LogoImageList.TransparentColor = System.Drawing.Color.Transparent;
             // 
             // _CallbackTimer
             // 
@@ -165,17 +167,19 @@
             this._GameListView.BackColor = System.Drawing.Color.Black;
             this._GameListView.Dock = System.Windows.Forms.DockStyle.Fill;
             this._GameListView.ForeColor = System.Drawing.Color.White;
-            this._GameListView.LargeImageList = this._GameLogoImageList;
+            this._GameListView.LargeImageList = this._LogoImageList;
             this._GameListView.Location = new System.Drawing.Point(0, 25);
             this._GameListView.MultiSelect = false;
             this._GameListView.Name = "_GameListView";
             this._GameListView.Size = new System.Drawing.Size(742, 245);
-            this._GameListView.SmallImageList = this._GameLogoImageList;
+            this._GameListView.SmallImageList = this._LogoImageList;
             this._GameListView.Sorting = System.Windows.Forms.SortOrder.Ascending;
             this._GameListView.TabIndex = 0;
             this._GameListView.TileSize = new System.Drawing.Size(184, 69);
             this._GameListView.UseCompatibleStateImageBehavior = false;
+            this._GameListView.VirtualMode = true;
             this._GameListView.ItemActivate += new System.EventHandler(this.OnSelectGame);
+            this._GameListView.RetrieveVirtualItem += new System.Windows.Forms.RetrieveVirtualItemEventHandler(this.OnGameListViewRetrieveVirtualItem);
             // 
             // _PickerStatusStrip
             // 
@@ -203,6 +207,18 @@
             this._DownloadStatusLabel.Text = "Download status";
             this._DownloadStatusLabel.Visible = false;
             // 
+            // _LogoWorker
+            // 
+            this._LogoWorker.WorkerSupportsCancellation = true;
+            this._LogoWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.DoDownloadLogo);
+            this._LogoWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.OnDownloadLogo);
+            // 
+            // _ListWorker
+            // 
+            this._ListWorker.WorkerSupportsCancellation = true;
+            this._ListWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.DoDownloadList);
+            this._ListWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.OnDownloadList);
+            // 
             // GamePicker
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -226,7 +242,7 @@
 		#endregion
 
 		private DoubleBufferedListView _GameListView;
-		private System.Windows.Forms.ImageList _GameLogoImageList;
+		private System.Windows.Forms.ImageList _LogoImageList;
 		private System.Windows.Forms.Timer _CallbackTimer;
 		private System.Windows.Forms.ToolStrip _PickerToolStrip;
 		private System.Windows.Forms.ToolStripButton _RefreshGamesButton;
@@ -240,6 +256,8 @@
         private System.Windows.Forms.StatusStrip _PickerStatusStrip;
         private System.Windows.Forms.ToolStripStatusLabel _DownloadStatusLabel;
         private System.Windows.Forms.ToolStripStatusLabel _PickerStatusLabel;
+        private System.ComponentModel.BackgroundWorker _LogoWorker;
+        private System.ComponentModel.BackgroundWorker _ListWorker;
 	}
 }
 
