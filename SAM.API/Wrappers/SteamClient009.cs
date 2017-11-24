@@ -41,11 +41,11 @@ namespace SAM.API.Wrappers
         #region ReleaseSteamPipe
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
         [return: MarshalAs(UnmanagedType.I1)]
-        private delegate bool NativeReleaseSteamPipe(IntPtr self);
+        private delegate bool NativeReleaseSteamPipe(IntPtr self, int pipe);
 
         public bool ReleaseSteamPipe(int pipe)
         {
-            return this.Call<bool, NativeReleaseSteamPipe>(this.Functions.ReleaseSteamPipe, this.ObjectAddress);
+            return this.Call<bool, NativeReleaseSteamPipe>(this.Functions.ReleaseSteamPipe, this.ObjectAddress, pipe);
         }
         #endregion
 

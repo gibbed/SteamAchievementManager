@@ -31,9 +31,9 @@ namespace SAM.API.Wrappers
         #region IsSubscribed
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
         [return: MarshalAs(UnmanagedType.I1)]
-        private delegate bool NativeIsSubscribedApp(IntPtr self, Int64 gameId);
+        private delegate bool NativeIsSubscribedApp(IntPtr self, uint gameId);
 
-        public bool IsSubscribedApp(Int64 gameId)
+        public bool IsSubscribedApp(uint gameId)
         {
             return this.Call<bool, NativeIsSubscribedApp>(this.Functions.IsSubscribedApp, this.ObjectAddress, gameId);
         }

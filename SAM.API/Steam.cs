@@ -62,7 +62,7 @@ namespace SAM.API
             return (string)Registry.GetValue(@"HKEY_LOCAL_MACHINE\Software\Valve\Steam", "InstallPath", null);
         }
 
-        [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         private delegate IntPtr NativeCreateInterface(string version, IntPtr returnCode);
 
         private static NativeCreateInterface _CallCreateInterface;
