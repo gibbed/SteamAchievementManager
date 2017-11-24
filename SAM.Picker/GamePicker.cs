@@ -42,6 +42,7 @@ namespace SAM.Picker
 
         private readonly List<GameInfo> _Games;
         private readonly List<GameInfo> _FilteredGames;
+        private int _SelectedGameIndex;
 
         public List<GameInfo> Games
         {
@@ -59,6 +60,7 @@ namespace SAM.Picker
         {
             this._Games = new List<GameInfo>();
             this._FilteredGames = new List<GameInfo>();
+            this._SelectedGameIndex = -1;
             this._LogosAttempted = new List<string>();
             this._LogoQueue = new ConcurrentQueue<GameInfo>();
 
@@ -318,14 +320,32 @@ namespace SAM.Picker
             this._CallbackTimer.Enabled = true;
         }
 
-        private void OnSelectGame(object sender, EventArgs e)
+        private void OnSelectGame(object sender, ListViewItemSelectionChangedEventArgs e)
         {
-            if (this._GameListView.SelectedItems.Count == 0)
+            if (e.IsSelected == true && e.ItemIndex != this._SelectedGameIndex)
+            {
+                this._SelectedGameIndex = e.ItemIndex;
+            }
+            else if (e.IsSelected == true && e.ItemIndex == this._SelectedGameIndex)
+            {
+                this._SelectedGameIndex = -1;
+            }
+        }
+
+        private void OnActivateGame(object sender, EventArgs e)
+        {
+            if (this._SelectedGameIndex < 0)
             {
                 return;
             }
 
-            var info = this._GameListView.SelectedItems[0].Tag as GameInfo;
+            var index = this._SelectedGameIndex;
+            if (index < 0 || index >= this._FilteredGames.Count)
+            {
+                return;
+            }
+
+            var info = this._FilteredGames[index];
             if (info == null)
             {
                 return;
