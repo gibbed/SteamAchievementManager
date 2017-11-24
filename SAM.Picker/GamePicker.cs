@@ -171,7 +171,10 @@ namespace SAM.Picker
 
             this._GameListView.BeginUpdate();
             this._GameListView.VirtualListSize = this._FilteredGames.Count;
-            this._GameListView.RedrawItems(0, this._FilteredGames.Count - 1, true);
+            if (this._FilteredGames.Count > 0)
+            {
+                this._GameListView.RedrawItems(0, this._FilteredGames.Count - 1, true);
+            }
             this._GameListView.EndUpdate();
             this._PickerStatusLabel.Text = string.Format(
                 "Displaying {0} games. Total {1} games.",
@@ -181,7 +184,12 @@ namespace SAM.Picker
 
         private void OnGameListViewRetrieveVirtualItem(object sender, RetrieveVirtualItemEventArgs e)
         {
-            e.Item = this._FilteredGames[e.ItemIndex].Item;
+            var info = this._FilteredGames[e.ItemIndex];
+            e.Item = new ListViewItem()
+            {
+                Text = info.Name,
+                ImageIndex = info.ImageIndex,
+            };
         }
 
         private void DoDownloadLogo(object sender, DoWorkEventArgs e)

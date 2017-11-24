@@ -21,33 +21,22 @@
  */
 
 using System.Globalization;
-using System.Windows.Forms;
 
 namespace SAM.Picker
 {
     internal class GameInfo
     {
+        private string _Name;
+
         public uint Id;
         public string Type;
-        public ListViewItem Item;
+        public int ImageIndex;
 
-        #region public string Name;
         public string Name
         {
-            get { return this.Item.Text; }
-
-            set { this.Item.Text = value ?? "App " + this.Id.ToString(CultureInfo.InvariantCulture); }
+            get { return this._Name; }
+            set { this._Name = value ?? "App " + this.Id.ToString(CultureInfo.InvariantCulture); }
         }
-        #endregion
-
-        #region public int ImageIndex;
-        public int ImageIndex
-        {
-            get { return this.Item.ImageIndex; }
-
-            set { this.Item.ImageIndex = value; }
-        }
-        #endregion
 
         public string Logo;
 
@@ -55,10 +44,6 @@ namespace SAM.Picker
         {
             this.Id = id;
             this.Type = type;
-            this.Item = new ListViewItem()
-            {
-                Tag = this,
-            };
             this.Name = null;
             this.ImageIndex = 0;
             this.Logo = null;
