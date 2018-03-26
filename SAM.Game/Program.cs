@@ -40,9 +40,16 @@ namespace SAM.Game
                 return;
             }
 
-            if (args[1] == "auto")
+            if (args.Length == 2)
             {
-                isAuto = true;
+                if (args[1] == "auto")
+                {
+                    isAuto = true;
+                }
+                else
+                {
+                    isAuto = false;
+                }
             }
             else
             {
