@@ -13,9 +13,6 @@ There are some changes to the code since the last closed-source release:
 
 [![Build status](https://ci.appveyor.com/api/projects/status/00vic6jliar6j0ol/branch/master?svg=true)](https://ci.appveyor.com/project/gibbed/steamachievementmanager/branch/master)
 
-## What's new in this fork
-Automatically loop through all available games and unlock achievements.
-
 ## Attribution
 
 Most (if not all) icons are from the [Fugue Icons](http://p.yusukekamiyamane.com/) set.

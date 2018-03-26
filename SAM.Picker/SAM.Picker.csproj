@@ -118,6 +118,7 @@
     <None Include="Resources\magnifier.png" />
     <None Include="Resources\television-test.png" />
     <None Include="Resources\download-cloud.png" />
+    <Content Include="Resources\lock-unlock.png" />
     <Content Include="SAM.ico" />
   </ItemGroup>
   <ItemGroup>
