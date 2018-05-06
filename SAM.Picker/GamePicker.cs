@@ -422,7 +422,7 @@ namespace SAM.Picker
                 "This will open and close A LOT of windows.\n\nIn your case, it could be " + Games.Count + " windows.\n\nWhile this shouldn't cause a performance drop, it might get annoying if you're trying to do something.\n\nIs this OK?",
                 "Warning",
                 MessageBoxButtons.YesNo,
-                MessageBoxIcon.Error) != DialogResult.No)
+                MessageBoxIcon.Warning) != DialogResult.No)
             {
                 unlockAllProgress.Visible = true;
                 unlockAllProgress.Value = 0;
