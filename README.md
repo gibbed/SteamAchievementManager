@@ -17,7 +17,7 @@ There are some changes to the code since the last closed-source release:
 - A new "Unlock All" feature has been added that loops through all of the displayed games and unlocks everything automatically.
 
 ## Will I get banned for using the "Unlock All" feature?
-Honestly, I'm not really sure. I doubt it's any worse than just using this program normally. I let it run through 460+ games and I'm doing fine.
+Honestly, I'm not really sure. I doubt it's any worse than just using this program normally. I let it run through 460+ games and I'm doing fine. Please don't hold me or the original author responsible for any damages this could cause.
 
 ## Attribution
 
