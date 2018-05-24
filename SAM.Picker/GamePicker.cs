@@ -40,12 +40,12 @@ namespace SAM.Picker
     {
         private readonly API.Client _SteamClient;
 
-        private readonly Dictionary<uint, GameInfo> _Games;
-        private readonly List<GameInfo> _FilteredGames;
-        private int _SelectedGameIndex;
+        private readonly Dictionary<uint, GameInfo> _Games = new Dictionary<uint, GameInfo>();
+        private readonly List<GameInfo> _FilteredGames = new List<GameInfo>();
+        private int _SelectedGameIndex = -1;
 
-        private readonly List<string> _LogosAttempted;
-        private readonly ConcurrentQueue<GameInfo> _LogoQueue;
+        private readonly List<string> _LogosAttempted = new List<string>();
+        private readonly ConcurrentQueue<GameInfo> _LogoQueue = new ConcurrentQueue<GameInfo>();
 
         // ReSharper disable PrivateFieldCanBeConvertedToLocalVariable
         private readonly API.Callbacks.AppDataChanged _AppDataChangedCallback;
@@ -53,12 +53,6 @@ namespace SAM.Picker
 
         public GamePicker(API.Client client)
         {
-            this._Games = new Dictionary<uint, GameInfo>();
-            this._FilteredGames = new List<GameInfo>();
-            this._SelectedGameIndex = -1;
-            this._LogosAttempted = new List<string>();
-            this._LogoQueue = new ConcurrentQueue<GameInfo>();
-
             this.InitializeComponent();
 
             var blank = new Bitmap(this._LogoImageList.ImageSize.Width, this._LogoImageList.ImageSize.Height);
