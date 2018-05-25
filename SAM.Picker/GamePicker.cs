@@ -1,4 +1,4 @@
-﻿/* Copyright (c) 2017 Rick (rick 'at' gibbed 'dot' us)
+/* Copyright (c) 2017 Rick (rick 'at' gibbed 'dot' us)
  * 
  * This software is provided 'as-is', without any express or implied
  * warranty. In no event will the authors be held liable for any damages
@@ -40,14 +40,9 @@ namespace SAM.Picker
     {
         private readonly API.Client _SteamClient;
 
-        private readonly List<GameInfo> _Games;
+        private readonly Dictionary<uint, GameInfo> _Games;
         private readonly List<GameInfo> _FilteredGames;
         private int _SelectedGameIndex;
-
-        public List<GameInfo> Games
-        {
-            get { return _Games; }
-        }
 
         private readonly List<string> _LogosAttempted;
         private readonly ConcurrentQueue<GameInfo> _LogoQueue;
@@ -58,7 +53,7 @@ namespace SAM.Picker
 
         public GamePicker(API.Client client)
         {
-            this._Games = new List<GameInfo>();
+            this._Games = new Dictionary<uint, GameInfo>();
             this._FilteredGames = new List<GameInfo>();
             this._SelectedGameIndex = -1;
             this._LogosAttempted = new List<string>();
@@ -84,17 +79,12 @@ namespace SAM.Picker
 
         private void OnAppDataChanged(APITypes.AppDataChanged param)
         {
-            if (param.Result == true)
+            if (param.Result == true && this._Games.ContainsKey(param.Id))
             {
-                foreach (GameInfo info in this._Games)
-                {
-                    if (info.Id == param.Id)
-                    {
-                        info.Name = this._SteamClient.SteamApps001.GetAppData(info.Id, "name");
-                        this.AddGameToLogoQueue(info);
-                        break;
-                    }
-                }
+                var game = this._Games[param.Id];
+
+                game.Name = this._SteamClient.SteamApps001.GetAppData(game.Id, "name");
+                this.AddGameToLogoQueue(game);
             }
         }
 
@@ -148,7 +138,7 @@ namespace SAM.Picker
         private void RefreshGames()
         {
             this._FilteredGames.Clear();
-            foreach (var info in this._Games.OrderBy(gi => gi.Name))
+            foreach (var info in this._Games.Values.OrderBy(gi => gi.Name))
             {
                 if (info.Type == "normal" && _FilterGamesMenuItem.Checked == false)
                 {
@@ -226,8 +216,7 @@ namespace SAM.Picker
             }
 
             var logoInfo = (LogoInfo)e.Result;
-            var gameInfo = this._Games.FirstOrDefault(gi => gi.Id == logoInfo.Id);
-            if (gameInfo != null && logoInfo.Bitmap != null)
+            if (logoInfo.Bitmap != null && this._Games.TryGetValue(logoInfo.Id, out var gameInfo))
             {
                 this._GameListView.BeginUpdate();
                 var imageIndex = this._LogoImageList.Images.Count;
@@ -292,7 +281,7 @@ namespace SAM.Picker
 
         private void AddGame(uint id, string type)
         {
-            if (this._Games.Any(i => i.Id == id) == true)
+            if (this._Games.ContainsKey(id))
             {
                 return;
             }
@@ -305,7 +294,7 @@ namespace SAM.Picker
             var info = new GameInfo(id, type);
             info.Name = this._SteamClient.SteamApps001.GetAppData(info.Id, "name");
 
-            this._Games.Add(info);
+            this._Games.Add(id, info);
             this.AddGameToLogoQueue(info);
         }
 
