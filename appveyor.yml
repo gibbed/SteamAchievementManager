@@ -11,7 +11,7 @@ skip_commits:
 
 max_jobs: 1
 
-image: Visual Studio 2015
+image: Visual Studio 2017
 
 clone_folder: c:\projects\SAM
 
