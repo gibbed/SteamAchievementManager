@@ -85,6 +85,7 @@ namespace SAM.Picker
 
                 game.Name = this._SteamClient.SteamApps001.GetAppData(game.Id, "name");
                 this.AddGameToLogoQueue(game);
+                this.DownloadNextLogo();
             }
         }
 
@@ -111,20 +112,16 @@ namespace SAM.Picker
                     pairs.Add(new KeyValuePair<uint, string>((uint)nodes.Current.ValueAsLong, type));
                 }
             }
-            e.Result = pairs;
+
+            foreach (var kv in pairs)
+            {
+                this.AddGame(kv.Key, kv.Value);
+            }
         }
 
         private void OnDownloadList(object sender, RunWorkerCompletedEventArgs e)
         {
-            if (e.Error == null && e.Cancelled == false)
-            {
-                var pairs = (List<KeyValuePair<uint, string>>)e.Result;
-                foreach (var kv in pairs)
-                {
-                    this.AddGame(kv.Key, kv.Value);
-                }
-            }
-            else
+            if (e.Error != null || e.Cancelled)
             {
                 this.AddDefaultGames();
                 //MessageBox.Show(e.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -157,15 +154,10 @@ namespace SAM.Picker
                     continue;
                 }
                 this._FilteredGames.Add(info);
+                this.AddGameToLogoQueue(info);
             }
 
-            this._GameListView.BeginUpdate();
             this._GameListView.VirtualListSize = this._FilteredGames.Count;
-            if (this._FilteredGames.Count > 0)
-            {
-                this._GameListView.RedrawItems(0, this._FilteredGames.Count - 1, true);
-            }
-            this._GameListView.EndUpdate();
             this._PickerStatusLabel.Text = string.Format(
                 "Displaying {0} games. Total {1} games.",
                 this._GameListView.Items.Count,
@@ -270,7 +262,6 @@ namespace SAM.Picker
             {
                 this._LogosAttempted.Add(logo);
                 this._LogoQueue.Enqueue(info);
-                this.DownloadNextLogo();
             }
         }
 
@@ -295,7 +286,6 @@ namespace SAM.Picker
             info.Name = this._SteamClient.SteamApps001.GetAppData(info.Id, "name");
 
             this._Games.Add(id, info);
-            this.AddGameToLogoQueue(info);
         }
 
         private void AddGames()
