@@ -181,6 +181,7 @@
             this._GameListView.ItemActivate += new System.EventHandler(this.OnActivateGame);
             this._GameListView.ItemSelectionChanged += new System.Windows.Forms.ListViewItemSelectionChangedEventHandler(this.OnSelectGame);
             this._GameListView.RetrieveVirtualItem += new System.Windows.Forms.RetrieveVirtualItemEventHandler(this.OnGameListViewRetrieveVirtualItem);
+            this._GameListView.SearchForVirtualItem += new System.Windows.Forms.SearchForVirtualItemEventHandler(this.OnGameListViewSearchForVirtualItem);
             // 
             // _PickerStatusStrip
             // 

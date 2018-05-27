@@ -174,6 +174,55 @@ namespace SAM.Picker
             };
         }
 
+        private void OnGameListViewSearchForVirtualItem(object sender, SearchForVirtualItemEventArgs e)
+        {
+            if (e.Direction != SearchDirectionHint.Down || e.IsTextSearch == false)
+            {
+                return;
+            }
+
+            var count = this._FilteredGames.Count;
+            if (count < 2)
+            {
+                return;
+            }
+
+            var text = e.Text.ToLowerInvariant();
+            int startIndex = e.StartIndex;
+
+            Predicate<GameInfo> predicate;
+            /*if (e.IsPrefixSearch == true)*/
+            {
+                predicate = gi => gi.Name != null && gi.Name.ToLowerInvariant().StartsWith(e.Text);
+            }
+            /*else
+            {
+                predicate = gi => gi.Name != null && gi.Name.ToLowerInvariant() == e.Text;
+            }*/
+
+            int index;
+            if (e.StartIndex >= count)
+            {
+                // starting from the last item in the list
+                index = this._FilteredGames.FindIndex(0, startIndex - 1, predicate);
+            }
+            else if (startIndex <= 0)
+            {
+                // starting from the first item in the list
+                index = this._FilteredGames.FindIndex(0, count, predicate);
+            }
+            else
+            {
+                index = this._FilteredGames.FindIndex(startIndex, count - startIndex, predicate);
+                if (index < 0)
+                {
+                    index = this._FilteredGames.FindIndex(0, startIndex - 1, predicate);
+                }
+            }
+
+            e.Index = index < 0 ? -1 : index;
+        }
+
         private void DoDownloadLogo(object sender, DoWorkEventArgs e)
         {
             var info = (GameInfo)e.Argument;
