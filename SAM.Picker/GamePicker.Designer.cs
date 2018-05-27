@@ -36,19 +36,21 @@
             this._CallbackTimer = new System.Windows.Forms.Timer(this.components);
             this._PickerToolStrip = new System.Windows.Forms.ToolStrip();
             this._RefreshGamesButton = new System.Windows.Forms.ToolStripButton();
+            this.unlockAllGames = new System.Windows.Forms.ToolStripButton();
             this._AddGameTextBox = new System.Windows.Forms.ToolStripTextBox();
-            this._AddGameButton = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
             this._FilterDropDownButton = new System.Windows.Forms.ToolStripDropDownButton();
             this._FilterGamesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this._FilterDemosMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this._FilterModsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this._FilterJunkMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this._GameListView = new SAM.Picker.DoubleBufferedListView();
             this._PickerStatusStrip = new System.Windows.Forms.StatusStrip();
             this._PickerStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this._DownloadStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.unlockAllProgress = new System.Windows.Forms.ToolStripProgressBar();
             this._LogoWorker = new System.ComponentModel.BackgroundWorker();
             this._ListWorker = new System.ComponentModel.BackgroundWorker();
+            this._GameListView = new SAM.Picker.DoubleBufferedListView();
             _ToolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             _ToolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this._PickerToolStrip.SuspendLayout();
@@ -80,9 +82,10 @@
             // 
             this._PickerToolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this._RefreshGamesButton,
+            this.unlockAllGames,
             _ToolStripSeparator1,
             this._AddGameTextBox,
-            this._AddGameButton,
+            this.toolStripButton1,
             _ToolStripSeparator2,
             this._FilterDropDownButton});
             this._PickerToolStrip.Location = new System.Drawing.Point(0, 0);
@@ -100,19 +103,28 @@
             this._RefreshGamesButton.Text = "Refresh Games";
             this._RefreshGamesButton.Click += new System.EventHandler(this.OnRefresh);
             // 
+            // unlockAllGames
+            // 
+            this.unlockAllGames.Enabled = false;
+            this.unlockAllGames.Image = global::SAM.Picker.Properties.Resources.lock_unlock;
+            this.unlockAllGames.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.unlockAllGames.Name = "unlockAllGames";
+            this.unlockAllGames.Size = new System.Drawing.Size(81, 22);
+            this.unlockAllGames.Text = "Unlock All";
+            this.unlockAllGames.Click += new System.EventHandler(this.unlockAllGames_Click);
+            // 
             // _AddGameTextBox
             // 
             this._AddGameTextBox.Name = "_AddGameTextBox";
             this._AddGameTextBox.Size = new System.Drawing.Size(100, 25);
             // 
-            // _AddGameButton
+            // toolStripButton1
             // 
-            this._AddGameButton.Image = global::SAM.Picker.Properties.Resources.Search;
-            this._AddGameButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this._AddGameButton.Name = "_AddGameButton";
-            this._AddGameButton.Size = new System.Drawing.Size(83, 22);
-            this._AddGameButton.Text = "Add Game";
-            this._AddGameButton.Click += new System.EventHandler(this.OnAddGame);
+            this.toolStripButton1.Image = global::SAM.Picker.Properties.Resources.Search;
+            this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton1.Name = "toolStripButton1";
+            this.toolStripButton1.Size = new System.Drawing.Size(83, 22);
+            this.toolStripButton1.Text = "Add Game";
             // 
             // _FilterDropDownButton
             // 
@@ -162,31 +174,12 @@
             this._FilterJunkMenuItem.Text = "Show &junk";
             this._FilterJunkMenuItem.CheckedChanged += new System.EventHandler(this.OnFilterUpdate);
             // 
-            // _GameListView
-            // 
-            this._GameListView.BackColor = System.Drawing.Color.Black;
-            this._GameListView.Dock = System.Windows.Forms.DockStyle.Fill;
-            this._GameListView.ForeColor = System.Drawing.Color.White;
-            this._GameListView.LargeImageList = this._LogoImageList;
-            this._GameListView.Location = new System.Drawing.Point(0, 25);
-            this._GameListView.MultiSelect = false;
-            this._GameListView.Name = "_GameListView";
-            this._GameListView.Size = new System.Drawing.Size(742, 245);
-            this._GameListView.SmallImageList = this._LogoImageList;
-            this._GameListView.Sorting = System.Windows.Forms.SortOrder.Ascending;
-            this._GameListView.TabIndex = 0;
-            this._GameListView.TileSize = new System.Drawing.Size(184, 69);
-            this._GameListView.UseCompatibleStateImageBehavior = false;
-            this._GameListView.VirtualMode = true;
-            this._GameListView.ItemActivate += new System.EventHandler(this.OnActivateGame);
-            this._GameListView.ItemSelectionChanged += new System.Windows.Forms.ListViewItemSelectionChangedEventHandler(this.OnSelectGame);
-            this._GameListView.RetrieveVirtualItem += new System.Windows.Forms.RetrieveVirtualItemEventHandler(this.OnGameListViewRetrieveVirtualItem);
-            // 
             // _PickerStatusStrip
             // 
             this._PickerStatusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this._PickerStatusLabel,
-            this._DownloadStatusLabel});
+            this._DownloadStatusLabel,
+            this.unlockAllProgress});
             this._PickerStatusStrip.Location = new System.Drawing.Point(0, 270);
             this._PickerStatusStrip.Name = "_PickerStatusStrip";
             this._PickerStatusStrip.Size = new System.Drawing.Size(742, 22);
@@ -208,6 +201,13 @@
             this._DownloadStatusLabel.Text = "Download status";
             this._DownloadStatusLabel.Visible = false;
             // 
+            // unlockAllProgress
+            // 
+            this.unlockAllProgress.Name = "unlockAllProgress";
+            this.unlockAllProgress.Size = new System.Drawing.Size(100, 16);
+            this.unlockAllProgress.ToolTipText = "Unlock All Progress";
+            this.unlockAllProgress.Visible = false;
+            // 
             // _LogoWorker
             // 
             this._LogoWorker.WorkerSupportsCancellation = true;
@@ -219,6 +219,26 @@
             this._ListWorker.WorkerSupportsCancellation = true;
             this._ListWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.DoDownloadList);
             this._ListWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.OnDownloadList);
+            // 
+            // _GameListView
+            // 
+            this._GameListView.BackColor = System.Drawing.Color.Black;
+            this._GameListView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this._GameListView.ForeColor = System.Drawing.Color.White;
+            this._GameListView.LargeImageList = this._LogoImageList;
+            this._GameListView.Location = new System.Drawing.Point(0, 25);
+            this._GameListView.MultiSelect = false;
+            this._GameListView.Name = "_GameListView";
+            this._GameListView.Size = new System.Drawing.Size(742, 245);
+            this._GameListView.SmallImageList = this._LogoImageList;
+            this._GameListView.Sorting = System.Windows.Forms.SortOrder.Ascending;
+            this._GameListView.TabIndex = 0;
+            this._GameListView.TileSize = new System.Drawing.Size(184, 69);
+            this._GameListView.UseCompatibleStateImageBehavior = false;
+            this._GameListView.VirtualMode = true;
+            this._GameListView.ItemActivate += new System.EventHandler(this.OnActivateGame);
+            this._GameListView.ItemSelectionChanged += new System.Windows.Forms.ListViewItemSelectionChangedEventHandler(this.OnSelectGame);
+            this._GameListView.RetrieveVirtualItem += new System.Windows.Forms.RetrieveVirtualItemEventHandler(this.OnGameListViewRetrieveVirtualItem);
             // 
             // GamePicker
             // 
@@ -248,7 +268,6 @@
 		private System.Windows.Forms.ToolStrip _PickerToolStrip;
 		private System.Windows.Forms.ToolStripButton _RefreshGamesButton;
 		private System.Windows.Forms.ToolStripTextBox _AddGameTextBox;
-        private System.Windows.Forms.ToolStripButton _AddGameButton;
         private System.Windows.Forms.ToolStripDropDownButton _FilterDropDownButton;
         private System.Windows.Forms.ToolStripMenuItem _FilterGamesMenuItem;
         private System.Windows.Forms.ToolStripMenuItem _FilterJunkMenuItem;
@@ -259,6 +278,9 @@
         private System.Windows.Forms.ToolStripStatusLabel _PickerStatusLabel;
         private System.ComponentModel.BackgroundWorker _LogoWorker;
         private System.ComponentModel.BackgroundWorker _ListWorker;
-	}
+        private System.Windows.Forms.ToolStripButton toolStripButton1;
+        private System.Windows.Forms.ToolStripButton unlockAllGames;
+        private System.Windows.Forms.ToolStripProgressBar unlockAllProgress;
+    }
 }
 
