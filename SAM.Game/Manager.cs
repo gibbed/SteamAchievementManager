@@ -169,7 +169,7 @@ namespace SAM.Game
 
 
             this._IconDownloader.DownloadDataAsync(
-                new Uri(string.Format("http://media.steamcommunity.com/steamcommunity/public/images/apps/{0}/{1}",
+                new Uri(string.Format("https://media.steamcommunity.com/steamcommunity/public/images/apps/{0}/{1}",
                                       this._GameId,
                                       info.IsAchieved == true ? info.IconNormal : info.IconLocked)),
                 info);
