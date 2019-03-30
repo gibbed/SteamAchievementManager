@@ -227,15 +227,14 @@ namespace SAM.Picker
         {
             var info = (GameInfo)e.Argument;
             var logoPath = string.Format(
-                "http://media.steamcommunity.com/steamcommunity/public/images/apps/{0}/{1}.jpg",
+                "https://media.steamcommunity.com/steamcommunity/public/images/apps/{0}/{1}.jpg",
                 info.Id,
                 info.Logo);
             using (var downloader = new WebClient())
             {
-                var data = downloader.DownloadData(new Uri(logoPath));
-
                 try
                 {
+                    var data = downloader.DownloadData(new Uri(logoPath));
                     using (var stream = new MemoryStream(data, false))
                     {
                         var bitmap = new Bitmap(stream);
