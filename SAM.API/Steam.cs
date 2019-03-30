@@ -31,14 +31,15 @@ namespace SAM.API
     {
         private struct Native
         {
-            [DllImport("kernel32.dll", SetLastError = true)]
+            [DllImport("kernel32.dll", SetLastError = true, BestFitMapping = false, ThrowOnUnmappableChar = true)]
             internal static extern IntPtr GetProcAddress(IntPtr module, string name);
 
-            [DllImport("kernel32.dll", SetLastError = true)]
+            [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
             internal static extern IntPtr LoadLibraryEx(string path, IntPtr file, uint flags);
 
-            [DllImport("kernel32.dll", SetLastError = true)]
-            internal static extern IntPtr SetDllDirectory(string path);
+            [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            internal static extern bool SetDllDirectory(string path);
 
             internal const uint LoadWithAlteredSearchPath = 8;
         }

@@ -47,7 +47,7 @@ namespace SAM.Game
                 }
 
                 var child = this.Children.SingleOrDefault(
-                    c => c.Name.ToLowerInvariant() == key.ToLowerInvariant());
+                    c => string.Compare(c.Name, key, StringComparison.InvariantCultureIgnoreCase) == 0);
                 
                 if (child == null)
                 {
@@ -202,7 +202,11 @@ namespace SAM.Game
                 return this.Name;
             }
 
-            return string.Format("{0} = {1}", this.Name, this.Value);
+            return string.Format(
+                System.Globalization.CultureInfo.CurrentCulture,
+                "{0} = {1}",
+                this.Name,
+                this.Value);
         }
 
         public static KeyValue LoadAsBinary(string path)
@@ -214,16 +218,15 @@ namespace SAM.Game
 
             try
             {
-                var input = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                var kv = new KeyValue();
-
-                if (kv.ReadAsBinary(input) == false)
+                using (var input = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 {
-                    return null;
+                    var kv = new KeyValue();
+                    if (kv.ReadAsBinary(input) == false)
+                    {
+                        return null;
+                    }
+                    return kv;
                 }
-
-                input.Close();
-                return kv;
             }
             catch (Exception)
             {

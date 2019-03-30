@@ -95,7 +95,7 @@ namespace SAM.Picker
             byte[] bytes;
             using (var downloader = new WebClient())
             {
-                bytes = downloader.DownloadData(new Uri(string.Format("http://gib.me/sam/games.xml")));
+                bytes = downloader.DownloadData(new Uri("http://gib.me/sam/games.xml"));
             }
             using (var stream = new MemoryStream(bytes, false))
             {
@@ -105,7 +105,7 @@ namespace SAM.Picker
                 while (nodes.MoveNext())
                 {
                     string type = nodes.Current.GetAttribute("type", "");
-                    if (type == string.Empty)
+                    if (string.IsNullOrEmpty(type) == true)
                     {
                         type = "normal";
                     }
@@ -159,6 +159,7 @@ namespace SAM.Picker
 
             this._GameListView.VirtualListSize = this._FilteredGames.Count;
             this._PickerStatusLabel.Text = string.Format(
+                CultureInfo.CurrentCulture,
                 "Displaying {0} games. Total {1} games.",
                 this._GameListView.Items.Count,
                 this._Games.Count);
@@ -187,17 +188,17 @@ namespace SAM.Picker
                 return;
             }
 
-            var text = e.Text.ToLowerInvariant();
+            var text = e.Text;
             int startIndex = e.StartIndex;
 
             Predicate<GameInfo> predicate;
             /*if (e.IsPrefixSearch == true)*/
             {
-                predicate = gi => gi.Name != null && gi.Name.ToLowerInvariant().StartsWith(e.Text);
+                predicate = gi => gi.Name != null && gi.Name.StartsWith(text, StringComparison.CurrentCultureIgnoreCase);
             }
             /*else
             {
-                predicate = gi => gi.Name != null && gi.Name.ToLowerInvariant() == e.Text;
+                predicate = gi => gi.Name != null && string.Compare(gi.Name, text, StringComparison.CurrentCultureIgnoreCase) == 0;
             }*/
 
             int index;
@@ -227,6 +228,7 @@ namespace SAM.Picker
         {
             var info = (GameInfo)e.Argument;
             var logoPath = string.Format(
+                CultureInfo.InvariantCulture,
                 "https://media.steamcommunity.com/steamcommunity/public/images/apps/{0}/{1}.jpg",
                 info.Id,
                 info.Logo);
@@ -283,6 +285,7 @@ namespace SAM.Picker
             }
 
             this._DownloadStatusLabel.Text = string.Format(
+                CultureInfo.CurrentCulture,
                 "Downloading {0} game icons...",
                 this._LogoQueue.Count);
             this._DownloadStatusLabel.Visible = true;

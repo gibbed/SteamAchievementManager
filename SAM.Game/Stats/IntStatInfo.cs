@@ -32,7 +32,7 @@ namespace SAM.Game.Stats
             get { return this.IntValue; }
             set
             {
-                var i = int.Parse((string)value);
+                var i = int.Parse((string)value, System.Globalization.CultureInfo.CurrentCulture);
 
                 if ((this.Permission & 2) != 0 &&
                     this.IntValue != i)

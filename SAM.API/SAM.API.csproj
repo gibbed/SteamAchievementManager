@@ -74,6 +74,7 @@
   <ItemGroup>
     <Compile Include="Callbacks\AppDataChanged.cs" />
     <Compile Include="Callbacks\UserStatsReceived.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="ICallback.cs" />
     <Compile Include="NativeStrings.cs" />
     <Compile Include="Types\CallbackMessage.cs" />

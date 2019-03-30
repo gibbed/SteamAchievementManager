@@ -87,6 +87,7 @@
     <Compile Include="GamePicker.Designer.cs">
       <DependentUpon>GamePicker.cs</DependentUpon>
     </Compile>
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="LogoInfo.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

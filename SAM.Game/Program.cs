@@ -43,7 +43,7 @@ namespace SAM.Game
             if (long.TryParse(args[0], out appId) == false)
             {
                 MessageBox.Show(
-                    "Could not parse application ID from commandline argument.",
+                    "Could not parse application ID from command line argument.",
                     "Error",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);

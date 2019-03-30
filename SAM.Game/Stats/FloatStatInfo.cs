@@ -32,7 +32,7 @@ namespace SAM.Game.Stats
             get { return this.FloatValue; }
             set
             {
-                var f = float.Parse((string)value);
+                var f = float.Parse((string)value, System.Globalization.CultureInfo.CurrentCulture);
 
                 if ((this.Permission & 2) != 0 &&
                     this.FloatValue.Equals(f) == false)

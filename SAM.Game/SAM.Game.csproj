@@ -73,6 +73,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Stats\AchievementInfo.cs" />
     <Compile Include="DoubleBufferedListView.cs">
       <SubType>Component</SubType>

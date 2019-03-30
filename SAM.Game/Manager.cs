@@ -156,12 +156,15 @@ namespace SAM.Game
                 return;
             }
 
-            if (this._IconDownloader.IsBusy)
+            if (this._IconDownloader.IsBusy == true)
             {
                 return;
             }
 
-            this._DownloadStatusLabel.Text = string.Format("Downloading {0} icons...", this._IconQueue.Count);
+            this._DownloadStatusLabel.Text = string.Format(
+                CultureInfo.CurrentCulture,
+                "Downloading {0} icons...",
+                this._IconQueue.Count);
             this._DownloadStatusLabel.Visible = true;
 
             var info = this._IconQueue[0];
@@ -169,13 +172,15 @@ namespace SAM.Game
 
 
             this._IconDownloader.DownloadDataAsync(
-                new Uri(string.Format("http://media.steamcommunity.com/steamcommunity/public/images/apps/{0}/{1}",
-                                      this._GameId,
-                                      info.IsAchieved == true ? info.IconNormal : info.IconLocked)),
+                new Uri(string.Format(
+                    CultureInfo.InvariantCulture,
+                    "http://media.steamcommunity.com/steamcommunity/public/images/apps/{0}/{1}",
+                    this._GameId,
+                    info.IsAchieved == true ? info.IconNormal : info.IconLocked)),
                 info);
         }
 
-        private string TranslateError(int id)
+        private static string TranslateError(int id)
         {
             switch (id)
             {
@@ -188,7 +193,7 @@ namespace SAM.Game
             return id.ToString(CultureInfo.InvariantCulture);
         }
 
-        private string GetLocalizedString(KeyValue kv, string language, string defaultValue)
+        private static string GetLocalizedString(KeyValue kv, string language, string defaultValue)
         {
             var name = kv[language].AsString("");
             if (string.IsNullOrEmpty(name) == false)
@@ -223,7 +228,10 @@ namespace SAM.Game
                 path = API.Steam.GetInstallPath();
                 path = Path.Combine(path, "appcache");
                 path = Path.Combine(path, "stats");
-                path = Path.Combine(path, string.Format("UserGameStatsSchema_{0}.bin", this._GameId));
+                path = Path.Combine(path, string.Format(
+                    CultureInfo.InvariantCulture,
+                    "UserGameStatsSchema_{0}.bin",
+                    this._GameId));
 
                 if (File.Exists(path) == false)
                 {
@@ -268,7 +276,7 @@ namespace SAM.Game
                 var type = (APITypes.UserStatType)rawType;
                 switch (type)
                 {
-                    case API.Types.UserStatType.Invalid:
+                    case APITypes.UserStatType.Invalid:
                     {
                         break;
                     }
@@ -318,7 +326,7 @@ namespace SAM.Game
                         if (stat.Children != null)
                         {
                             foreach (var bits in stat.Children.Where(
-                                b => b.Name.ToLowerInvariant() == "bits"))
+                                b => string.Compare(b.Name, "bits", StringComparison.InvariantCultureIgnoreCase) == 0))
                             {
                                 if (bits.Valid == false ||
                                     bits.Children == null)
@@ -364,6 +372,7 @@ namespace SAM.Game
             if (param.Result != 1)
             {
                 this._GameStatusLabel.Text = string.Format(
+                    CultureInfo.CurrentCulture,
                     "Error while retrieving stats: {0}",
                     TranslateError(param.Result));
                 this.EnableInput();
@@ -395,6 +404,7 @@ namespace SAM.Game
             }
 
             this._GameStatusLabel.Text = string.Format(
+                CultureInfo.CurrentCulture,
                 "Retrieved {0} achievements and {1} statistics.",
                 this._AchievementListView.Items.Count,
                 this._StatisticsDataGridView.Rows.Count);
@@ -428,7 +438,7 @@ namespace SAM.Game
 
             foreach (var def in this._AchievementDefinitions)
             {
-                if (def.Id == string.Empty)
+                if (string.IsNullOrEmpty(def.Id) == true)
                 {
                     continue;
                 }
@@ -460,7 +470,7 @@ namespace SAM.Game
 
                 info.Item = item;
 
-                if (item.Text.StartsWith("#") == true)
+                if (item.Text.StartsWith("#", StringComparison.InvariantCulture) == true)
                 {
                     item.Text = info.Id;
                 }
@@ -580,7 +590,10 @@ namespace SAM.Game
                 {
                     MessageBox.Show(
                         this,
-                        string.Format("An error occured while setting the state for {0}, aborting store.", info.Id),
+                        string.Format(
+                            CultureInfo.CurrentCulture,
+                            "An error occurred while setting the state for {0}, aborting store.",
+                            info.Id),
                         "Error",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
@@ -615,7 +628,10 @@ namespace SAM.Game
                     {
                         MessageBox.Show(
                             this,
-                            string.Format("An error occured while setting the value for {0}, aborting store.", stat.Id),
+                            string.Format(
+                                CultureInfo.CurrentCulture,
+                                "An error occurred while setting the value for {0}, aborting store.",
+                                stat.Id),
                             "Error",
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Error);
@@ -631,7 +647,10 @@ namespace SAM.Game
                     {
                         MessageBox.Show(
                             this,
-                            string.Format("An error occured while setting the value for {0}, aborting store.", stat.Id),
+                            string.Format(
+                                CultureInfo.CurrentCulture,
+                                "An error occurred while setting the value for {0}, aborting store.",
+                                stat.Id),
                             "Error",
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Error);
@@ -640,7 +659,7 @@ namespace SAM.Game
                 }
                 else
                 {
-                    throw new Exception();
+                    throw new InvalidOperationException("unsupported stat type");
                 }
             }
 
@@ -701,7 +720,7 @@ namespace SAM.Game
             {
                 MessageBox.Show(
                     this,
-                    "An error occured while storing, aborting.",
+                    "An error occurred while storing, aborting.",
                     "Error",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
@@ -735,7 +754,11 @@ namespace SAM.Game
 
             MessageBox.Show(
                 this,
-                string.Format("Stored {0} achievements and {1} statistics.", achievements, stats),
+                string.Format(
+                    CultureInfo.CurrentCulture,
+                    "Stored {0} achievements and {1} statistics.",
+                    achievements,
+                    stats),
                 "Information",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
@@ -746,18 +769,17 @@ namespace SAM.Game
         {
             if (e.Context == DataGridViewDataErrorContexts.Commit)
             {
+                var view = (DataGridView)sender;
                 if (e.Exception is Stats.StatIsProtectedException)
                 {
                     e.ThrowException = false;
                     e.Cancel = true;
-                    var view = (DataGridView)sender;
                     view.Rows[e.RowIndex].ErrorText = "Stat is protected! -- you can't modify it";
                 }
                 else
                 {
                     e.ThrowException = false;
                     e.Cancel = true;
-                    var view = (DataGridView)sender;
                     view.Rows[e.RowIndex].ErrorText = "Invalid value";
                 }
             }
