@@ -7,6 +7,8 @@
     <Authors>Gibbed</Authors>
     <Description>A game picker for the Steam Achievement Manager.</Description>
     <Copyright>Copyright © Gibbed 2019</Copyright>
+    <AssemblyVersion>7.0.0.0</AssemblyVersion>
+    <FileVersion>7.0.0.0</FileVersion>
     <RepositoryUrl>https://github.com/gibbed/SteamAchievementManager/</RepositoryUrl>
     <RepositoryType>it</RepositoryType>
     <ApplicationIcon>SAM.ico</ApplicationIcon>

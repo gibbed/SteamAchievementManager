@@ -7,6 +7,8 @@
     <Authors>Gibbed</Authors>
     <Description>A manager for game achievements in Steam.</Description>
     <Copyright>Copyright © Gibbed 2019</Copyright>
+    <AssemblyVersion>7.0.0.0</AssemblyVersion>
+    <FileVersion>7.0.0.0</FileVersion>
     <RepositoryUrl>https://github.com/gibbed/SteamAchievementManager/</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <ApplicationIcon>Blank.ico</ApplicationIcon>
