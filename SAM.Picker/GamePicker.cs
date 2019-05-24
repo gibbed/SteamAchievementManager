@@ -318,7 +318,7 @@ namespace SAM.Picker
 
         private bool OwnsGame(uint id)
         {
-            return this._SteamClient.SteamApps003.IsSubscribedApp(id);
+            return this._SteamClient.SteamApps008.IsSubscribedApp(id);
         }
 
         private void AddGame(uint id, string type)

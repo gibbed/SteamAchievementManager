@@ -26,7 +26,7 @@ using SAM.API.Interfaces;
 
 namespace SAM.API.Wrappers
 {
-    public class SteamApps003 : NativeWrapper<ISteamApps003>
+    public class SteamApps008 : NativeWrapper<ISteamApps008>
     {
         #region IsSubscribed
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]

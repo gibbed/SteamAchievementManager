@@ -250,7 +250,7 @@ namespace SAM.Game
                 return false;
             }
 
-            var currentLanguage = this._SteamClient.SteamApps003.GetCurrentGameLanguage();
+            var currentLanguage = this._SteamClient.SteamApps008.GetCurrentGameLanguage();
             //var currentLanguage = "german";
 
             this._AchievementDefinitions.Clear();
