@@ -93,7 +93,7 @@
             // 
             // _RefreshGamesButton
             // 
-            this._RefreshGamesButton.Image = global::SAM.Picker.Properties.Resources.Refresh;
+            this._RefreshGamesButton.Image = global::SAM.Picker.Resources.Refresh;
             this._RefreshGamesButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this._RefreshGamesButton.Name = "_RefreshGamesButton";
             this._RefreshGamesButton.Size = new System.Drawing.Size(105, 22);
@@ -107,7 +107,7 @@
             // 
             // _AddGameButton
             // 
-            this._AddGameButton.Image = global::SAM.Picker.Properties.Resources.Search;
+            this._AddGameButton.Image = global::SAM.Picker.Resources.Search;
             this._AddGameButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this._AddGameButton.Name = "_AddGameButton";
             this._AddGameButton.Size = new System.Drawing.Size(83, 22);
@@ -122,7 +122,7 @@
             this._FilterDemosMenuItem,
             this._FilterModsMenuItem,
             this._FilterJunkMenuItem});
-            this._FilterDropDownButton.Image = global::SAM.Picker.Properties.Resources.Filter;
+            this._FilterDropDownButton.Image = global::SAM.Picker.Resources.Filter;
             this._FilterDropDownButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this._FilterDropDownButton.Name = "_FilterDropDownButton";
             this._FilterDropDownButton.Size = new System.Drawing.Size(29, 22);
@@ -203,7 +203,7 @@
             // 
             // _DownloadStatusLabel
             // 
-            this._DownloadStatusLabel.Image = global::SAM.Picker.Properties.Resources.Download;
+            this._DownloadStatusLabel.Image = global::SAM.Picker.Resources.Download;
             this._DownloadStatusLabel.Name = "_DownloadStatusLabel";
             this._DownloadStatusLabel.Size = new System.Drawing.Size(111, 17);
             this._DownloadStatusLabel.Text = "Download status";

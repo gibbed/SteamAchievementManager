@@ -84,7 +84,7 @@
             // 
             this._StoreButton.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
             this._StoreButton.Enabled = false;
-            this._StoreButton.Image = global::SAM.Game.Properties.Resources.Save;
+            this._StoreButton.Image = global::SAM.Game.Resources.Save;
             this._StoreButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this._StoreButton.Name = "_StoreButton";
             this._StoreButton.Size = new System.Drawing.Size(120, 22);
@@ -95,7 +95,7 @@
             // _ReloadButton
             // 
             this._ReloadButton.Enabled = false;
-            this._ReloadButton.Image = global::SAM.Game.Properties.Resources.Refresh;
+            this._ReloadButton.Image = global::SAM.Game.Resources.Refresh;
             this._ReloadButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this._ReloadButton.Name = "_ReloadButton";
             this._ReloadButton.Size = new System.Drawing.Size(66, 22);
@@ -105,7 +105,7 @@
             // 
             // _ResetButton
             // 
-            this._ResetButton.Image = global::SAM.Game.Properties.Resources.Reset;
+            this._ResetButton.Image = global::SAM.Game.Resources.Reset;
             this._ResetButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this._ResetButton.Name = "_ResetButton";
             this._ResetButton.Size = new System.Drawing.Size(55, 22);
@@ -145,7 +145,7 @@
             // 
             // _DownloadStatusLabel
             // 
-            this._DownloadStatusLabel.Image = global::SAM.Game.Properties.Resources.Download;
+            this._DownloadStatusLabel.Image = global::SAM.Game.Resources.Download;
             this._DownloadStatusLabel.Name = "_DownloadStatusLabel";
             this._DownloadStatusLabel.Size = new System.Drawing.Size(111, 17);
             this._DownloadStatusLabel.Text = "Download status";
@@ -230,7 +230,7 @@
             // _LockAllButton
             // 
             this._LockAllButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this._LockAllButton.Image = global::SAM.Game.Properties.Resources.Lock;
+            this._LockAllButton.Image = global::SAM.Game.Resources.Lock;
             this._LockAllButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this._LockAllButton.Name = "_LockAllButton";
             this._LockAllButton.Size = new System.Drawing.Size(23, 22);
@@ -241,7 +241,7 @@
             // _InvertAllButton
             // 
             this._InvertAllButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this._InvertAllButton.Image = global::SAM.Game.Properties.Resources.Invert;
+            this._InvertAllButton.Image = global::SAM.Game.Resources.Invert;
             this._InvertAllButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this._InvertAllButton.Name = "_InvertAllButton";
             this._InvertAllButton.Size = new System.Drawing.Size(23, 22);
@@ -252,7 +252,7 @@
             // _UnlockAllButton
             // 
             this._UnlockAllButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this._UnlockAllButton.Image = global::SAM.Game.Properties.Resources.Unlock;
+            this._UnlockAllButton.Image = global::SAM.Game.Resources.Unlock;
             this._UnlockAllButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this._UnlockAllButton.Name = "_UnlockAllButton";
             this._UnlockAllButton.Size = new System.Drawing.Size(23, 22);
