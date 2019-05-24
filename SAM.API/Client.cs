@@ -91,10 +91,14 @@ namespace SAM.API
 
         ~Client()
         {
-            if (this.SteamClient != null)
+            if (this.SteamClient != null && this._Pipe > 0)
             {
-                this.SteamClient.ReleaseUser(this._Pipe, this._User);
-                this._User = 0;
+                if (this._User > 0)
+                {
+                    this.SteamClient.ReleaseUser(this._Pipe, this._User);
+                    this._User = 0;
+                }
+                
                 this.SteamClient.ReleaseSteamPipe(this._Pipe);
                 this._Pipe = 0;
             }
