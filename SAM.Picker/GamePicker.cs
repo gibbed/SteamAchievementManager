@@ -229,7 +229,7 @@ namespace SAM.Picker
             var info = (GameInfo)e.Argument;
             var logoPath = string.Format(
                 CultureInfo.InvariantCulture,
-                "https://media.steamcommunity.com/steamcommunity/public/images/apps/{0}/{1}.jpg",
+                "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/{0}/{1}.jpg",
                 info.Id,
                 info.Logo);
             using (var downloader = new WebClient())

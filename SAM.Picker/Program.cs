@@ -87,12 +87,6 @@ namespace SAM.Picker
                     return;
                 }
 
-                /* Disable server certificate validation.
-                 * This is for media downloads (application logos).
-                 * https://media.steamcommunity.com/ has certs issued to (various).e.akamai.net.
-                 */
-                ServicePointManager.ServerCertificateValidationCallback = (s, ce, ch, e) => true;
-
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
                 Application.Run(new GamePicker(client));

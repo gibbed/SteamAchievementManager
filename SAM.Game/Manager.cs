@@ -174,7 +174,7 @@ namespace SAM.Game
             this._IconDownloader.DownloadDataAsync(
                 new Uri(string.Format(
                     CultureInfo.InvariantCulture,
-                    "http://media.steamcommunity.com/steamcommunity/public/images/apps/{0}/{1}",
+                    "http://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/{0}/{1}",
                     this._GameId,
                     info.IsAchieved == true ? info.IconNormal : info.IconLocked)),
                 info);
