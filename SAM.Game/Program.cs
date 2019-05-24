@@ -24,6 +24,7 @@ using System;
 using System.Diagnostics;
 using System.Net;
 using System.Windows.Forms;
+using SAM.API;
 
 namespace SAM.Game
 {
@@ -60,40 +61,61 @@ namespace SAM.Game
                 return;
             }
 
-            API.Client client;
-            try
+            using (var client = new API.Client())
             {
-                client = new API.Client();
-
-                if (client.Initialize(appId) == false)
+                try
+                {
+                    client.Initialize(appId);
+                }
+                catch (ClientInitializeException e)
+                {
+                    if (e.Failure == ClientInitializeFailure.ConnectToGlobalUser)
+                    {
+                        // TODO(gibbed): show error about family sharing?
+                        MessageBox.Show(
+                            "Steam is not running. Please start Steam then run this tool again.\n\n(" + e.Message + ")",
+                            "Error",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
+                    }
+                    else if (string.IsNullOrEmpty(e.Message) == false)
+                    {
+                        MessageBox.Show(
+                            "Steam is not running. Please start Steam then run this tool again.\n\n(" + e.Message + ")",
+                            "Error",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
+                    }
+                    else
+                    {
+                        MessageBox.Show(
+                            "Steam is not running. Please start Steam then run this tool again.",
+                            "Error",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
+                    }
+                    return;
+                }
+                catch (DllNotFoundException)
                 {
                     MessageBox.Show(
-                        "Steam is not running. Please start Steam then run this tool again.",
+                        "You've caused an exceptional error!",
                         "Error",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
                     return;
                 }
-            }
-            catch (DllNotFoundException)
-            {
-                MessageBox.Show(
-                    "You've caused an exceptional error!",
-                    "Error",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
-                return;
-            }
 
-            /* Disable server certificate validation.
-             * This is for media downloads (achievement icons).
-             * https://media.steamcommunity.com/ has certs issued to (various).e.akamai.net.
-             */
-            ServicePointManager.ServerCertificateValidationCallback = (s, ce, ch, e) => true;
+                /* Disable server certificate validation.
+                 * This is for media downloads (achievement icons).
+                 * https://media.steamcommunity.com/ has certs issued to (various).e.akamai.net.
+                 */
+                ServicePointManager.ServerCertificateValidationCallback = (s, ce, ch, e) => true;
 
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Manager(appId, client));
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+                Application.Run(new Manager(appId, client));
+            }
         }
     }
 }
