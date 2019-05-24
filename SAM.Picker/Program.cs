@@ -21,9 +21,7 @@
  */
 
 using System;
-using System.Net;
 using System.Windows.Forms;
-using SAM.API;
 
 namespace SAM.Picker
 {
@@ -48,21 +46,13 @@ namespace SAM.Picker
                 {
                     client.Initialize(0);
                 }
-                catch (ClientInitializeException e)
+                catch (API.ClientInitializeException e)
                 {
-                    if (e.Failure == ClientInitializeFailure.ConnectToGlobalUser)
-                    {
-                        // TODO(gibbed): show error about family sharing?
-                        MessageBox.Show(
-                            "Steam is not running. Please start Steam then run this tool again.\n\n(" + e.Message + ")",
-                            "Error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
-                    }
-                    else if (string.IsNullOrEmpty(e.Message) == false)
+                    if (string.IsNullOrEmpty(e.Message) == false)
                     {
                         MessageBox.Show(
-                            "Steam is not running. Please start Steam then run this tool again.\n\n(" + e.Message + ")",
+                            "Steam is not running. Please start Steam then run this tool again.\n\n" +
+                            "(" + e.Message + ")",
                             "Error",
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Error);

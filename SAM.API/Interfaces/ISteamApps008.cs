@@ -37,7 +37,7 @@ namespace SAM.API.Interfaces
         public IntPtr IsSubscribedApp;
         public IntPtr IsDlcInstalled;
         public IntPtr GetEarliestPurchaseUnixTime;
-        public IntPtr BIsSubscribedFromFreeWeekend;
+        public IntPtr IsSubscribedFromFreeWeekend;
         public IntPtr GetDLCCount;
         public IntPtr GetDLCDataByIndex;
         public IntPtr InstallDLC;

@@ -24,7 +24,6 @@ using System;
 using System.Diagnostics;
 using System.Net;
 using System.Windows.Forms;
-using SAM.API;
 
 namespace SAM.Game
 {
@@ -67,13 +66,15 @@ namespace SAM.Game
                 {
                     client.Initialize(appId);
                 }
-                catch (ClientInitializeException e)
+                catch (API.ClientInitializeException e)
                 {
-                    if (e.Failure == ClientInitializeFailure.ConnectToGlobalUser)
+                    if (e.Failure == API.ClientInitializeFailure.ConnectToGlobalUser)
                     {
-                        // TODO(gibbed): show error about family sharing?
                         MessageBox.Show(
-                            "Steam is not running. Please start Steam then run this tool again.\n\n(" + e.Message + ")",
+                            "Steam is not running. Please start Steam then run this tool again.\n\n" +
+                            "If you have the game through Family Share, the game may be locked due to\n\n" +
+                            "the Family Share account actively playing a game.\n\n" +
+                            "(" + e.Message + ")",
                             "Error",
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Error);
@@ -81,7 +82,8 @@ namespace SAM.Game
                     else if (string.IsNullOrEmpty(e.Message) == false)
                     {
                         MessageBox.Show(
-                            "Steam is not running. Please start Steam then run this tool again.\n\n(" + e.Message + ")",
+                            "Steam is not running. Please start Steam then run this tool again.\n\n" +
+                            "(" + e.Message + ")",
                             "Error",
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Error);
