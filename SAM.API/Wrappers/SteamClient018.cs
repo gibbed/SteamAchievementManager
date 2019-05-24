@@ -26,7 +26,7 @@ using SAM.API.Interfaces;
 
 namespace SAM.API.Wrappers
 {
-    public class SteamClient009 : NativeWrapper<ISteamClient009>
+    public class SteamClient018 : NativeWrapper<ISteamClient018>
     {
         #region CreateSteamPipe
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]

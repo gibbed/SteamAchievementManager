@@ -29,7 +29,7 @@ namespace SAM.API
 {
     public class Client
     {
-        public Wrappers.SteamClient009 SteamClient;
+        public Wrappers.SteamClient018 SteamClient;
         public Wrappers.SteamUser012 SteamUser;
         public Wrappers.SteamUserStats007 SteamUserStats;
         public Wrappers.SteamUtils005 SteamUtils;
@@ -58,7 +58,7 @@ namespace SAM.API
                 return false;
             }
 
-            this.SteamClient = Steam.CreateInterface<Wrappers.SteamClient009>("SteamClient009");
+            this.SteamClient = Steam.CreateInterface<Wrappers.SteamClient018>("SteamClient018");
             if (this.SteamClient == null)
             {
                 return false;
