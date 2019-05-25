@@ -134,6 +134,7 @@ namespace SAM.Picker
 
         private void RefreshGames()
         {
+            this._SelectedGameIndex = -1;
             this._FilteredGames.Clear();
             foreach (var info in this._Games.Values.OrderBy(gi => gi.Name))
             {
@@ -163,6 +164,12 @@ namespace SAM.Picker
                 "Displaying {0} games. Total {1} games.",
                 this._GameListView.Items.Count,
                 this._Games.Count);
+
+            if (this._GameListView.Items.Count > 0)
+            {
+                this._GameListView.Items[0].Selected = true;
+                this._GameListView.Select();
+            }
         }
 
         private void OnGameListViewRetrieveVirtualItem(object sender, RetrieveVirtualItemEventArgs e)
@@ -360,23 +367,11 @@ namespace SAM.Picker
 
         private void OnSelectGame(object sender, ListViewItemSelectionChangedEventArgs e)
         {
-            if (e.IsSelected == true && e.ItemIndex != this._SelectedGameIndex)
-            {
-                this._SelectedGameIndex = e.ItemIndex;
-            }
-            else if (e.IsSelected == true && e.ItemIndex == this._SelectedGameIndex)
-            {
-                this._SelectedGameIndex = -1;
-            }
+            this._SelectedGameIndex = e.ItemIndex;
         }
 
         private void OnActivateGame(object sender, EventArgs e)
         {
-            if (this._SelectedGameIndex < 0)
-            {
-                return;
-            }
-
             var index = this._SelectedGameIndex;
             if (index < 0 || index >= this._FilteredGames.Count)
             {
@@ -429,6 +424,13 @@ namespace SAM.Picker
             {
                 MessageBox.Show(this, "You don't own that game.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
+            }
+
+            while (this._LogoQueue.TryDequeue(out var logo))
+            {
+                // clear the download queue because we will be showing only one app
+                // TODO: https://github.com/gibbed/SteamAchievementManager/issues/106
+                this._LogosAttempted.Remove(logo.Logo);
             }
 
             this._AddGameTextBox.Text = "";
