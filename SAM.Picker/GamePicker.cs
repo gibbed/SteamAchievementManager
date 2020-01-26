@@ -138,6 +138,11 @@ namespace SAM.Picker
             this._FilteredGames.Clear();
             foreach (var info in this._Games.Values.OrderBy(gi => gi.Name))
             {
+                if (_SearchGameTextBox.Text.Length != 0 &&
+                    !info.Name.ToLowerInvariant().Contains(_SearchGameTextBox.Text.ToLowerInvariant()))
+                {
+                    continue;
+                }
                 if (info.Type == "normal" && _FilterGamesMenuItem.Checked == false)
                 {
                     continue;
@@ -444,6 +449,7 @@ namespace SAM.Picker
         private void OnFilterUpdate(object sender, EventArgs e)
         {
             this.RefreshGames();
+            this._SearchGameTextBox.Focus(); // Compatibility with _GameListView SearchForVirtualItemEventHandler (otherwise _SearchGameTextBox loose focus on KeyUp)
         }
     }
 }
