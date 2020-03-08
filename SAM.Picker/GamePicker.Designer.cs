@@ -29,8 +29,6 @@
 		private void InitializeComponent()
 		{
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.ToolStripSeparator _ToolStripSeparator1;
-            System.Windows.Forms.ToolStripSeparator _ToolStripSeparator2;
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(GamePicker));
             this._LogoImageList = new System.Windows.Forms.ImageList(this.components);
             this._CallbackTimer = new System.Windows.Forms.Timer(this.components);
@@ -49,8 +47,8 @@
             this._DownloadStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this._LogoWorker = new System.ComponentModel.BackgroundWorker();
             this._ListWorker = new System.ComponentModel.BackgroundWorker();
-            _ToolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
-            _ToolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+            this._ToolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this._ToolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this._ToolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             this._FindGamesLabel = new System.Windows.Forms.ToolStripLabel();
             this._SearchGameTextBox = new System.Windows.Forms.ToolStripTextBox();
@@ -60,8 +58,8 @@
             // 
             // _ToolStripSeparator1
             // 
-            _ToolStripSeparator1.Name = "_ToolStripSeparator1";
-            _ToolStripSeparator1.Size = new System.Drawing.Size(6, 25);
+            this._ToolStripSeparator1.Name = "_ToolStripSeparator1";
+            this._ToolStripSeparator1.Size = new System.Drawing.Size(6, 25);
             // 
             // _ToolStripSeparator2
             // 
@@ -261,17 +259,16 @@
             this._PickerStatusStrip.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
+	}
 
-		}
+	#endregion
 
-		#endregion
-
-		private DoubleBufferedListView _GameListView;
-		private System.Windows.Forms.ImageList _LogoImageList;
-		private System.Windows.Forms.Timer _CallbackTimer;
-		private System.Windows.Forms.ToolStrip _PickerToolStrip;
-		private System.Windows.Forms.ToolStripButton _RefreshGamesButton;
-		private System.Windows.Forms.ToolStripTextBox _AddGameTextBox;
+	private DoubleBufferedListView _GameListView;
+	private System.Windows.Forms.ImageList _LogoImageList;
+	private System.Windows.Forms.Timer _CallbackTimer;
+	private System.Windows.Forms.ToolStrip _PickerToolStrip;
+	private System.Windows.Forms.ToolStripButton _RefreshGamesButton;
+	private System.Windows.Forms.ToolStripTextBox _AddGameTextBox;
         private System.Windows.Forms.ToolStripButton _AddGameButton;
         private System.Windows.Forms.ToolStripDropDownButton _FilterDropDownButton;
         private System.Windows.Forms.ToolStripMenuItem _FilterGamesMenuItem;
@@ -285,7 +282,9 @@
         private System.ComponentModel.BackgroundWorker _ListWorker;
         private System.Windows.Forms.ToolStripTextBox _SearchGameTextBox;
         private System.Windows.Forms.ToolStripLabel _FindGamesLabel;
+	private System.Windows.Forms.ToolStripSeparator _ToolStripSeparator1;
+	private System.Windows.Forms.ToolStripSeparator _ToolStripSeparator2;
         private System.Windows.Forms.ToolStripSeparator _ToolStripSeparator3;
-	}
+    }
 }
 
