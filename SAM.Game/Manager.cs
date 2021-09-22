@@ -470,14 +470,7 @@ namespace SAM.Game
 
                 info.Item = item;
 
-                if (item.Text.StartsWith("#", StringComparison.InvariantCulture) == true)
-                {
-                    item.Text = info.Id;
-                }
-                else
-                {
-                    item.SubItems.Add(info.Description);
-                }
+                item.SubItems.Add(info.Description);
 
                 info.ImageIndex = 0;
 
