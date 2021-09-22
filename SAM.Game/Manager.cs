@@ -449,6 +449,10 @@ namespace SAM.Game
                     continue;
                 }
 
+                if (!this.IsMatchingSearchAndDisplaySettings(isAchieved, def.Name, def.Description))
+                {
+                    continue;
+                }
                 var info = new Stats.AchievementInfo()
                 {
                     Id = def.Id,
@@ -860,6 +864,57 @@ namespace SAM.Game
                     MessageBoxIcon.Error);
                 e.NewValue = e.CurrentValue;
             }
+        }
+		
+		private bool IsMatchingSearchAndDisplaySettings(bool isLocked, string achievementName, string achievementDesc)
+        {
+            // display locked, unlocked or both
+            bool lockStateMatch = (!_DisplayLockedOnlyButton.Checked && !_DisplayUnlockedOnlyButton.Checked) || 
+                                (_DisplayLockedOnlyButton.Checked && isLocked) || 
+                                (_DisplayUnlockedOnlyButton.Checked && !isLocked);
+            // text filter on name / description
+            bool findTxtMatch = true;
+            if (lockStateMatch)
+            {
+                string searchString = _MatchingStringTextBox.Text.ToLowerInvariant();
+                findTxtMatch = String.IsNullOrEmpty(searchString) || achievementName.ToLowerInvariant().Contains(searchString) || achievementDesc.ToLowerInvariant().Contains(searchString);
+            }
+            return lockStateMatch && findTxtMatch;
+        }
+
+        private void _DisplayUncheckedOnlyButton_Click(object sender, EventArgs e)
+        {
+            if ((sender as ToolStripButton).Checked)
+            {
+                _DisplayLockedOnlyButton.Checked = false;
+                _DisplayUnlockedOnlyButton.ForeColor = Color.Blue;
+                _DisplayLockedOnlyButton.ForeColor = Color.Black;
+            }
+            else
+            {
+                _DisplayUnlockedOnlyButton.ForeColor = Color.Black;
+            }
+            this.GetAchievements();
+        }
+
+        private void _DisplayCheckedOnlyButton_Click(object sender, EventArgs e)
+        {
+            if ((sender as ToolStripButton).Checked)
+            {
+                _DisplayUnlockedOnlyButton.Checked = false;
+                _DisplayLockedOnlyButton.ForeColor = Color.Blue;
+                _DisplayUnlockedOnlyButton.ForeColor = Color.Black;
+            }
+            else
+            {
+                _DisplayLockedOnlyButton.ForeColor = Color.Black;
+            }
+            this.GetAchievements();
+        }
+
+        private void OnFilterUpdate(object sender, KeyEventArgs e)
+        {
+            this.GetAchievements();
         }
     }
 }
