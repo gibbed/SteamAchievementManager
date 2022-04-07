@@ -54,8 +54,17 @@ namespace SAM.Game
 
         //private API.Callback<APITypes.UserStatsStored> UserStatsStoredCallback;
 
+        private string logoDirLocal;
+
         public Manager(long gameId, API.Client client)
         {
+            logoDirLocal = string.Format(
+                CultureInfo.InvariantCulture,
+                "{0}/logocache/{1}",
+                Path.GetDirectoryName(Application.ExecutablePath),
+                gameId);
+            System.IO.Directory.CreateDirectory(logoDirLocal);
+
             this.InitializeComponent();
 
             this._MainTabControl.SelectedTab = this._AchievementsTabPage;
@@ -125,24 +134,19 @@ namespace SAM.Game
             if (e.Error == null && e.Cancelled == false)
             {
                 var info = e.UserState as Stats.AchievementInfo;
-
-                Bitmap bitmap;
+                var logoPathLocal = logoDirLocal + "/" + (info.IsAchieved == true ? info.IconNormal : info.IconLocked);
 
                 try
                 {
-                    using (var stream = new MemoryStream())
+                    using (var stream = File.OpenWrite(logoPathLocal))
                     {
                         stream.Write(e.Result, 0, e.Result.Length);
-                        bitmap = new Bitmap(stream);
                     }
+                    LoadAchievementIconLocally(info);
                 }
                 catch (Exception)
                 {
-                    bitmap = null;
                 }
-
-                this.AddAchievementIcon(info, bitmap);
-                this._AchievementListView.Update();
             }
 
             this.DownloadNextIcon();
@@ -551,6 +555,8 @@ namespace SAM.Game
             }
             else
             {
+                if (LoadAchievementIconLocally(info)) return;
+
                 this._IconQueue.Add(info);
 
                 if (startDownload == true)
@@ -558,6 +564,23 @@ namespace SAM.Game
                     this.DownloadNextIcon();
                 }
             }
+        }
+        private bool LoadAchievementIconLocally(Stats.AchievementInfo info)
+        {
+            var logoPathLocal = logoDirLocal + "/" + (info.IsAchieved == true ? info.IconNormal : info.IconLocked);
+
+            if (File.Exists(logoPathLocal))
+            {
+                var stream = File.OpenRead(logoPathLocal);
+                Bitmap bitmap = new Bitmap(stream);
+
+                this.AddAchievementIcon(info, bitmap);
+                this._AchievementListView.Update();
+
+                return true;
+            }
+
+            return false;
         }
 
         private int StoreAchievements()

@@ -239,12 +239,25 @@ namespace SAM.Picker
                 "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/{0}/{1}.jpg",
                 info.Id,
                 info.Logo);
+            var logoDirLocal = string.Format(
+                CultureInfo.InvariantCulture,
+                "{0}/logocache/{1}",
+                Path.GetDirectoryName(Application.ExecutablePath),
+                info.Id);
+            var logoPathLocal = logoDirLocal + "/" + info.Logo + ".jpg";
             using (var downloader = new WebClient())
             {
                 try
                 {
-                    var data = downloader.DownloadData(new Uri(logoPath));
-                    using (var stream = new MemoryStream(data, false))
+                    System.IO.Directory.CreateDirectory(logoDirLocal);
+
+                    if (!File.Exists(logoPathLocal))
+                    {
+                        var data = downloader.DownloadData(new Uri(logoPath));
+                        File.WriteAllBytes(logoPathLocal, data);
+                    }
+
+                    using (var stream = File.OpenRead(logoPathLocal))
                     {
                         var bitmap = new Bitmap(stream);
                         e.Result = new LogoInfo(info.Id, bitmap);
