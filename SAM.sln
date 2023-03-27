@@ -1,9 +1,12 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28803.156
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33502.453
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SAM.Picker", "SAM.Picker\SAM.Picker.csproj", "{E89E57BB-0F09-47F3-98A0-2026E2E65FBA}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7640DE31-E54E-45F9-9CF0-8DF3A3EA30FC} = {7640DE31-E54E-45F9-9CF0-8DF3A3EA30FC}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SAM.API", "SAM.API\SAM.API.csproj", "{DF9102D5-048A-4D21-8CE3-3544CBDF0ED1}"
 EndProject

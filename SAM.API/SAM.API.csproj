@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net40</TargetFramework>
+    <TargetFramework>net452</TargetFramework>
     <Company>Gibbed</Company>
     <Authors>Gibbed</Authors>
     <Description></Description>
