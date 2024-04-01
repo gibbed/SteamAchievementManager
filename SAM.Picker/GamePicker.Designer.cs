@@ -67,7 +67,7 @@
             // 
             // _LogoImageList
             // 
-            this._LogoImageList.ColorDepth = System.Windows.Forms.ColorDepth.Depth8Bit;
+            this._LogoImageList.ColorDepth = System.Windows.Forms.ColorDepth.Depth24Bit;
             this._LogoImageList.ImageSize = new System.Drawing.Size(184, 69);
             this._LogoImageList.TransparentColor = System.Drawing.Color.Transparent;
             // 
