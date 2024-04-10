@@ -13,6 +13,8 @@ There are some changes to the code since the last closed-source release:
 
 [![Build status](https://ci.appveyor.com/api/projects/status/00vic6jliar6j0ol/branch/master?svg=true)](https://ci.appveyor.com/project/gibbed/steamachievementmanager/branch/master)
 
+
 ## Attribution
+
 
 Most (if not all) icons are from the [Fugue Icons](http://p.yusukekamiyamane.com/) set.
