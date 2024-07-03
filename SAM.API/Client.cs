@@ -40,7 +40,7 @@ namespace SAM.API
         private int _Pipe;
         private int _User;
 
-        private readonly List<ICallback> _Callbacks = new List<ICallback>();
+        private readonly List<ICallback> _Callbacks = [];
 
         public void Initialize(long appId)
         {

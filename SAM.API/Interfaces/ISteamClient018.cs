@@ -53,15 +53,12 @@ namespace SAM.API.Interfaces
         public IntPtr SetWarningMessageHook;
         public IntPtr ShutdownIfAllPipesClosed;
         public IntPtr GetISteamHTTP;
-        public IntPtr DEPRECATED_GetISteamUnifiedMessages;
         public IntPtr GetISteamController;
         public IntPtr GetISteamUGC;
         public IntPtr GetISteamAppList;
         public IntPtr GetISteamMusic;
         public IntPtr GetISteamMusicRemote;
         public IntPtr GetISteamHTMLSurface;
-        public IntPtr DEPRECATED_Set_SteamAPI_CPostAPIResultInProcess;
-        public IntPtr DEPRECATED_Remove_SteamAPI_CPostAPIResultInProcess;
         public IntPtr Set_SteamAPI_CCheckCallbackRegisteredInProcess;
         public IntPtr GetISteamInventory;
         public IntPtr GetISteamVideo;

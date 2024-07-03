@@ -31,15 +31,13 @@ namespace SAM.Game
         [STAThread]
         public static void Main(string[] args)
         {
-            long appId;
-
             if (args.Length == 0)
             {
                 Process.Start("SAM.Picker.exe");
                 return;
             }
 
-            if (long.TryParse(args[0], out appId) == false)
+            if (long.TryParse(args[0], out long appId) == false)
             {
                 MessageBox.Show(
                     "Could not parse application ID from command line argument.",
@@ -59,58 +57,56 @@ namespace SAM.Game
                 return;
             }
 
-            using (var client = new API.Client())
+            using var client = new API.Client();
+            try
             {
-                try
-                {
-                    client.Initialize(appId);
-                }
-                catch (API.ClientInitializeException e)
-                {
-                    if (e.Failure == API.ClientInitializeFailure.ConnectToGlobalUser)
-                    {
-                        MessageBox.Show(
-                            "Steam is not running. Please start Steam then run this tool again.\n\n" +
-                            "If you have the game through Family Share, the game may be locked due to\n\n" +
-                            "the Family Share account actively playing a game.\n\n" +
-                            "(" + e.Message + ")",
-                            "Error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
-                    }
-                    else if (string.IsNullOrEmpty(e.Message) == false)
-                    {
-                        MessageBox.Show(
-                            "Steam is not running. Please start Steam then run this tool again.\n\n" +
-                            "(" + e.Message + ")",
-                            "Error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
-                    }
-                    else
-                    {
-                        MessageBox.Show(
-                            "Steam is not running. Please start Steam then run this tool again.",
-                            "Error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
-                    }
-                    return;
-                }
-                catch (DllNotFoundException)
+                client.Initialize(appId);
+            }
+            catch (API.ClientInitializeException e)
+            {
+                if (e.Failure == API.ClientInitializeFailure.ConnectToGlobalUser)
                 {
                     MessageBox.Show(
-                        "You've caused an exceptional error!",
+                        "Steam is not running. Please start Steam then run this tool again.\n\n" +
+                        "If you have the game through Family Share, the game may be locked due to\n\n" +
+                        "the Family Share account actively playing a game.\n\n" +
+                        "(" + e.Message + ")",
                         "Error",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
-                    return;
                 }
-
-                Application.EnableVisualStyles();
-                Application.SetCompatibleTextRenderingDefault(false);
-                Application.Run(new Manager(appId, client));
+                else if (string.IsNullOrEmpty(e.Message) == false)
+                {
+                    MessageBox.Show(
+                        "Steam is not running. Please start Steam then run this tool again.\n\n" +
+                        "(" + e.Message + ")",
+                        "Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                }
+                else
+                {
+                    MessageBox.Show(
+                        "Steam is not running. Please start Steam then run this tool again.",
+                        "Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                }
+                return;
             }
+            catch (DllNotFoundException)
+            {
+                MessageBox.Show(
+                    "You've caused an exceptional error!",
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return;
+            }
+
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(new Manager(appId, client));
         }
     }
 }

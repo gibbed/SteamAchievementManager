@@ -29,7 +29,7 @@ namespace SAM.Game
 {
     internal class KeyValue
     {
-        private static readonly KeyValue _Invalid = new KeyValue();
+        private static readonly KeyValue _Invalid = new();
         public string Name = "<root>";
         public KeyValueType Type = KeyValueType.None;
         public object Value;
@@ -85,8 +85,7 @@ namespace SAM.Game
                 case KeyValueType.String:
                 case KeyValueType.WideString:
                     {
-                        int value;
-                        if (int.TryParse((string)Value, out value) == false)
+                        if (int.TryParse((string)Value, out int value) == false)
                         {
                             return defaultValue;
                         }
@@ -124,8 +123,7 @@ namespace SAM.Game
                 case KeyValueType.String:
                 case KeyValueType.WideString:
                     {
-                        float value;
-                        if (float.TryParse((string)Value, out value) == false)
+                        if (float.TryParse((string)Value, out float value) == false)
                         {
                             return defaultValue;
                         }
@@ -163,8 +161,7 @@ namespace SAM.Game
                 case KeyValueType.String:
                 case KeyValueType.WideString:
                     {
-                        int value;
-                        if (int.TryParse((string)Value, out value) == false)
+                        if (int.TryParse((string)Value, out int value) == false)
                         {
                             return defaultValue;
                         }
@@ -218,15 +215,13 @@ namespace SAM.Game
 
             try
             {
-                using (var input = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using var input = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                var kv = new KeyValue();
+                if (kv.ReadAsBinary(input) == false)
                 {
-                    var kv = new KeyValue();
-                    if (kv.ReadAsBinary(input) == false)
-                    {
-                        return null;
-                    }
-                    return kv;
+                    return null;
                 }
+                return kv;
             }
             catch (Exception)
             {
@@ -236,7 +231,7 @@ namespace SAM.Game
 
         public bool ReadAsBinary(Stream input)
         {
-            Children = new List<KeyValue>();
+            Children = [];
 
             try
             {

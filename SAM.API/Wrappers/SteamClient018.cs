@@ -113,18 +113,16 @@ namespace SAM.API.Wrappers
         private TClass GetISteamUser<TClass>(int user, int pipe, string version)
             where TClass : INativeWrapper, new()
         {
-            using (var nativeVersion = NativeStrings.StringToStringHandle(version))
-            {
-                IntPtr address = Call<IntPtr, NativeGetISteamUser>(
-                    Functions.GetISteamUser,
-                    ObjectAddress,
-                    user,
-                    pipe,
-                    nativeVersion.Handle);
-                var result = new TClass();
-                result.SetupFunctions(address);
-                return result;
-            }
+            using var nativeVersion = NativeStrings.StringToStringHandle(version);
+            IntPtr address = Call<IntPtr, NativeGetISteamUser>(
+                Functions.GetISteamUser,
+                ObjectAddress,
+                user,
+                pipe,
+                nativeVersion.Handle);
+            var result = new TClass();
+            result.SetupFunctions(address);
+            return result;
         }
 
         #endregion GetISteamUser
@@ -146,18 +144,16 @@ namespace SAM.API.Wrappers
         private TClass GetISteamUserStats<TClass>(int user, int pipe, string version)
             where TClass : INativeWrapper, new()
         {
-            using (var nativeVersion = NativeStrings.StringToStringHandle(version))
-            {
-                IntPtr address = Call<IntPtr, NativeGetISteamUserStats>(
-                    Functions.GetISteamUserStats,
-                    ObjectAddress,
-                    user,
-                    pipe,
-                    nativeVersion.Handle);
-                var result = new TClass();
-                result.SetupFunctions(address);
-                return result;
-            }
+            using var nativeVersion = NativeStrings.StringToStringHandle(version);
+            IntPtr address = Call<IntPtr, NativeGetISteamUserStats>(
+                Functions.GetISteamUserStats,
+                ObjectAddress,
+                user,
+                pipe,
+                nativeVersion.Handle);
+            var result = new TClass();
+            result.SetupFunctions(address);
+            return result;
         }
 
         #endregion GetISteamUserStats
@@ -179,17 +175,15 @@ namespace SAM.API.Wrappers
         public TClass GetISteamUtils<TClass>(int pipe, string version)
             where TClass : INativeWrapper, new()
         {
-            using (var nativeVersion = NativeStrings.StringToStringHandle(version))
-            {
-                IntPtr address = Call<IntPtr, NativeGetISteamUtils>(
-                    Functions.GetISteamUtils,
-                    ObjectAddress,
-                    pipe,
-                    nativeVersion.Handle);
-                var result = new TClass();
-                result.SetupFunctions(address);
-                return result;
-            }
+            using var nativeVersion = NativeStrings.StringToStringHandle(version);
+            IntPtr address = Call<IntPtr, NativeGetISteamUtils>(
+                Functions.GetISteamUtils,
+                ObjectAddress,
+                pipe,
+                nativeVersion.Handle);
+            var result = new TClass();
+            result.SetupFunctions(address);
+            return result;
         }
 
         #endregion GetISteamUtils
@@ -210,17 +204,15 @@ namespace SAM.API.Wrappers
         private TClass GetISteamApps<TClass>(int user, int pipe, string version)
             where TClass : INativeWrapper, new()
         {
-            using (var nativeVersion = NativeStrings.StringToStringHandle(version))
-            {
-                IntPtr address = Call<IntPtr, NativeGetISteamApps>(
-                    Functions.GetISteamApps,
-                    user,
-                    pipe,
-                    nativeVersion.Handle);
-                var result = new TClass();
-                result.SetupFunctions(address);
-                return result;
-            }
+            using var nativeVersion = NativeStrings.StringToStringHandle(version);
+            IntPtr address = Call<IntPtr, NativeGetISteamApps>(
+                Functions.GetISteamApps,
+                user,
+                pipe,
+                nativeVersion.Handle);
+            var result = new TClass();
+            result.SetupFunctions(address);
+            return result;
         }
 
         #endregion GetISteamApps

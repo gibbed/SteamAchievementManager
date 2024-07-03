@@ -40,21 +40,19 @@ namespace SAM.API.Wrappers
 
         public string GetAppData(uint appId, string key)
         {
-            using (var nativeHandle = NativeStrings.StringToStringHandle(key))
-            {
-                const int valueLength = 1024;
-                var valuePointer = Marshal.AllocHGlobal(valueLength);
-                int result = Call<int, NativeGetAppData>(
-                    Functions.GetAppData,
-                    ObjectAddress,
-                    appId,
-                    nativeHandle.Handle,
-                    valuePointer,
-                    valueLength);
-                var value = result == 0 ? null : NativeStrings.PointerToString(valuePointer, valueLength);
-                Marshal.FreeHGlobal(valuePointer);
-                return value;
-            }
+            using var nativeHandle = NativeStrings.StringToStringHandle(key);
+            const int valueLength = 1024;
+            var valuePointer = Marshal.AllocHGlobal(valueLength);
+            int result = Call<int, NativeGetAppData>(
+                Functions.GetAppData,
+                ObjectAddress,
+                appId,
+                nativeHandle.Handle,
+                valuePointer,
+                valueLength);
+            var value = result == 0 ? null : NativeStrings.PointerToString(valuePointer, valueLength);
+            Marshal.FreeHGlobal(valuePointer);
+            return value;
         }
 
         #endregion GetAppData

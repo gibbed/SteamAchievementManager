@@ -43,17 +43,11 @@ namespace SAM.API
         public void SetupFunctions(IntPtr objectAddress)
         {
             ObjectAddress = objectAddress;
-
-            var iface = (NativeClass)Marshal.PtrToStructure(
-                ObjectAddress,
-                typeof(NativeClass));
-
-            Functions = (TNativeFunctions)Marshal.PtrToStructure(
-                iface.VirtualTable,
-                typeof(TNativeFunctions));
+            var iface = Marshal.PtrToStructure<NativeClass>(ObjectAddress);
+            Functions = Marshal.PtrToStructure<TNativeFunctions>(iface.VirtualTable);
         }
 
-        private readonly Dictionary<IntPtr, Delegate> _FunctionCache = new Dictionary<IntPtr, Delegate>();
+        private readonly Dictionary<IntPtr, Delegate> _FunctionCache = [];
 
         protected Delegate GetDelegate<TDelegate>(IntPtr pointer)
         {

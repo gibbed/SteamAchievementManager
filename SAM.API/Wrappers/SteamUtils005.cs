@@ -75,10 +75,7 @@ namespace SAM.API.Wrappers
 
         public bool GetImageRGBA(int index, byte[] data)
         {
-            if (data == null)
-            {
-                throw new ArgumentNullException("data");
-            }
+            ArgumentNullException.ThrowIfNull(data);
             var call = GetFunction<NativeGetImageRGBA>(Functions.GetImageRGBA);
             return call(ObjectAddress, index, data, data.Length);
         }

@@ -33,8 +33,7 @@ namespace SAM.API
             Failure = failure;
         }
 
-        public ClientInitializeException(ClientInitializeFailure failure, string message)
-            : base(message)
+        public ClientInitializeException(ClientInitializeFailure failure, string message) : base(message)
         {
             Failure = failure;
         }
@@ -42,8 +41,7 @@ namespace SAM.API
         public ClientInitializeException(
             ClientInitializeFailure failure,
             string message,
-            Exception innerException)
-            : base(message, innerException)
+            Exception innerException) : base(message, innerException)
         {
             Failure = failure;
         }
