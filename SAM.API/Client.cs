@@ -1,21 +1,21 @@
 ﻿/* Copyright (c) 2019 Rick (rick 'at' gibbed 'dot' us)
- * 
+ *
  * This software is provided 'as-is', without any express or implied
  * warranty. In no event will the authors be held liable for any damages
  * arising from the use of this software.
- * 
+ *
  * Permission is granted to anyone to use this software for any purpose,
  * including commercial applications, and to alter it and redistribute it
  * freely, subject to the following restrictions:
- * 
+ *
  * 1. The origin of this software must not be misrepresented; you must not
  *    claim that you wrote the original software. If you use this software
  *    in a product, an acknowledgment in the product documentation would
  *    be appreciated but is not required.
- * 
+ *
  * 2. Altered source versions must be plainly marked as such, and must not
  *    be misrepresented as being the original software.
- * 
+ *
  * 3. This notice may not be removed or altered from any source
  *    distribution.
  */
@@ -59,61 +59,61 @@ namespace SAM.API
                 throw new ClientInitializeException(ClientInitializeFailure.Load, "failed to load SteamClient");
             }
 
-            this.SteamClient = Steam.CreateInterface<Wrappers.SteamClient018>("SteamClient018");
-            if (this.SteamClient == null)
+            SteamClient = Steam.CreateInterface<Wrappers.SteamClient018>("SteamClient018");
+            if (SteamClient == null)
             {
                 throw new ClientInitializeException(ClientInitializeFailure.CreateSteamClient, "failed to create ISteamClient018");
             }
 
-            this._Pipe = this.SteamClient.CreateSteamPipe();
-            if (this._Pipe == 0)
+            _Pipe = SteamClient.CreateSteamPipe();
+            if (_Pipe == 0)
             {
                 throw new ClientInitializeException(ClientInitializeFailure.CreateSteamPipe, "failed to create pipe");
             }
 
-            this._User = this.SteamClient.ConnectToGlobalUser(this._Pipe);
-            if (this._User == 0)
+            _User = SteamClient.ConnectToGlobalUser(_Pipe);
+            if (_User == 0)
             {
                 throw new ClientInitializeException(ClientInitializeFailure.ConnectToGlobalUser, "failed to connect to global user");
             }
 
-            this.SteamUtils = this.SteamClient.GetSteamUtils004(this._Pipe);
-            if (appId > 0 && this.SteamUtils.GetAppId() != (uint)appId)
+            SteamUtils = SteamClient.GetSteamUtils004(_Pipe);
+            if (appId > 0 && SteamUtils.GetAppId() != (uint)appId)
             {
                 throw new ClientInitializeException(ClientInitializeFailure.AppIdMismatch, "appID mismatch");
             }
 
-            this.SteamUser = this.SteamClient.GetSteamUser012(this._User, this._Pipe);
-            this.SteamUserStats = this.SteamClient.GetSteamUserStats006(this._User, this._Pipe);
-            this.SteamApps001 = this.SteamClient.GetSteamApps001(this._User, this._Pipe);
-            this.SteamApps008 = this.SteamClient.GetSteamApps008(this._User, this._Pipe);
+            SteamUser = SteamClient.GetSteamUser012(_User, _Pipe);
+            SteamUserStats = SteamClient.GetSteamUserStats006(_User, _Pipe);
+            SteamApps001 = SteamClient.GetSteamApps001(_User, _Pipe);
+            SteamApps008 = SteamClient.GetSteamApps008(_User, _Pipe);
         }
 
         ~Client()
         {
-            this.Dispose(false);
+            Dispose(false);
         }
 
         protected virtual void Dispose(bool disposing)
         {
-            if (this._IsDisposed == true)
+            if (_IsDisposed == true)
             {
                 return;
             }
 
-            if (this.SteamClient != null && this._Pipe > 0)
+            if (SteamClient != null && _Pipe > 0)
             {
-                if (this._User > 0)
+                if (_User > 0)
                 {
-                    this.SteamClient.ReleaseUser(this._Pipe, this._User);
-                    this._User = 0;
+                    SteamClient.ReleaseUser(_Pipe, _User);
+                    _User = 0;
                 }
 
-                this.SteamClient.ReleaseSteamPipe(this._Pipe);
-                this._Pipe = 0;
+                SteamClient.ReleaseSteamPipe(_Pipe);
+                _Pipe = 0;
             }
 
-            this._IsDisposed = true;
+            _IsDisposed = true;
         }
 
         public void Dispose()
@@ -126,7 +126,7 @@ namespace SAM.API
             where TCallback : ICallback, new()
         {
             var callback = new TCallback();
-            this._Callbacks.Add(callback);
+            _Callbacks.Add(callback);
             return callback;
         }
 
@@ -134,29 +134,27 @@ namespace SAM.API
 
         public void RunCallbacks(bool server)
         {
-            if (this._RunningCallbacks == true)
+            if (_RunningCallbacks == true)
             {
                 return;
             }
 
-            this._RunningCallbacks = true;
+            _RunningCallbacks = true;
 
-            Types.CallbackMessage message;
-            int call;
-            while (Steam.GetCallback(this._Pipe, out message, out call) == true)
+            while (Steam.GetCallback(_Pipe, out Types.CallbackMessage message, out int call) == true)
             {
                 var callbackId = message.Id;
-                foreach (ICallback callback in this._Callbacks.Where(
+                foreach (ICallback callback in _Callbacks.Where(
                     candidate => candidate.Id == callbackId &&
                                  candidate.IsServer == server))
                 {
                     callback.Run(message.ParamPointer);
                 }
 
-                Steam.FreeLastCallback(this._Pipe);
+                Steam.FreeLastCallback(_Pipe);
             }
 
-            this._RunningCallbacks = false;
+            _RunningCallbacks = false;
         }
     }
 }

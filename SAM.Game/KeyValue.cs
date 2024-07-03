@@ -1,21 +1,21 @@
 ﻿/* Copyright (c) 2019 Rick (rick 'at' gibbed 'dot' us)
- * 
+ *
  * This software is provided 'as-is', without any express or implied
  * warranty. In no event will the authors be held liable for any damages
  * arising from the use of this software.
- * 
+ *
  * Permission is granted to anyone to use this software for any purpose,
  * including commercial applications, and to alter it and redistribute it
  * freely, subject to the following restrictions:
- * 
+ *
  * 1. The origin of this software must not be misrepresented; you must not
  *    claim that you wrote the original software. If you use this software
  *    in a product, an acknowledgment in the product documentation would
  *    be appreciated but is not required.
- * 
+ *
  * 2. Altered source versions must be plainly marked as such, and must not
  *    be misrepresented as being the original software.
- * 
+ *
  * 3. This notice may not be removed or altered from any source
  *    distribution.
  */
@@ -41,14 +41,14 @@ namespace SAM.Game
         {
             get
             {
-                if (this.Children == null)
+                if (Children == null)
                 {
                     return _Invalid;
                 }
 
-                var child = this.Children.SingleOrDefault(
+                var child = Children.SingleOrDefault(
                     c => string.Compare(c.Name, key, StringComparison.InvariantCultureIgnoreCase) == 0);
-                
+
                 if (child == null)
                 {
                     return _Invalid;
@@ -60,53 +60,53 @@ namespace SAM.Game
 
         public string AsString(string defaultValue)
         {
-            if (this.Valid == false)
+            if (Valid == false)
             {
                 return defaultValue;
             }
 
-            if (this.Value == null)
+            if (Value == null)
             {
                 return defaultValue;
             }
 
-            return this.Value.ToString();
+            return Value.ToString();
         }
 
         public int AsInteger(int defaultValue)
         {
-            if (this.Valid == false)
+            if (Valid == false)
             {
                 return defaultValue;
             }
 
-            switch (this.Type)
+            switch (Type)
             {
                 case KeyValueType.String:
                 case KeyValueType.WideString:
-                {
-                    int value;
-                    if (int.TryParse((string)this.Value, out value) == false)
                     {
-                        return defaultValue;
+                        int value;
+                        if (int.TryParse((string)Value, out value) == false)
+                        {
+                            return defaultValue;
+                        }
+                        return value;
                     }
-                    return value;
-                }
 
                 case KeyValueType.Int32:
-                {
-                    return (int)this.Value;
-                }
+                    {
+                        return (int)Value;
+                    }
 
                 case KeyValueType.Float32:
-                {
-                    return (int)((float)this.Value);
-                }
+                    {
+                        return (int)((float)Value);
+                    }
 
                 case KeyValueType.UInt64:
-                {
-                    return (int)((ulong)this.Value & 0xFFFFFFFF);
-                }
+                    {
+                        return (int)((ulong)Value & 0xFFFFFFFF);
+                    }
             }
 
             return defaultValue;
@@ -114,38 +114,38 @@ namespace SAM.Game
 
         public float AsFloat(float defaultValue)
         {
-            if (this.Valid == false)
+            if (Valid == false)
             {
                 return defaultValue;
             }
 
-            switch (this.Type)
+            switch (Type)
             {
                 case KeyValueType.String:
                 case KeyValueType.WideString:
-                {
-                    float value;
-                    if (float.TryParse((string)this.Value, out value) == false)
                     {
-                        return defaultValue;
+                        float value;
+                        if (float.TryParse((string)Value, out value) == false)
+                        {
+                            return defaultValue;
+                        }
+                        return value;
                     }
-                    return value;
-                }
 
                 case KeyValueType.Int32:
-                {
-                    return (int)this.Value;
-                }
+                    {
+                        return (int)Value;
+                    }
 
                 case KeyValueType.Float32:
-                {
-                    return (float)this.Value;
-                }
+                    {
+                        return (float)Value;
+                    }
 
                 case KeyValueType.UInt64:
-                {
-                    return (ulong)this.Value & 0xFFFFFFFF;
-                }
+                    {
+                        return (ulong)Value & 0xFFFFFFFF;
+                    }
             }
 
             return defaultValue;
@@ -153,38 +153,38 @@ namespace SAM.Game
 
         public bool AsBoolean(bool defaultValue)
         {
-            if (this.Valid == false)
+            if (Valid == false)
             {
                 return defaultValue;
             }
 
-            switch (this.Type)
+            switch (Type)
             {
                 case KeyValueType.String:
                 case KeyValueType.WideString:
-                {
-                    int value;
-                    if (int.TryParse((string)this.Value, out value) == false)
                     {
-                        return defaultValue;
+                        int value;
+                        if (int.TryParse((string)Value, out value) == false)
+                        {
+                            return defaultValue;
+                        }
+                        return value != 0;
                     }
-                    return value != 0;
-                }
 
                 case KeyValueType.Int32:
-                {
-                    return ((int)this.Value) != 0;
-                }
+                    {
+                        return ((int)Value) != 0;
+                    }
 
                 case KeyValueType.Float32:
-                {
-                    return ((int)((float)this.Value)) != 0;
-                }
+                    {
+                        return ((int)((float)Value)) != 0;
+                    }
 
                 case KeyValueType.UInt64:
-                {
-                    return ((ulong)this.Value) != 0;
-                }
+                    {
+                        return ((ulong)Value) != 0;
+                    }
             }
 
             return defaultValue;
@@ -192,21 +192,21 @@ namespace SAM.Game
 
         public override string ToString()
         {
-            if (this.Valid == false)
+            if (Valid == false)
             {
                 return "<invalid>";
             }
 
-            if (this.Type == KeyValueType.None)
+            if (Type == KeyValueType.None)
             {
-                return this.Name;
+                return Name;
             }
 
             return string.Format(
                 System.Globalization.CultureInfo.CurrentCulture,
                 "{0} = {1}",
-                this.Name,
-                this.Value);
+                Name,
+                Value);
         }
 
         public static KeyValue LoadAsBinary(string path)
@@ -236,7 +236,7 @@ namespace SAM.Game
 
         public bool ReadAsBinary(Stream input)
         {
-            this.Children = new List<KeyValue>();
+            Children = new List<KeyValue>();
 
             try
             {
@@ -248,7 +248,7 @@ namespace SAM.Game
                     {
                         break;
                     }
-                
+
                     var current = new KeyValue
                     {
                         Type = type,
@@ -258,62 +258,62 @@ namespace SAM.Game
                     switch (type)
                     {
                         case KeyValueType.None:
-                        {
-                            current.ReadAsBinary(input);
-                            break;
-                        }
+                            {
+                                current.ReadAsBinary(input);
+                                break;
+                            }
 
                         case KeyValueType.String:
-                        {
-                            current.Valid = true;
-                            current.Value = input.ReadStringUnicode();
-                            break;
-                        }
+                            {
+                                current.Valid = true;
+                                current.Value = input.ReadStringUnicode();
+                                break;
+                            }
 
                         case KeyValueType.WideString:
-                        {
-                            throw new FormatException("wstring is unsupported");
-                        }
+                            {
+                                throw new FormatException("wstring is unsupported");
+                            }
 
                         case KeyValueType.Int32:
-                        {
-                            current.Valid = true;
-                            current.Value = input.ReadValueS32();
-                            break;
-                        }
+                            {
+                                current.Valid = true;
+                                current.Value = input.ReadValueS32();
+                                break;
+                            }
 
                         case KeyValueType.UInt64:
-                        {
-                            current.Valid = true;
-                            current.Value = input.ReadValueU64();
-                            break;
-                        }
+                            {
+                                current.Valid = true;
+                                current.Value = input.ReadValueU64();
+                                break;
+                            }
 
                         case KeyValueType.Float32:
-                        {
-                            current.Valid = true;
-                            current.Value = input.ReadValueF32();
-                            break;
-                        }
+                            {
+                                current.Valid = true;
+                                current.Value = input.ReadValueF32();
+                                break;
+                            }
 
                         case KeyValueType.Color:
-                        {
-                            current.Valid = true;
-                            current.Value = input.ReadValueU32();
-                            break;
-                        }
+                            {
+                                current.Valid = true;
+                                current.Value = input.ReadValueU32();
+                                break;
+                            }
 
                         case KeyValueType.Pointer:
-                        {
-                            current.Valid = true;
-                            current.Value = input.ReadValueU32();
-                            break;
-                        }
+                            {
+                                current.Valid = true;
+                                current.Value = input.ReadValueU32();
+                                break;
+                            }
 
                         default:
-                        {
-                            throw new FormatException();
-                        }
+                            {
+                                throw new FormatException();
+                            }
                     }
 
                     if (input.Position >= input.Length)
@@ -321,10 +321,10 @@ namespace SAM.Game
                         throw new FormatException();
                     }
 
-                    this.Children.Add(current);
+                    Children.Add(current);
                 }
 
-                this.Valid = true;
+                Valid = true;
                 return input.Position == input.Length;
             }
             catch (Exception)
