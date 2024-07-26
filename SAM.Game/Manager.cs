@@ -900,12 +900,6 @@ namespace SAM.Game
             if ((sender as ToolStripButton).Checked == true)
             {
                 this._DisplayLockedOnlyButton.Checked = false;
-                this._DisplayUnlockedOnlyButton.ForeColor = Color.Blue;
-                this._DisplayLockedOnlyButton.ForeColor = Color.Black;
-            }
-            else
-            {
-                this._DisplayUnlockedOnlyButton.ForeColor = Color.Black;
             }
 
             this.GetAchievements();
@@ -916,12 +910,6 @@ namespace SAM.Game
             if ((sender as ToolStripButton).Checked == true)
             {
                 this._DisplayUnlockedOnlyButton.Checked = false;
-                this._DisplayLockedOnlyButton.ForeColor = Color.Blue;
-                this._DisplayUnlockedOnlyButton.ForeColor = Color.Black;
-            }
-            else
-            {
-                this._DisplayLockedOnlyButton.ForeColor = Color.Black;
             }
 
             this.GetAchievements();
