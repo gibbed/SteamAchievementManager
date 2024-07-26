@@ -28,6 +28,7 @@ namespace SAM.Game.Stats
         public int MaxValue;
         public int MaxChange;
         public bool IncrementOnly;
+        public bool SetByTrustedGameServer;
         public int DefaultValue;
     }
 }

@@ -38,9 +38,8 @@ namespace SAM.Game.Stats
         #region public int ImageIndex;
         public int ImageIndex
         {
-            get { return this.Item.ImageIndex; }
-
-            set { this.Item.ImageIndex = value; }
+            get => this.Item.ImageIndex;
+            set => this.Item.ImageIndex = value;
         }
         #endregion
     }

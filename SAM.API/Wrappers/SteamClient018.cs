@@ -108,7 +108,7 @@ namespace SAM.API.Wrappers
                     user,
                     pipe,
                     nativeVersion.Handle);
-                var result = new TClass();
+                TClass result = new();
                 result.SetupFunctions(address);
                 return result;
             }
@@ -137,7 +137,7 @@ namespace SAM.API.Wrappers
                     user,
                     pipe,
                     nativeVersion.Handle);
-                var result = new TClass();
+                TClass result = new();
                 result.SetupFunctions(address);
                 return result;
             }
@@ -165,7 +165,7 @@ namespace SAM.API.Wrappers
                     this.ObjectAddress,
                     pipe,
                     nativeVersion.Handle);
-                var result = new TClass();
+                TClass result = new();
                 result.SetupFunctions(address);
                 return result;
             }
@@ -192,7 +192,7 @@ namespace SAM.API.Wrappers
                     user,
                     pipe,
                     nativeVersion.Handle);
-                var result = new TClass();
+                TClass result = new();
                 result.SetupFunctions(address);
                 return result;
             }

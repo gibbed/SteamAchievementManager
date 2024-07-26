@@ -19,6 +19,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <TargetFramework>net40</TargetFramework>
+    <LangVersion>9.0</LangVersion>
     <Platforms>x86</Platforms>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">

@@ -29,7 +29,7 @@ namespace SAM.Game
 {
     internal class KeyValue
     {
-        private static readonly KeyValue _Invalid = new KeyValue();
+        private static readonly KeyValue _Invalid = new();
         public string Name = "<root>";
         public KeyValueType Type = KeyValueType.None;
         public object Value;
@@ -48,7 +48,7 @@ namespace SAM.Game
 
                 var child = this.Children.SingleOrDefault(
                     c => string.Compare(c.Name, key, StringComparison.InvariantCultureIgnoreCase) == 0);
-                
+
                 if (child == null)
                 {
                     return _Invalid;
@@ -85,12 +85,9 @@ namespace SAM.Game
                 case KeyValueType.String:
                 case KeyValueType.WideString:
                 {
-                    int value;
-                    if (int.TryParse((string)this.Value, out value) == false)
-                    {
-                        return defaultValue;
-                    }
-                    return value;
+                    return int.TryParse((string)this.Value, out int value) == false
+                        ? defaultValue
+                        : value;
                 }
 
                 case KeyValueType.Int32:
@@ -124,12 +121,9 @@ namespace SAM.Game
                 case KeyValueType.String:
                 case KeyValueType.WideString:
                 {
-                    float value;
-                    if (float.TryParse((string)this.Value, out value) == false)
-                    {
-                        return defaultValue;
-                    }
-                    return value;
+                    return float.TryParse((string)this.Value, out float value) == false
+                        ? defaultValue
+                        : value;
                 }
 
                 case KeyValueType.Int32:
@@ -163,12 +157,9 @@ namespace SAM.Game
                 case KeyValueType.String:
                 case KeyValueType.WideString:
                 {
-                    int value;
-                    if (int.TryParse((string)this.Value, out value) == false)
-                    {
-                        return defaultValue;
-                    }
-                    return value != 0;
+                    return int.TryParse((string)this.Value, out int value) == false
+                        ? defaultValue
+                        : value != 0;
                 }
 
                 case KeyValueType.Int32:
@@ -220,7 +211,7 @@ namespace SAM.Game
             {
                 using (var input = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 {
-                    var kv = new KeyValue();
+                    KeyValue kv = new();
                     if (kv.ReadAsBinary(input) == false)
                     {
                         return null;
@@ -236,8 +227,7 @@ namespace SAM.Game
 
         public bool ReadAsBinary(Stream input)
         {
-            this.Children = new List<KeyValue>();
-
+            this.Children = new();
             try
             {
                 while (true)
@@ -248,8 +238,8 @@ namespace SAM.Game
                     {
                         break;
                     }
-                
-                    var current = new KeyValue
+
+                    KeyValue current = new()
                     {
                         Type = type,
                         Name = input.ReadStringUnicode(),

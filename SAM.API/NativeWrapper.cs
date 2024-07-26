@@ -53,22 +53,15 @@ namespace SAM.API
                 typeof(TNativeFunctions));
         }
 
-        private readonly Dictionary<IntPtr, Delegate> _FunctionCache = new Dictionary<IntPtr, Delegate>();
+        private readonly Dictionary<IntPtr, Delegate> _FunctionCache = new();
 
         protected Delegate GetDelegate<TDelegate>(IntPtr pointer)
         {
-            Delegate function;
-
-            if (this._FunctionCache.ContainsKey(pointer) == false)
+            if (this._FunctionCache.TryGetValue(pointer, out var function) == false)
             {
                 function = Marshal.GetDelegateForFunctionPointer(pointer, typeof(TDelegate));
                 this._FunctionCache[pointer] = function;
             }
-            else
-            {
-                function = this._FunctionCache[pointer];
-            }
-
             return function;
         }
 

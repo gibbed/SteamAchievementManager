@@ -40,7 +40,7 @@ namespace SAM.API
         private int _Pipe;
         private int _User;
 
-        private readonly List<ICallback> _Callbacks = new List<ICallback>();
+        private readonly List<ICallback> _Callbacks = new();
 
         public void Initialize(long appId)
         {
@@ -125,7 +125,7 @@ namespace SAM.API
         public TCallback CreateAndRegisterCallback<TCallback>()
             where TCallback : ICallback, new()
         {
-            var callback = new TCallback();
+            TCallback callback = new();
             this._Callbacks.Add(callback);
             return callback;
         }

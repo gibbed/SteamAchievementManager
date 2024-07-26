@@ -22,7 +22,6 @@
 
 using System;
 using System.Diagnostics;
-using System.Net;
 using System.Windows.Forms;
 
 namespace SAM.Game
@@ -60,7 +59,7 @@ namespace SAM.Game
                 return;
             }
 
-            using (var client = new API.Client())
+            using (API.Client client = new())
             {
                 try
                 {

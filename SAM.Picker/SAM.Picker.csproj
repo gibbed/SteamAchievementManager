@@ -22,6 +22,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net40</TargetFramework>
+    <LangVersion>9.0</LangVersion>
     <Platforms>x86</Platforms>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
@@ -36,7 +37,7 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Update="DoubleBufferedListView.cs">
+    <Compile Update="MyListView.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Update="GamePicker.cs">

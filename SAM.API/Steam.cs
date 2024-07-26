@@ -75,12 +75,12 @@ namespace SAM.API
 
             if (address == IntPtr.Zero)
             {
-                return default(TClass);
+                return default;
             }
 
-            var rez = new TClass();
-            rez.SetupFunctions(address);
-            return rez;
+            TClass instance = new();
+            instance.SetupFunctions(address);
+            return instance;
         }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]

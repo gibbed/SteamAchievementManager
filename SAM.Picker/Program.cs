@@ -40,7 +40,7 @@ namespace SAM.Picker
                 return;
             }
 
-            using (var client = new API.Client())
+            using (API.Client client = new())
             {
                 try
                 {

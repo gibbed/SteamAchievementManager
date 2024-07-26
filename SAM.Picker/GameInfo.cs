@@ -21,6 +21,7 @@
  */
 
 using System.Globalization;
+using System.Windows.Forms;
 
 namespace SAM.Picker
 {
@@ -34,11 +35,13 @@ namespace SAM.Picker
 
         public string Name
         {
-            get { return this._Name; }
-            set { this._Name = value ?? "App " + this.Id.ToString(CultureInfo.InvariantCulture); }
+            get => this._Name;
+            set => this._Name = value ?? "App " + this.Id.ToString(CultureInfo.InvariantCulture);
         }
 
-        public string Logo;
+        public string ImageUrl;
+
+        public ListViewItem Item;
 
         public GameInfo(uint id, string type)
         {
@@ -46,7 +49,7 @@ namespace SAM.Picker
             this.Type = type;
             this.Name = null;
             this.ImageIndex = 0;
-            this.Logo = null;
+            this.ImageUrl = null;
         }
     }
 }

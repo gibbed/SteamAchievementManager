@@ -1,33 +1,33 @@
 ﻿namespace SAM.Game
 {
-	partial class Manager
-	{
-		/// <summary>
-		/// Required designer variable.
-		/// </summary>
-		private System.ComponentModel.IContainer components = null;
+    partial class Manager
+    {
+        /// <summary>
+        /// Required designer variable.
+        /// </summary>
+        private System.ComponentModel.IContainer components = null;
 
-		/// <summary>
-		/// Clean up any resources being used.
-		/// </summary>
-		/// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-		protected override void Dispose(bool disposing)
-		{
-			if (disposing && (components != null))
-			{
-				components.Dispose();
-			}
-			base.Dispose(disposing);
-		}
+        /// <summary>
+        /// Clean up any resources being used.
+        /// </summary>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
 
-		#region Windows Form Designer generated code
+        #region Windows Form Designer generated code
 
-		/// <summary>
-		/// Required method for Designer support - do not modify
-		/// the contents of this method with the code editor.
-		/// </summary>
-		private void InitializeComponent()
-		{
+        /// <summary>
+        /// Required method for Designer support - do not modify
+        /// the contents of this method with the code editor.
+        /// </summary>
+        private void InitializeComponent()
+        {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Manager));
             this._MainToolStrip = new System.Windows.Forms.ToolStrip();
@@ -53,12 +53,12 @@
             this._EnableStatsEditingCheckBox = new System.Windows.Forms.CheckBox();
             this._StatisticsDataGridView = new System.Windows.Forms.DataGridView();
             this._ToolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
-			this._DisplayLabel = new System.Windows.Forms.ToolStripLabel();
+            this._DisplayLabel = new System.Windows.Forms.ToolStripLabel();
             this._DisplayUnlockedOnlyButton = new System.Windows.Forms.ToolStripButton();
             this._DisplayLockedOnlyButton = new System.Windows.Forms.ToolStripButton();
             this._MatchingStringLabel = new System.Windows.Forms.ToolStripLabel();
             this._MatchingStringTextBox = new System.Windows.Forms.ToolStripTextBox();
-			this._ToolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+            this._ToolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this._MainToolStrip.SuspendLayout();
             this._MainStatusStrip.SuspendLayout();
             this._MainTabControl.SuspendLayout();
@@ -163,8 +163,8 @@
             // 
             // _MainTabControl
             // 
-            this._MainTabControl.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
+            this._MainTabControl.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this._MainTabControl.Controls.Add(this._AchievementsTabPage);
             this._MainTabControl.Controls.Add(this._StatisticsTabPage);
@@ -286,7 +286,7 @@
             // 
             // _EnableStatsEditingCheckBox
             // 
-            this._EnableStatsEditingCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            this._EnableStatsEditingCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this._EnableStatsEditingCheckBox.AutoSize = true;
             this._EnableStatsEditingCheckBox.Location = new System.Drawing.Point(6, 285);
@@ -302,8 +302,8 @@
             // 
             this._StatisticsDataGridView.AllowUserToAddRows = false;
             this._StatisticsDataGridView.AllowUserToDeleteRows = false;
-            this._StatisticsDataGridView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
+            this._StatisticsDataGridView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this._StatisticsDataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this._StatisticsDataGridView.Location = new System.Drawing.Point(6, 6);
@@ -334,7 +334,7 @@
             this._DisplayUnlockedOnlyButton.Name = "_DisplayUnlockedOnlyButton";
             this._DisplayUnlockedOnlyButton.Size = new System.Drawing.Size(60, 22);
             this._DisplayUnlockedOnlyButton.Text = "unlocked";
-            this._DisplayUnlockedOnlyButton.Click += new System.EventHandler(this._DisplayUncheckedOnlyButton_Click);
+            this._DisplayUnlockedOnlyButton.Click += new System.EventHandler(this.OnDisplayUncheckedOnly);
             // 
             // _DisplayLockedOnlyButton
             // 
@@ -345,7 +345,7 @@
             this._DisplayLockedOnlyButton.Name = "_DisplayLockedOnlyButton";
             this._DisplayLockedOnlyButton.Size = new System.Drawing.Size(46, 22);
             this._DisplayLockedOnlyButton.Text = "locked";
-            this._DisplayLockedOnlyButton.Click += new System.EventHandler(this._DisplayCheckedOnlyButton_Click);
+            this._DisplayLockedOnlyButton.Click += new System.EventHandler(this.OnDisplayCheckedOnly);
             // 
             // MatchingStringLabel
             // 
@@ -388,17 +388,17 @@
             this.ResumeLayout(false);
             this.PerformLayout();
 
-		}
+        }
 
-		#endregion
+        #endregion
 
-		private System.Windows.Forms.ToolStrip _MainToolStrip;
-		private System.Windows.Forms.ToolStripButton _StoreButton;
+        private System.Windows.Forms.ToolStrip _MainToolStrip;
+        private System.Windows.Forms.ToolStripButton _StoreButton;
         private System.Windows.Forms.ToolStripButton _ReloadButton;
-		private System.Windows.Forms.StatusStrip _MainStatusStrip;
-		private System.Windows.Forms.ToolStripStatusLabel _CountryStatusLabel;
-		private System.Windows.Forms.ToolStripStatusLabel _GameStatusLabel;
-		private System.Windows.Forms.ImageList _AchievementImageList;
+        private System.Windows.Forms.StatusStrip _MainStatusStrip;
+        private System.Windows.Forms.ToolStripStatusLabel _CountryStatusLabel;
+        private System.Windows.Forms.ToolStripStatusLabel _GameStatusLabel;
+        private System.Windows.Forms.ImageList _AchievementImageList;
         private System.Windows.Forms.Timer _CallbackTimer;
         private System.Windows.Forms.TabControl _MainTabControl;
         private System.Windows.Forms.TabPage _AchievementsTabPage;
@@ -421,6 +421,5 @@
         private System.Windows.Forms.ToolStripLabel _MatchingStringLabel;
         private System.Windows.Forms.ToolStripTextBox _MatchingStringTextBox;
         private System.Windows.Forms.ToolStripSeparator _ToolStripSeparator2;
-	}
+    }
 }
-
