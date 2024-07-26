@@ -80,7 +80,7 @@ namespace SAM.Game
             this._StatisticsDataGridView.Columns[2].Width = 200;
             this._StatisticsDataGridView.Columns[2].DataPropertyName = "Extra";
 
-            this._StatisticsDataGridView.DataSource = new BindingSource
+            this._StatisticsDataGridView.DataSource = new BindingSource()
             {
                 DataSource = this._Statistics,
             };
@@ -443,8 +443,7 @@ namespace SAM.Game
                     continue;
                 }
 
-                bool isAchieved;
-                if (this._SteamClient.SteamUserStats.GetAchievementState(def.Id, out isAchieved) == false)
+                if (this._SteamClient.SteamUserStats.GetAchievementState(def.Id, out bool isAchieved) == false)
                 {
                     continue;
                 }

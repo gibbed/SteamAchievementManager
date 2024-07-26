@@ -46,9 +46,7 @@ namespace SAM.Picker
         private readonly List<string> _LogosAttempted;
         private readonly ConcurrentQueue<GameInfo> _LogoQueue;
 
-        // ReSharper disable PrivateFieldCanBeConvertedToLocalVariable
         private readonly API.Callbacks.AppDataChanged _AppDataChangedCallback;
-        // ReSharper restore PrivateFieldCanBeConvertedToLocalVariable
 
         public GamePicker(API.Client client)
         {
@@ -77,14 +75,20 @@ namespace SAM.Picker
 
         private void OnAppDataChanged(APITypes.AppDataChanged param)
         {
-            if (param.Result == true && this._Games.ContainsKey(param.Id))
+            if (param.Result == false)
             {
-                var game = this._Games[param.Id];
-
-                game.Name = this._SteamClient.SteamApps001.GetAppData(game.Id, "name");
-                this.AddGameToLogoQueue(game);
-                this.DownloadNextLogo();
+                return;
             }
+
+            if (this._Games.TryGetValue(param.Id, out var game) == false)
+            {
+                return;
+            }
+
+            game.Name = this._SteamClient.SteamApps001.GetAppData(game.Id, "name");
+
+            this.AddGameToLogoQueue(game);
+            this.DownloadNextLogo();
         }
 
         private void DoDownloadList(object sender, DoWorkEventArgs e)
@@ -119,7 +123,7 @@ namespace SAM.Picker
 
         private void OnDownloadList(object sender, RunWorkerCompletedEventArgs e)
         {
-            if (e.Error != null || e.Cancelled)
+            if (e.Error != null || e.Cancelled == true)
             {
                 this.AddDefaultGames();
                 //MessageBox.Show(e.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -424,7 +428,7 @@ namespace SAM.Picker
                 return;
             }
 
-            while (this._LogoQueue.TryDequeue(out var logo))
+            while (this._LogoQueue.TryDequeue(out var logo) == true)
             {
                 // clear the download queue because we will be showing only one app
                 // TODO: https://github.com/gibbed/SteamAchievementManager/issues/106
