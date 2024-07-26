@@ -1,19 +1,27 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net40</TargetFramework>
     <AssemblyTitle>Steam Achievement Manager</AssemblyTitle>
     <Company>Gibbed</Company>
     <Authors>Gibbed</Authors>
     <Description>A manager for game achievements in Steam.</Description>
     <Copyright>Copyright © Gibbed 2019</Copyright>
+  </PropertyGroup>
+  <PropertyGroup>
     <Version>7.0.0</Version>
     <AssemblyVersion>7.0.0.0</AssemblyVersion>
     <FileVersion>7.0.0.0</FileVersion>
-    <RepositoryUrl>https://github.com/gibbed/SteamAchievementManager/</RepositoryUrl>
-    <RepositoryType>Git</RepositoryType>
+  </PropertyGroup>
+  <PropertyGroup>
     <ApplicationIcon>Blank.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <PropertyGroup>
+    <RepositoryUrl>https://github.com/gibbed/SteamAchievementManager/</RepositoryUrl>
+    <RepositoryType>Git</RepositoryType>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net40</TargetFramework>
     <Platforms>x86</Platforms>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
