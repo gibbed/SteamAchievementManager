@@ -115,7 +115,7 @@
             // 
             // _AchievementImageList
             // 
-            this._AchievementImageList.ColorDepth = System.Windows.Forms.ColorDepth.Depth8Bit;
+            this._AchievementImageList.ColorDepth = System.Windows.Forms.ColorDepth.Depth24Bit;
             this._AchievementImageList.ImageSize = new System.Drawing.Size(64, 64);
             this._AchievementImageList.TransparentColor = System.Drawing.Color.Transparent;
             // 
