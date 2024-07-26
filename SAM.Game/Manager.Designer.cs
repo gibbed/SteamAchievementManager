@@ -29,7 +29,6 @@
 		private void InitializeComponent()
 		{
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.ToolStripSeparator _ToolStripSeparator1;
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Manager));
             this._MainToolStrip = new System.Windows.Forms.ToolStrip();
             this._StoreButton = new System.Windows.Forms.ToolStripButton();
@@ -53,7 +52,13 @@
             this._StatisticsTabPage = new System.Windows.Forms.TabPage();
             this._EnableStatsEditingCheckBox = new System.Windows.Forms.CheckBox();
             this._StatisticsDataGridView = new System.Windows.Forms.DataGridView();
-            _ToolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this._ToolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+			this._DisplayLabel = new System.Windows.Forms.ToolStripLabel();
+            this._DisplayUnlockedOnlyButton = new System.Windows.Forms.ToolStripButton();
+            this._DisplayLockedOnlyButton = new System.Windows.Forms.ToolStripButton();
+            this._MatchingStringLabel = new System.Windows.Forms.ToolStripLabel();
+            this._MatchingStringTextBox = new System.Windows.Forms.ToolStripTextBox();
+			this._ToolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this._MainToolStrip.SuspendLayout();
             this._MainStatusStrip.SuspendLayout();
             this._MainTabControl.SuspendLayout();
@@ -219,9 +224,16 @@
             // _AchievementsToolStrip
             // 
             this._AchievementsToolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this._LockAllButton,
-            this._InvertAllButton,
-            this._UnlockAllButton});
+                this._LockAllButton,
+                this._InvertAllButton,
+                this._UnlockAllButton,
+                this._ToolStripSeparator1,
+                this._DisplayLabel,
+                this._DisplayLockedOnlyButton,
+                this._DisplayUnlockedOnlyButton,
+                this._ToolStripSeparator2,
+                this._MatchingStringLabel,
+                this._MatchingStringTextBox});
             this._AchievementsToolStrip.Location = new System.Drawing.Point(3, 3);
             this._AchievementsToolStrip.Name = "_AchievementsToolStrip";
             this._AchievementsToolStrip.Size = new System.Drawing.Size(602, 25);
@@ -301,6 +313,54 @@
             this._StatisticsDataGridView.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.OnStatCellEndEdit);
             this._StatisticsDataGridView.DataError += new System.Windows.Forms.DataGridViewDataErrorEventHandler(this.OnStatDataError);
             // 
+            // toolStripSeparator2
+            // 
+            this._ToolStripSeparator2.Name = "_ToolStripSeparator2";
+            this._ToolStripSeparator2.Size = new System.Drawing.Size(6, 25);
+            // 
+            // DisplayLabel
+            // 
+            this._DisplayLabel.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this._DisplayLabel.Name = "_DisplayLabel";
+            this._DisplayLabel.Size = new System.Drawing.Size(62, 22);
+            this._DisplayLabel.Text = "Show only";
+            // 
+            // _DisplayUnlockedOnlyButton
+            // 
+            this._DisplayUnlockedOnlyButton.CheckOnClick = true;
+            this._DisplayUnlockedOnlyButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this._DisplayUnlockedOnlyButton.Image = ((System.Drawing.Image)(resources.GetObject("_DisplayUnlockedOnlyButton.Image")));
+            this._DisplayUnlockedOnlyButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this._DisplayUnlockedOnlyButton.Name = "_DisplayUnlockedOnlyButton";
+            this._DisplayUnlockedOnlyButton.Size = new System.Drawing.Size(60, 22);
+            this._DisplayUnlockedOnlyButton.Text = "unlocked";
+            this._DisplayUnlockedOnlyButton.Click += new System.EventHandler(this._DisplayUncheckedOnlyButton_Click);
+            // 
+            // _DisplayLockedOnlyButton
+            // 
+            this._DisplayLockedOnlyButton.CheckOnClick = true;
+            this._DisplayLockedOnlyButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this._DisplayLockedOnlyButton.Image = ((System.Drawing.Image)(resources.GetObject("_DisplayLockedOnlyButton.Image")));
+            this._DisplayLockedOnlyButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this._DisplayLockedOnlyButton.Name = "_DisplayLockedOnlyButton";
+            this._DisplayLockedOnlyButton.Size = new System.Drawing.Size(46, 22);
+            this._DisplayLockedOnlyButton.Text = "locked";
+            this._DisplayLockedOnlyButton.Click += new System.EventHandler(this._DisplayCheckedOnlyButton_Click);
+            // 
+            // MatchingStringLabel
+            // 
+            this._MatchingStringLabel.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this._MatchingStringLabel.Name = "_MatchingStringLabel";
+            this._MatchingStringLabel.Size = new System.Drawing.Size(33, 22);
+            this._MatchingStringLabel.Text = "Filter";
+            // 
+            // _MatchingStringTextBox
+            // 
+            this._MatchingStringTextBox.Name = "_MatchingStringTextBox";
+            this._MatchingStringTextBox.Size = new System.Drawing.Size(100, 25);
+            this._MatchingStringTextBox.ToolTipText = "Type at least 3 characters that must appear in the name or description";
+            this._MatchingStringTextBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.OnFilterUpdate);
+            // 
             // Manager
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -354,6 +414,13 @@
         public System.Windows.Forms.CheckBox _EnableStatsEditingCheckBox;
         private System.Windows.Forms.ToolStripButton _ResetButton;
         private System.Windows.Forms.ToolStripStatusLabel _DownloadStatusLabel;
+        private System.Windows.Forms.ToolStripSeparator _ToolStripSeparator1;
+        private System.Windows.Forms.ToolStripLabel _DisplayLabel;
+        private System.Windows.Forms.ToolStripButton _DisplayUnlockedOnlyButton;
+        private System.Windows.Forms.ToolStripButton _DisplayLockedOnlyButton;
+        private System.Windows.Forms.ToolStripLabel _MatchingStringLabel;
+        private System.Windows.Forms.ToolStripTextBox _MatchingStringTextBox;
+        private System.Windows.Forms.ToolStripSeparator _ToolStripSeparator2;
 	}
 }
 
