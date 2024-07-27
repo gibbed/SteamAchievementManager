@@ -44,6 +44,7 @@ namespace SAM.Picker
         private readonly Dictionary<uint, GameInfo> _Games;
         private readonly List<GameInfo> _FilteredGames;
 
+        private readonly object _LogoLock;
         private readonly HashSet<string> _LogosAttempting;
         private readonly HashSet<string> _LogosAttempted;
         private readonly ConcurrentQueue<GameInfo> _LogoQueue;
@@ -54,6 +55,7 @@ namespace SAM.Picker
         {
             this._Games = new();
             this._FilteredGames = new();
+            this._LogoLock = new();
             this._LogosAttempting = new();
             this._LogosAttempted = new();
             this._LogoQueue = new();
@@ -294,39 +296,43 @@ namespace SAM.Picker
 
         private void DownloadNextLogo()
         {
-            if (this._LogoWorker.IsBusy == true)
+            lock (this._LogoLock)
             {
-                return;
-            }
 
-            GameInfo info;
-            while (true)
-            {
-                if (this._LogoQueue.TryDequeue(out info) == false)
+                if (this._LogoWorker.IsBusy == true)
                 {
-                    this._DownloadStatusLabel.Visible = false;
                     return;
                 }
 
-                if (info.Item == null)
+                GameInfo info;
+                while (true)
                 {
-                    continue;
+                    if (this._LogoQueue.TryDequeue(out info) == false)
+                    {
+                        this._DownloadStatusLabel.Visible = false;
+                        return;
+                    }
+
+                    if (info.Item == null)
+                    {
+                        continue;
+                    }
+
+                    if (this._FilteredGames.Contains(info) == false ||
+                        info.Item.Bounds.IntersectsWith(this._GameListView.ClientRectangle) == false)
+                    {
+                        this._LogosAttempting.Remove(info.ImageUrl);
+                        continue;
+                    }
+
+                    break;
                 }
 
-                if (this._FilteredGames.Contains(info) == false ||
-                    info.Item.Bounds.IntersectsWith(this._GameListView.ClientRectangle) == false)
-                {
-                    this._LogosAttempting.Remove(info.ImageUrl);
-                    continue;
-                }
+                this._DownloadStatusLabel.Text = $"Downloading {1 + this._LogoQueue.Count} game icons...";
+                this._DownloadStatusLabel.Visible = true;
 
-                break;
+                this._LogoWorker.RunWorkerAsync(info);
             }
-
-            this._DownloadStatusLabel.Text = $"Downloading {1 + this._LogoQueue.Count} game icons...";
-            this._DownloadStatusLabel.Visible = true;
-
-            this._LogoWorker.RunWorkerAsync(info);
         }
 
         private string GetGameImageUrl(uint id)
