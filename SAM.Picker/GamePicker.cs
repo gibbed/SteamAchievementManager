@@ -96,6 +96,8 @@ namespace SAM.Picker
 
         private void DoDownloadList(object sender, DoWorkEventArgs e)
         {
+            this._PickerStatusLabel.Text = "Downloading game list...";
+
             byte[] bytes;
             using (WebClient downloader = new())
             {
@@ -119,6 +121,7 @@ namespace SAM.Picker
                 }
             }
 
+            this._PickerStatusLabel.Text = "Checking game ownership...";
             foreach (var kv in pairs)
             {
                 this.AddGame(kv.Key, kv.Value);
