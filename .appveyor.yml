@@ -22,6 +22,7 @@ cache:
   - '%LocalAppData%\NuGet\v3-cache'
 
 install:
+  - choco install netfx-4.8.1-devpack
   - git submodule update --init --recursive
 
 configuration:
