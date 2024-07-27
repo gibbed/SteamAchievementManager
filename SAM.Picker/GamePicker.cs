@@ -32,6 +32,7 @@ using System.Linq;
 using System.Net;
 using System.Windows.Forms;
 using System.Xml.XPath;
+using static SAM.Picker.InvariantShorthand;
 using APITypes = SAM.API.Types;
 
 namespace SAM.Picker
@@ -43,8 +44,8 @@ namespace SAM.Picker
         private readonly Dictionary<uint, GameInfo> _Games;
         private readonly List<GameInfo> _FilteredGames;
 
-        private readonly List<string> _LogosAttempting;
-        private readonly List<string> _LogosAttempted;
+        private readonly HashSet<string> _LogosAttempting;
+        private readonly HashSet<string> _LogosAttempted;
         private readonly ConcurrentQueue<GameInfo> _LogoQueue;
 
         private readonly API.Callbacks.AppDataChanged _AppDataChangedCallback;
@@ -102,7 +103,6 @@ namespace SAM.Picker
             }
 
             List<KeyValuePair<uint, string>> pairs = new();
-
             using (MemoryStream stream = new(bytes, false))
             {
                 XPathDocument document = new(stream);
@@ -175,11 +175,8 @@ namespace SAM.Picker
             }
 
             this._GameListView.VirtualListSize = this._FilteredGames.Count;
-            this._PickerStatusLabel.Text = string.Format(
-                CultureInfo.CurrentCulture,
-                "Displaying {0} games. Total {1} games.",
-                this._GameListView.Items.Count,
-                this._Games.Count);
+            this._PickerStatusLabel.Text =
+                $"Displaying {this._GameListView.Items.Count} games. Total {this._Games.Count} games.";
 
             if (this._GameListView.Items.Count > 0)
             {
@@ -323,10 +320,7 @@ namespace SAM.Picker
                 break;
             }
 
-            this._DownloadStatusLabel.Text = string.Format(
-                CultureInfo.CurrentCulture,
-                "Downloading {0} game icons...",
-                this._LogoQueue.Count);
+            this._DownloadStatusLabel.Text = $"Downloading {1 + this._LogoQueue.Count} game icons...";
             this._DownloadStatusLabel.Visible = true;
 
             this._LogoWorker.RunWorkerAsync(info);
@@ -338,14 +332,10 @@ namespace SAM.Picker
 
             var currentLanguage = this._SteamClient.SteamApps008.GetCurrentGameLanguage();
 
-            candidate = this._SteamClient.SteamApps001.GetAppData(id, string.Format(CultureInfo.InvariantCulture, "small_capsule/{0}", currentLanguage));
+            candidate = this._SteamClient.SteamApps001.GetAppData(id, _($"small_capsule/{currentLanguage}"));
             if (string.IsNullOrEmpty(candidate) == false)
             {
-                return string.Format(
-                    CultureInfo.InvariantCulture,
-                    "https://steamcdn-a.akamaihd.net/steam/apps/{0}/{1}",
-                    id,
-                    candidate);
+                return _($"https://steamcdn-a.akamaihd.net/steam/apps/{id}/{candidate}");
             }
 
             if (currentLanguage != "english")
@@ -353,22 +343,14 @@ namespace SAM.Picker
                 candidate = this._SteamClient.SteamApps001.GetAppData(id, "small_capsule/english");
                 if (string.IsNullOrEmpty(candidate) == false)
                 {
-                    return string.Format(
-                        CultureInfo.InvariantCulture,
-                        "https://steamcdn-a.akamaihd.net/steam/apps/{0}/{1}",
-                        id,
-                        candidate);
+                    return _($"https://steamcdn-a.akamaihd.net/steam/apps/{id}/{candidate}");
                 }
             }
 
             candidate = this._SteamClient.SteamApps001.GetAppData(id, "logo");
             if (string.IsNullOrEmpty(candidate) == false)
             {
-                return string.Format(
-                    CultureInfo.InvariantCulture,
-                    "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/{0}/{1}.jpg",
-                    id,
-                    candidate);
+                return _($"https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/{id}/{candidate}.jpg");
             }
 
             return null;

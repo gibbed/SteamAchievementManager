@@ -29,6 +29,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Windows.Forms;
+using static SAM.Game.InvariantShorthand;
 using APITypes = SAM.API.Types;
 
 namespace SAM.Game
@@ -158,10 +159,7 @@ namespace SAM.Game
                 return;
             }
 
-            this._DownloadStatusLabel.Text = string.Format(
-                CultureInfo.CurrentCulture,
-                "Downloading {0} icons...",
-                this._IconQueue.Count);
+            this._DownloadStatusLabel.Text = $"Downloading {this._IconQueue.Count} icons...";
             this._DownloadStatusLabel.Visible = true;
 
             var info = this._IconQueue[0];
@@ -169,26 +167,15 @@ namespace SAM.Game
 
 
             this._IconDownloader.DownloadDataAsync(
-                new Uri(string.Format(
-                    CultureInfo.InvariantCulture,
-                    "http://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/{0}/{1}",
-                    this._GameId,
-                    info.IsAchieved == true ? info.IconNormal : info.IconLocked)),
+                new Uri(_($"http://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/{this._GameId}/{(info.IsAchieved == true ? info.IconNormal : info.IconLocked)}")),
                 info);
         }
 
-        private static string TranslateError(int id)
+        private static string TranslateError(int id) => id switch
         {
-            switch (id)
-            {
-                case 2:
-                {
-                    return "generic error -- this usually means you don't own the game";
-                }
-            }
-
-            return id.ToString(CultureInfo.InvariantCulture);
-        }
+            2 => "generic error -- this usually means you don't own the game",
+            _ => _($"{id}"),
+        };
 
         private static string GetLocalizedString(KeyValue kv, string language, string defaultValue)
         {
@@ -225,10 +212,7 @@ namespace SAM.Game
                 path = API.Steam.GetInstallPath();
                 path = Path.Combine(path, "appcache");
                 path = Path.Combine(path, "stats");
-                path = Path.Combine(path, string.Format(
-                    CultureInfo.InvariantCulture,
-                    "UserGameStatsSchema_{0}.bin",
-                    this._GameId));
+                path = Path.Combine(path, _($"UserGameStatsSchema_{this._GameId}.bin"));
 
                 if (File.Exists(path) == false)
                 {
@@ -368,10 +352,7 @@ namespace SAM.Game
         {
             if (param.Result != 1)
             {
-                this._GameStatusLabel.Text = string.Format(
-                    CultureInfo.CurrentCulture,
-                    "Error while retrieving stats: {0}",
-                    TranslateError(param.Result));
+                this._GameStatusLabel.Text = $"Error while retrieving stats: {TranslateError(param.Result)}";
                 this.EnableInput();
                 return;
             }
@@ -415,11 +396,7 @@ namespace SAM.Game
                 return;
             }
 
-            this._GameStatusLabel.Text = string.Format(
-                CultureInfo.CurrentCulture,
-                "Retrieved {0} achievements and {1} statistics.",
-                this._AchievementListView.Items.Count,
-                this._StatisticsDataGridView.Rows.Count);
+            this._GameStatusLabel.Text = $"Retrieved {this._AchievementListView.Items.Count} achievements and {this._StatisticsDataGridView.Rows.Count} statistics.";
             this.EnableInput();
         }
 
@@ -625,10 +602,7 @@ namespace SAM.Game
                 {
                     MessageBox.Show(
                         this,
-                        string.Format(
-                            CultureInfo.CurrentCulture,
-                            "An error occurred while setting the state for {0}, aborting store.",
-                            info.Id),
+                        $"An error occurred while setting the state for {info.Id}, aborting store.",
                         "Error",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
@@ -662,10 +636,7 @@ namespace SAM.Game
                     {
                         MessageBox.Show(
                             this,
-                            string.Format(
-                                CultureInfo.CurrentCulture,
-                                "An error occurred while setting the value for {0}, aborting store.",
-                                stat.Id),
+                            $"An error occurred while setting the value for {stat.Id}, aborting store.",
                             "Error",
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Error);
@@ -680,10 +651,7 @@ namespace SAM.Game
                     {
                         MessageBox.Show(
                             this,
-                            string.Format(
-                                CultureInfo.CurrentCulture,
-                                "An error occurred while setting the value for {0}, aborting store.",
-                                stat.Id),
+                            $"An error occurred while setting the value for {stat.Id}, aborting store.",
                             "Error",
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Error);
@@ -787,11 +755,7 @@ namespace SAM.Game
 
             MessageBox.Show(
                 this,
-                string.Format(
-                    CultureInfo.CurrentCulture,
-                    "Stored {0} achievements and {1} statistics.",
-                    achievements,
-                    stats),
+                $"Stored {achievements} achievements and {stats} statistics.",
                 "Information",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);

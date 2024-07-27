@@ -33,11 +33,7 @@ namespace SAM.API
 
         public override string ToString()
         {
-            return string.Format(
-                System.Globalization.CultureInfo.CurrentCulture,
-                "Steam Interface<{0}> #{1:X8}",
-                typeof(TNativeFunctions),
-                this.ObjectAddress.ToInt32());
+            return $"Steam Interface<{typeof(TNativeFunctions)}> #{this.ObjectAddress.ToInt32():X8}";
         }
 
         public void SetupFunctions(IntPtr objectAddress)

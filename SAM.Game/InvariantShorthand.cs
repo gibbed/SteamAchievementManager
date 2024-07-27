@@ -20,21 +20,15 @@
  *    distribution.
  */
 
-namespace SAM.Game.Stats
-{
-    internal class AchievementDefinition
-    {
-        public string Id;
-        public string Name;
-        public string Description;
-        public string IconNormal;
-        public string IconLocked;
-        public bool IsHidden;
-        public int Permission;
+using System;
 
-        public override string ToString()
+namespace SAM.Game
+{
+    public static class InvariantShorthand
+    {
+        public static string _(FormattableString formattable)
         {
-            return $"{this.Name ?? this.Id ?? base.ToString()}: {this.Permission}";
+            return FormattableString.Invariant(formattable);
         }
     }
 }

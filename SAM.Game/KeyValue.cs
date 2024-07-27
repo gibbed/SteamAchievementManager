@@ -193,11 +193,7 @@ namespace SAM.Game
                 return this.Name;
             }
 
-            return string.Format(
-                System.Globalization.CultureInfo.CurrentCulture,
-                "{0} = {1}",
-                this.Name,
-                this.Value);
+            return $"{this.Name} = {this.Value}";
         }
 
         public static KeyValue LoadAsBinary(string path)

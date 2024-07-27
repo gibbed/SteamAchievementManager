@@ -18,7 +18,7 @@
     <RepositoryType>Git</RepositoryType>
   </PropertyGroup>
   <PropertyGroup>
-    <TargetFramework>net40</TargetFramework>
+    <TargetFramework>net481</TargetFramework>
     <LangVersion>9.0</LangVersion>
     <Platforms>x86</Platforms>
   </PropertyGroup>
