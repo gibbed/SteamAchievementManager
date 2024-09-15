@@ -29,5 +29,6 @@ namespace SAM.API.Types
     {
         public ulong GameId;
         public int Result;
+        public ulong SteamIdUser;
     }
 }
