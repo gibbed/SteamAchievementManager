@@ -167,7 +167,7 @@ namespace SAM.Game
 
 
             this._IconDownloader.DownloadDataAsync(
-                new Uri(_($"http://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/{this._GameId}/{(info.IsAchieved == true ? info.IconNormal : info.IconLocked)}")),
+                new Uri(_($"https://cdn.steamstatic.com/steamcommunity/public/images/apps/{this._GameId}/{(info.IsAchieved == true ? info.IconNormal : info.IconLocked)}")),
                 info);
         }
 
