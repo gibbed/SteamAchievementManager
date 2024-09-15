@@ -206,26 +206,22 @@ namespace SAM.Game
         private bool LoadUserGameStatsSchema()
         {
             string path;
-
             try
             {
+                string fileName = _($"UserGameStatsSchema_{this._GameId}.bin");
                 path = API.Steam.GetInstallPath();
-                path = Path.Combine(path, "appcache");
-                path = Path.Combine(path, "stats");
-                path = Path.Combine(path, _($"UserGameStatsSchema_{this._GameId}.bin"));
-
+                path = Path.Combine(path, "appcache", "stats", fileName);
                 if (File.Exists(path) == false)
                 {
                     return false;
                 }
             }
-            catch
+            catch (Exception e)
             {
                 return false;
             }
 
             var kv = KeyValue.LoadAsBinary(path);
-
             if (kv == null)
             {
                 return false;
@@ -405,7 +401,9 @@ namespace SAM.Game
             this._AchievementListView.Items.Clear();
             this._StatisticsDataGridView.Rows.Clear();
 
-            if (this._SteamClient.SteamUserStats.RequestCurrentStats() == false)
+            var steamId = this._SteamClient.SteamUser.GetSteamId();
+
+            if (this._SteamClient.SteamUserStats.RequestUserStats(steamId) == false)
             {
                 MessageBox.Show(this, "Failed.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;

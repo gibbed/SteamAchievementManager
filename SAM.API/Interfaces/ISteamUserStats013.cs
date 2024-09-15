@@ -26,9 +26,8 @@ using System.Runtime.InteropServices;
 namespace SAM.API.Interfaces
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public class ISteamUserStats007
+    public class ISteamUserStats013
     {
-        public IntPtr RequestCurrentStats;
         public IntPtr GetStatFloat;
         public IntPtr GetStatInteger;
         public IntPtr SetStatFloat;
@@ -42,6 +41,8 @@ namespace SAM.API.Interfaces
         public IntPtr GetAchievementIcon;
         public IntPtr GetAchievementDisplayAttribute;
         public IntPtr IndicateAchievementProgress;
+        public IntPtr GetNumAchievements;
+        public IntPtr GetAchievementName;
         public IntPtr RequestUserStats;
         public IntPtr GetUserStatFloat;
         public IntPtr GetUserStatInt;
@@ -55,8 +56,21 @@ namespace SAM.API.Interfaces
         public IntPtr GetLeaderboardSortMethod;
         public IntPtr GetLeaderboardDisplayType;
         public IntPtr DownloadLeaderboardEntries;
+        public IntPtr DownloadLeaderboardEntriesForUsers;
         public IntPtr GetDownloadedLeaderboardEntry;
         public IntPtr UploadLeaderboardScore;
+        public IntPtr AttachLeaderboardUGC;
         public IntPtr GetNumberOfCurrentPlayers;
+        public IntPtr RequestGlobalAchievementPercentages;
+        public IntPtr GetMostAchievedAchievementInfo;
+        public IntPtr GetNextMostAchievedAchievementInfo;
+        public IntPtr GetAchievementAchievedPercent;
+        public IntPtr RequestGlobalStats;
+        public IntPtr GetGlobalStatFloat;
+        public IntPtr GetGlobalStatInteger;
+        public IntPtr GetGlobalStatHistoryFloat;
+        public IntPtr GetGlobalStatHistoryInteger;
+        public IntPtr GetAchievementProgressLimitsFloat;
+        public IntPtr GetAchievementProgressLimitsInteger;
     }
 }

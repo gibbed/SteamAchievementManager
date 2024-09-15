@@ -31,7 +31,7 @@ namespace SAM.API
     {
         public Wrappers.SteamClient018 SteamClient;
         public Wrappers.SteamUser012 SteamUser;
-        public Wrappers.SteamUserStats007 SteamUserStats;
+        public Wrappers.SteamUserStats013 SteamUserStats;
         public Wrappers.SteamUtils005 SteamUtils;
         public Wrappers.SteamApps001 SteamApps001;
         public Wrappers.SteamApps008 SteamApps008;
@@ -84,7 +84,7 @@ namespace SAM.API
             }
 
             this.SteamUser = this.SteamClient.GetSteamUser012(this._User, this._Pipe);
-            this.SteamUserStats = this.SteamClient.GetSteamUserStats006(this._User, this._Pipe);
+            this.SteamUserStats = this.SteamClient.GetSteamUserStats013(this._User, this._Pipe);
             this.SteamApps001 = this.SteamClient.GetSteamApps001(this._User, this._Pipe);
             this.SteamApps008 = this.SteamClient.GetSteamApps008(this._User, this._Pipe);
         }

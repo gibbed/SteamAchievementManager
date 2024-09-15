@@ -26,19 +26,8 @@ using SAM.API.Interfaces;
 
 namespace SAM.API.Wrappers
 {
-    public class SteamUserStats007 : NativeWrapper<ISteamUserStats007>
+    public class SteamUserStats013 : NativeWrapper<ISteamUserStats013>
     {
-        #region RequestCurrentStats
-        [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
-        [return: MarshalAs(UnmanagedType.I1)]
-        private delegate bool NativeRequestCurrentStats(IntPtr self);
-
-        public bool RequestCurrentStats()
-        {
-            return this.Call<bool, NativeRequestCurrentStats>(this.Functions.RequestCurrentStats, this.ObjectAddress);
-        }
-        #endregion
-
         #region GetStatValue (int)
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
         [return: MarshalAs(UnmanagedType.I1)]
@@ -195,6 +184,17 @@ namespace SAM.API.Wrappers
                     nativeKey.Handle);
                 return NativeStrings.PointerToString(result);
             }
+        }
+        #endregion
+
+        #region RequestUserStats
+        [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
+        [return: MarshalAs(UnmanagedType.I1)]
+        private delegate bool NativeRequestUserStats(IntPtr self, ulong steamIdUser);
+
+        public bool RequestUserStats(ulong steamIdUser)
+        {
+            return this.Call<bool, NativeRequestUserStats>(this.Functions.RequestUserStats, this.ObjectAddress, steamIdUser);
         }
         #endregion
 

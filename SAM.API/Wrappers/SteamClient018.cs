@@ -144,10 +144,10 @@ namespace SAM.API.Wrappers
         }
         #endregion
 
-        #region GetSteamUserStats007
-        public SteamUserStats007 GetSteamUserStats006(int user, int pipe)
+        #region GetSteamUserStats013
+        public SteamUserStats013 GetSteamUserStats013(int user, int pipe)
         {
-            return this.GetISteamUserStats<SteamUserStats007>(user, pipe, "STEAMUSERSTATS_INTERFACE_VERSION007");
+            return this.GetISteamUserStats<SteamUserStats013>(user, pipe, "STEAMUSERSTATS_INTERFACE_VERSION013");
         }
         #endregion
 
