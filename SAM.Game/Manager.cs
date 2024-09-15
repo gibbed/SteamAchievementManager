@@ -233,8 +233,7 @@ namespace SAM.Game
             this._StatDefinitions.Clear();
 
             var stats = kv[this._GameId.ToString(CultureInfo.InvariantCulture)]["stats"];
-            if (stats.Valid == false ||
-                stats.Children == null)
+            if (stats.Valid == false || stats.Children == null)
             {
                 return false;
             }
@@ -317,7 +316,7 @@ namespace SAM.Game
                                     string name = GetLocalizedString(bit["display"]["name"], currentLanguage, id);
                                     string desc = GetLocalizedString(bit["display"]["desc"], currentLanguage, "");
 
-                                    this._AchievementDefinitions.Add(new Stats.AchievementDefinition()
+                                    this._AchievementDefinitions.Add(new()
                                     {
                                         Id = id,
                                         Name = name,
@@ -440,7 +439,10 @@ namespace SAM.Game
                     continue;
                 }
 
-                if (this._SteamClient.SteamUserStats.GetAchievementState(def.Id, out bool isAchieved) == false)
+                if (this._SteamClient.SteamUserStats.GetAchievementAndUnlockTime(
+                    def.Id,
+                    out bool isAchieved,
+                    out var unlockTime) == false)
                 {
                     continue;
                 }
@@ -468,6 +470,9 @@ namespace SAM.Game
                 {
                     Id = def.Id,
                     IsAchieved = isAchieved,
+                    UnlockTime = isAchieved == true && unlockTime > 0
+                        ? DateTimeOffset.FromUnixTimeSeconds(unlockTime).LocalDateTime
+                        : null,
                     IconNormal = string.IsNullOrEmpty(def.IconNormal) ? null : def.IconNormal,
                     IconLocked = string.IsNullOrEmpty(def.IconLocked) ? def.IconNormal : def.IconLocked,
                     Permission = def.Permission,
@@ -488,17 +493,21 @@ namespace SAM.Game
                 if (item.Text.StartsWith("#", StringComparison.InvariantCulture) == true)
                 {
                     item.Text = info.Id;
+                    item.SubItems.Add("");
                 }
                 else
                 {
                     item.SubItems.Add(info.Description);
                 }
 
+                item.SubItems.Add(info.UnlockTime.HasValue == true
+                    ? info.UnlockTime.Value.ToString()
+                    : "");
+
                 info.ImageIndex = 0;
 
                 this.AddAchievementToIconQueue(info, false);
                 this._AchievementListView.Items.Add(item);
-                //this.Achievements.Add(info.Id, info);
             }
 
             this._AchievementListView.EndUpdate();

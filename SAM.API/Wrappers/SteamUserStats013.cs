@@ -102,7 +102,7 @@ namespace SAM.API.Wrappers
             IntPtr name,
             [MarshalAs(UnmanagedType.I1)] out bool isAchieved);
 
-        public bool GetAchievementState(string name, out bool isAchieved)
+        public bool GetAchievement(string name, out bool isAchieved)
         {
             using (var nativeName = NativeStrings.StringToStringHandle(name))
             {
@@ -112,7 +112,7 @@ namespace SAM.API.Wrappers
         }
         #endregion
 
-        #region SetAchievementState
+        #region SetAchievement
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
         [return: MarshalAs(UnmanagedType.I1)]
         private delegate bool NativeSetAchievement(IntPtr self, IntPtr name);
@@ -137,6 +137,25 @@ namespace SAM.API.Wrappers
                     this.Functions.SetAchievement,
                     this.ObjectAddress,
                     nativeName.Handle);
+            }
+        }
+        #endregion
+
+        #region GetAchievementAndUnlockTime
+        [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
+        [return: MarshalAs(UnmanagedType.I1)]
+        private delegate bool NativeGetAchievementAndUnlockTime(
+            IntPtr self,
+            IntPtr name,
+            [MarshalAs(UnmanagedType.I1)] out bool isAchieved,
+            out uint unlockTime);
+
+        public bool GetAchievementAndUnlockTime(string name, out bool isAchieved, out uint unlockTime)
+        {
+            using (var nativeName = NativeStrings.StringToStringHandle(name))
+            {
+                var call = this.GetFunction<NativeGetAchievementAndUnlockTime>(this.Functions.GetAchievementAndUnlockTime);
+                return call(this.ObjectAddress, nativeName.Handle, out isAchieved, out unlockTime);
             }
         }
         #endregion
