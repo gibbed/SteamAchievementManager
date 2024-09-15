@@ -403,7 +403,10 @@ namespace SAM.Game
 
             var steamId = this._SteamClient.SteamUser.GetSteamId();
 
-            if (this._SteamClient.SteamUserStats.RequestUserStats(steamId) == false)
+            // This still triggers the UserStatsReceived callback, in addition to the callresult.
+            // No need to implement callresults for the time being.
+            var callHandle = this._SteamClient.SteamUserStats.RequestUserStats(steamId);
+            if (callHandle == API.CallHandle.Invalid)
             {
                 MessageBox.Show(this, "Failed.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;

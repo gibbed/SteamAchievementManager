@@ -189,12 +189,11 @@ namespace SAM.API.Wrappers
 
         #region RequestUserStats
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
-        [return: MarshalAs(UnmanagedType.I1)]
-        private delegate bool NativeRequestUserStats(IntPtr self, ulong steamIdUser);
+        private delegate CallHandle NativeRequestUserStats(IntPtr self, ulong steamIdUser);
 
-        public bool RequestUserStats(ulong steamIdUser)
+        public CallHandle RequestUserStats(ulong steamIdUser)
         {
-            return this.Call<bool, NativeRequestUserStats>(this.Functions.RequestUserStats, this.ObjectAddress, steamIdUser);
+            return this.Call<CallHandle, NativeRequestUserStats>(this.Functions.RequestUserStats, this.ObjectAddress, steamIdUser);
         }
         #endregion
 

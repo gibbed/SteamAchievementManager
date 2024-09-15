@@ -142,8 +142,7 @@ namespace SAM.API
             this._RunningCallbacks = true;
 
             Types.CallbackMessage message;
-            int call;
-            while (Steam.GetCallback(this._Pipe, out message, out call) == true)
+            while (Steam.GetCallback(this._Pipe, out message, out _) == true)
             {
                 var callbackId = message.Id;
                 foreach (ICallback callback in this._Callbacks.Where(
@@ -152,7 +151,6 @@ namespace SAM.API
                 {
                     callback.Run(message.ParamPointer);
                 }
-
                 Steam.FreeLastCallback(this._Pipe);
             }
 
