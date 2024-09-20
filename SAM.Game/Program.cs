@@ -71,7 +71,7 @@ namespace SAM.Game
                     {
                         MessageBox.Show(
                             "Steam is not running. Please start Steam then run this tool again.\n\n" +
-                            "If you have the game through Family Share, the game may be locked due to\n\n" +
+                            "If you have the game through Family Share, the game may be locked due to\n" +
                             "the Family Share account actively playing a game.\n\n" +
                             "(" + e.Message + ")",
                             "Error",
