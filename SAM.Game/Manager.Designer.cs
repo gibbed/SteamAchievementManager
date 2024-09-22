@@ -48,6 +48,7 @@
             this._AchievementNameColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this._AchievementDescriptionColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this._AchievementUnlockTimeColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this._AchievementGlobarProgressColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this._AchievementsToolStrip = new System.Windows.Forms.ToolStrip();
             this._LockAllButton = new System.Windows.Forms.ToolStripButton();
             this._InvertAllButton = new System.Windows.Forms.ToolStripButton();
@@ -89,7 +90,7 @@
             this._ResetButton});
             this._MainToolStrip.Location = new System.Drawing.Point(0, 0);
             this._MainToolStrip.Name = "_MainToolStrip";
-            this._MainToolStrip.Size = new System.Drawing.Size(712, 25);
+            this._MainToolStrip.Size = new System.Drawing.Size(1172, 25);
             this._MainToolStrip.TabIndex = 1;
             // 
             // _StoreButton
@@ -139,7 +140,7 @@
             this._DownloadStatusLabel});
             this._MainStatusStrip.Location = new System.Drawing.Point(0, 370);
             this._MainStatusStrip.Name = "_MainStatusStrip";
-            this._MainStatusStrip.Size = new System.Drawing.Size(712, 22);
+            this._MainStatusStrip.Size = new System.Drawing.Size(1172, 22);
             this._MainStatusStrip.TabIndex = 4;
             // 
             // _CountryStatusLabel
@@ -150,7 +151,7 @@
             // _GameStatusLabel
             // 
             this._GameStatusLabel.Name = "_GameStatusLabel";
-            this._GameStatusLabel.Size = new System.Drawing.Size(555, 17);
+            this._GameStatusLabel.Size = new System.Drawing.Size(1157, 17);
             this._GameStatusLabel.Spring = true;
             this._GameStatusLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
@@ -177,7 +178,7 @@
             this._MainTabControl.Location = new System.Drawing.Point(8, 33);
             this._MainTabControl.Name = "_MainTabControl";
             this._MainTabControl.SelectedIndex = 0;
-            this._MainTabControl.Size = new System.Drawing.Size(696, 334);
+            this._MainTabControl.Size = new System.Drawing.Size(1156, 334);
             this._MainTabControl.TabIndex = 5;
             // 
             // _AchievementsTabPage
@@ -187,7 +188,7 @@
             this._AchievementsTabPage.Location = new System.Drawing.Point(4, 22);
             this._AchievementsTabPage.Name = "_AchievementsTabPage";
             this._AchievementsTabPage.Padding = new System.Windows.Forms.Padding(3);
-            this._AchievementsTabPage.Size = new System.Drawing.Size(688, 308);
+            this._AchievementsTabPage.Size = new System.Drawing.Size(1148, 308);
             this._AchievementsTabPage.TabIndex = 0;
             this._AchievementsTabPage.Text = "Achievements";
             this._AchievementsTabPage.UseVisualStyleBackColor = true;
@@ -201,7 +202,8 @@
             this._AchievementListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this._AchievementNameColumnHeader,
             this._AchievementDescriptionColumnHeader,
-            this._AchievementUnlockTimeColumnHeader});
+            this._AchievementUnlockTimeColumnHeader,
+            this._AchievementGlobarProgressColumnHeader});
             this._AchievementListView.Dock = System.Windows.Forms.DockStyle.Fill;
             this._AchievementListView.ForeColor = System.Drawing.Color.White;
             this._AchievementListView.FullRowSelect = true;
@@ -210,7 +212,7 @@
             this._AchievementListView.LargeImageList = this._AchievementImageList;
             this._AchievementListView.Location = new System.Drawing.Point(3, 28);
             this._AchievementListView.Name = "_AchievementListView";
-            this._AchievementListView.Size = new System.Drawing.Size(682, 277);
+            this._AchievementListView.Size = new System.Drawing.Size(1142, 277);
             this._AchievementListView.SmallImageList = this._AchievementImageList;
             this._AchievementListView.Sorting = System.Windows.Forms.SortOrder.Ascending;
             this._AchievementListView.TabIndex = 4;
@@ -233,6 +235,11 @@
             this._AchievementUnlockTimeColumnHeader.Text = "Unlock Time";
             this._AchievementUnlockTimeColumnHeader.Width = 160;
             // 
+            // _AchievementGlobarProgressColumnHeader
+            // 
+            this._AchievementGlobarProgressColumnHeader.Text = "Global Progress";
+            this._AchievementGlobarProgressColumnHeader.Width = 97;
+            // 
             // _AchievementsToolStrip
             // 
             this._AchievementsToolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -248,7 +255,7 @@
             this._MatchingStringTextBox});
             this._AchievementsToolStrip.Location = new System.Drawing.Point(3, 3);
             this._AchievementsToolStrip.Name = "_AchievementsToolStrip";
-            this._AchievementsToolStrip.Size = new System.Drawing.Size(682, 25);
+            this._AchievementsToolStrip.Size = new System.Drawing.Size(1142, 25);
             this._AchievementsToolStrip.TabIndex = 5;
             // 
             // _LockAllButton
@@ -333,7 +340,7 @@
             this._StatisticsTabPage.Location = new System.Drawing.Point(4, 22);
             this._StatisticsTabPage.Name = "_StatisticsTabPage";
             this._StatisticsTabPage.Padding = new System.Windows.Forms.Padding(3);
-            this._StatisticsTabPage.Size = new System.Drawing.Size(688, 308);
+            this._StatisticsTabPage.Size = new System.Drawing.Size(1148, 308);
             this._StatisticsTabPage.TabIndex = 1;
             this._StatisticsTabPage.Text = "Statistics";
             this._StatisticsTabPage.UseVisualStyleBackColor = true;
@@ -371,7 +378,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(712, 392);
+            this.ClientSize = new System.Drawing.Size(1172, 392);
             this.Controls.Add(this._MainToolStrip);
             this.Controls.Add(this._MainTabControl);
             this.Controls.Add(this._MainStatusStrip);
@@ -426,5 +433,6 @@
         private System.Windows.Forms.ToolStripTextBox _MatchingStringTextBox;
         private System.Windows.Forms.ColumnHeader _AchievementUnlockTimeColumnHeader;
         private System.Windows.Forms.CheckBox _EnableStatsEditingCheckBox;
+        private System.Windows.Forms.ColumnHeader _AchievementGlobarProgressColumnHeader;
     }
 }

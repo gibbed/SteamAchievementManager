@@ -28,6 +28,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Security.Cryptography;
 using System.Windows.Forms;
 using static SAM.Game.InvariantShorthand;
 using APITypes = SAM.API.Types;
@@ -252,91 +253,91 @@ namespace SAM.Game
                 switch (type)
                 {
                     case APITypes.UserStatType.Invalid:
-                    {
-                        break;
-                    }
+                        {
+                            break;
+                        }
 
                     case APITypes.UserStatType.Integer:
-                    {
-                        var id = stat["name"].AsString("");
-                        string name = GetLocalizedString(stat["display"]["name"], currentLanguage, id);
-
-                        this._StatDefinitions.Add(new Stats.IntegerStatDefinition()
                         {
-                            Id = stat["name"].AsString(""),
-                            DisplayName = name,
-                            MinValue = stat["min"].AsInteger(int.MinValue),
-                            MaxValue = stat["max"].AsInteger(int.MaxValue),
-                            MaxChange = stat["maxchange"].AsInteger(0),
-                            IncrementOnly = stat["incrementonly"].AsBoolean(false),
-                            SetByTrustedGameServer = stat["bSetByTrustedGS"].AsBoolean(false),
-                            DefaultValue = stat["default"].AsInteger(0),
-                            Permission = stat["permission"].AsInteger(0),
-                        });
-                        break;
-                    }
+                            var id = stat["name"].AsString("");
+                            string name = GetLocalizedString(stat["display"]["name"], currentLanguage, id);
+
+                            this._StatDefinitions.Add(new Stats.IntegerStatDefinition()
+                            {
+                                Id = stat["name"].AsString(""),
+                                DisplayName = name,
+                                MinValue = stat["min"].AsInteger(int.MinValue),
+                                MaxValue = stat["max"].AsInteger(int.MaxValue),
+                                MaxChange = stat["maxchange"].AsInteger(0),
+                                IncrementOnly = stat["incrementonly"].AsBoolean(false),
+                                SetByTrustedGameServer = stat["bSetByTrustedGS"].AsBoolean(false),
+                                DefaultValue = stat["default"].AsInteger(0),
+                                Permission = stat["permission"].AsInteger(0),
+                            });
+                            break;
+                        }
 
                     case APITypes.UserStatType.Float:
                     case APITypes.UserStatType.AverageRate:
-                    {
-                        var id = stat["name"].AsString("");
-                        string name = GetLocalizedString(stat["display"]["name"], currentLanguage, id);
-
-                        this._StatDefinitions.Add(new Stats.FloatStatDefinition()
                         {
-                            Id = stat["name"].AsString(""),
-                            DisplayName = name,
-                            MinValue = stat["min"].AsFloat(float.MinValue),
-                            MaxValue = stat["max"].AsFloat(float.MaxValue),
-                            MaxChange = stat["maxchange"].AsFloat(0.0f),
-                            IncrementOnly = stat["incrementonly"].AsBoolean(false),
-                            DefaultValue = stat["default"].AsFloat(0.0f),
-                            Permission = stat["permission"].AsInteger(0),
-                        });
-                        break;
-                    }
+                            var id = stat["name"].AsString("");
+                            string name = GetLocalizedString(stat["display"]["name"], currentLanguage, id);
+
+                            this._StatDefinitions.Add(new Stats.FloatStatDefinition()
+                            {
+                                Id = stat["name"].AsString(""),
+                                DisplayName = name,
+                                MinValue = stat["min"].AsFloat(float.MinValue),
+                                MaxValue = stat["max"].AsFloat(float.MaxValue),
+                                MaxChange = stat["maxchange"].AsFloat(0.0f),
+                                IncrementOnly = stat["incrementonly"].AsBoolean(false),
+                                DefaultValue = stat["default"].AsFloat(0.0f),
+                                Permission = stat["permission"].AsInteger(0),
+                            });
+                            break;
+                        }
 
                     case APITypes.UserStatType.Achievements:
                     case APITypes.UserStatType.GroupAchievements:
-                    {
-                        if (stat.Children != null)
                         {
-                            foreach (var bits in stat.Children.Where(
-                                b => string.Compare(b.Name, "bits", StringComparison.InvariantCultureIgnoreCase) == 0))
+                            if (stat.Children != null)
                             {
-                                if (bits.Valid == false ||
-                                    bits.Children == null)
+                                foreach (var bits in stat.Children.Where(
+                                    b => string.Compare(b.Name, "bits", StringComparison.InvariantCultureIgnoreCase) == 0))
                                 {
-                                    continue;
-                                }
-
-                                foreach (var bit in bits.Children)
-                                {
-                                    string id = bit["name"].AsString("");
-                                    string name = GetLocalizedString(bit["display"]["name"], currentLanguage, id);
-                                    string desc = GetLocalizedString(bit["display"]["desc"], currentLanguage, "");
-
-                                    this._AchievementDefinitions.Add(new()
+                                    if (bits.Valid == false ||
+                                        bits.Children == null)
                                     {
-                                        Id = id,
-                                        Name = name,
-                                        Description = desc,
-                                        IconNormal = bit["display"]["icon"].AsString(""),
-                                        IconLocked = bit["display"]["icon_gray"].AsString(""),
-                                        IsHidden = bit["display"]["hidden"].AsBoolean(false),
-                                        Permission = bit["permission"].AsInteger(0),
-                                    });
+                                        continue;
+                                    }
+
+                                    foreach (var bit in bits.Children)
+                                    {
+                                        string id = bit["name"].AsString("");
+                                        string name = GetLocalizedString(bit["display"]["name"], currentLanguage, id);
+                                        string desc = GetLocalizedString(bit["display"]["desc"], currentLanguage, "");
+
+                                        this._AchievementDefinitions.Add(new()
+                                        {
+                                            Id = id,
+                                            Name = name,
+                                            Description = desc,
+                                            IconNormal = bit["display"]["icon"].AsString(""),
+                                            IconLocked = bit["display"]["icon_gray"].AsString(""),
+                                            IsHidden = bit["display"]["hidden"].AsBoolean(false),
+                                            Permission = bit["permission"].AsInteger(0),
+                                        });
+                                    }
                                 }
                             }
+
+                            break;
                         }
 
-                        break;
-                    }
-
                     default:
-                    {
-                        throw new InvalidOperationException("invalid stat type");
-                    }
+                        {
+                            throw new InvalidOperationException("invalid stat type");
+                        }
                 }
             }
 
@@ -432,6 +433,11 @@ namespace SAM.Game
             bool wantLocked = this._DisplayLockedOnlyButton.Checked == true;
             bool wantUnlocked = this._DisplayUnlockedOnlyButton.Checked == true;
 
+            if (this._SteamClient.SteamUserStats.RequestGlobalAchievementPercentages())
+            {
+                
+            }
+
             foreach (var def in this._AchievementDefinitions)
             {
                 if (string.IsNullOrEmpty(def.Id) == true)
@@ -466,6 +472,8 @@ namespace SAM.Game
                     }
                 }
 
+                _SteamClient.SteamUserStats.GetAchievementAchievedPercent(def.Id, out float percentage);
+
                 Stats.AchievementInfo info = new()
                 {
                     Id = def.Id,
@@ -478,6 +486,7 @@ namespace SAM.Game
                     Permission = def.Permission,
                     Name = def.Name,
                     Description = def.Description,
+                    Progress = percentage
                 };
 
                 ListViewItem item = new()
@@ -503,6 +512,8 @@ namespace SAM.Game
                 item.SubItems.Add(info.UnlockTime.HasValue == true
                     ? info.UnlockTime.Value.ToString()
                     : "");
+
+                item.SubItems.Add((percentage > 0 ? $"{percentage}%" : "Error").ToString());
 
                 info.ImageIndex = 0;
 
