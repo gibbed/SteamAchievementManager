@@ -359,6 +359,8 @@ namespace SAM.Game
                 return;
             }
 
+            this._SteamClient.SteamUserStats.RequestGlobalAchievementPercentages();
+
             try
             {
                 this.GetAchievements();
@@ -431,9 +433,7 @@ namespace SAM.Game
 
             bool wantLocked = this._DisplayLockedOnlyButton.Checked == true;
             bool wantUnlocked = this._DisplayUnlockedOnlyButton.Checked == true;
-
-            this._SteamClient.SteamUserStats.RequestGlobalAchievementPercentages();
-            
+                        
             foreach (var def in this._AchievementDefinitions)
             {
                 if (string.IsNullOrEmpty(def.Id) == true)
@@ -461,8 +461,12 @@ namespace SAM.Game
 
                 if (textSearch != null)
                 {
-                    if (def.Name.IndexOf(textSearch, StringComparison.OrdinalIgnoreCase) < 0 ||
-                        def.Description.IndexOf(textSearch, StringComparison.OrdinalIgnoreCase) < 0)
+                    string[] searchTerms = textSearch.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+                    bool nameMatches = searchTerms.All(term => def.Name.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0);
+                    bool descriptionMatches = searchTerms.All(term => def.Description.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0);
+
+                    if (!nameMatches && !descriptionMatches)
                     {
                         continue;
                     }
