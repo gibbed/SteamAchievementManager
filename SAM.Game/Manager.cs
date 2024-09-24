@@ -20,6 +20,7 @@
  *    distribution.
  */
 
+using SAM.API;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -97,6 +98,8 @@ namespace SAM.Game
             {
                 base.Text += " | " + this._GameId.ToString(CultureInfo.InvariantCulture);
             }
+
+            this._SteamClient.SteamUserStats.RequestGlobalAchievementPercentages();
 
             this._UserStatsReceivedCallback = client.CreateAndRegisterCallback<API.Callbacks.UserStatsReceived>();
             this._UserStatsReceivedCallback.OnRun += this.OnUserStatsReceived;
@@ -431,7 +434,7 @@ namespace SAM.Game
 
             bool wantLocked = this._DisplayLockedOnlyButton.Checked == true;
             bool wantUnlocked = this._DisplayUnlockedOnlyButton.Checked == true;
-
+                        
             foreach (var def in this._AchievementDefinitions)
             {
                 if (string.IsNullOrEmpty(def.Id) == true)
@@ -459,12 +462,18 @@ namespace SAM.Game
 
                 if (textSearch != null)
                 {
-                    if (def.Name.IndexOf(textSearch, StringComparison.OrdinalIgnoreCase) < 0 ||
-                        def.Description.IndexOf(textSearch, StringComparison.OrdinalIgnoreCase) < 0)
+                    string[] searchTerms = textSearch.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+                    bool nameMatches = searchTerms.All(term => def.Name.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0);
+                    bool descriptionMatches = searchTerms.All(term => def.Description.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0);
+
+                    if (!nameMatches && !descriptionMatches)
                     {
                         continue;
                     }
-                }
+                }                
+
+                _SteamClient.SteamUserStats.GetAchievementAchievedPercent(def.Id, out float percentage);
 
                 Stats.AchievementInfo info = new()
                 {
@@ -478,6 +487,7 @@ namespace SAM.Game
                     Permission = def.Permission,
                     Name = def.Name,
                     Description = def.Description,
+                    Progress = percentage,
                 };
 
                 ListViewItem item = new()
@@ -503,6 +513,8 @@ namespace SAM.Game
                 item.SubItems.Add(info.UnlockTime.HasValue == true
                     ? info.UnlockTime.Value.ToString()
                     : "");
+
+                item.SubItems.Add((percentage > 0 ? $"{percentage}%" : "Error").ToString());
 
                 info.ImageIndex = 0;
 

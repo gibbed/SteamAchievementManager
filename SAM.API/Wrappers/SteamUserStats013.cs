@@ -160,6 +160,32 @@ namespace SAM.API.Wrappers
         }
         #endregion
 
+        #region GetGlobalAchievementPercantage
+        [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
+        private delegate bool NativeRequestGlobalAchievementPercentages(IntPtr self);
+
+        public bool RequestGlobalAchievementPercentages()
+        {
+            var call = this.GetFunction<NativeRequestGlobalAchievementPercentages>(this.Functions.RequestGlobalAchievementPercentages);
+            return call(this.ObjectAddress);
+        }
+        #endregion
+
+        #region GetAchievementAchievedPercent
+        [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
+        private delegate bool NativeGetAchievementAchievedPercent(
+            IntPtr self,                      
+            [MarshalAs(UnmanagedType.LPStr)] string achievementName,
+            out float percent                 
+        );
+
+        public bool GetAchievementAchievedPercent(string achievementName, out float percent)
+        {
+            var call = this.GetFunction<NativeGetAchievementAchievedPercent>(this.Functions.GetAchievementAchievedPercent);
+            return call(this.ObjectAddress, achievementName, out percent);
+        }
+        #endregion
+
         #region StoreStats
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
         [return: MarshalAs(UnmanagedType.I1)]
