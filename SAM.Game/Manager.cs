@@ -20,6 +20,7 @@
  *    distribution.
  */
 
+using SAM.API;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -97,6 +98,8 @@ namespace SAM.Game
             {
                 base.Text += " | " + this._GameId.ToString(CultureInfo.InvariantCulture);
             }
+
+            this._SteamClient.SteamUserStats.RequestGlobalAchievementPercentages();
 
             this._UserStatsReceivedCallback = client.CreateAndRegisterCallback<API.Callbacks.UserStatsReceived>();
             this._UserStatsReceivedCallback.OnRun += this.OnUserStatsReceived;
@@ -358,8 +361,6 @@ namespace SAM.Game
                 this.EnableInput();
                 return;
             }
-
-            this._SteamClient.SteamUserStats.RequestGlobalAchievementPercentages();
 
             try
             {
