@@ -467,14 +467,8 @@ namespace SAM.Game
 
                 if (textSearch != null)
                 {
-                    // 首先判別 Name，因為它一定不為 null
-                    if (def.Name.IndexOf(textSearch, StringComparison.OrdinalIgnoreCase) < 0)
-                    {
-                        continue;
-                    }
-
-                    // 接著判別 Description，必須檢查是否為 null
-                    if (def.Description != null && def.Description.IndexOf(textSearch, StringComparison.OrdinalIgnoreCase) < 0)
+                    if (def.Name.IndexOf(textSearch, StringComparison.OrdinalIgnoreCase) < 0 &&
+                        (string.IsNullOrEmpty(def.Description) || def.Description.IndexOf(textSearch, StringComparison.OrdinalIgnoreCase) < 0))
                     {
                         continue;
                     }
