@@ -226,8 +226,16 @@ namespace SAM.Game
             {
                 return false;
             }
-
-            var currentLanguage = this._SteamClient.SteamApps008.GetCurrentGameLanguage();
+            var currentLanguage = "";
+            if (_LanguageComboBox.Text.Length == 0)
+            {
+                currentLanguage = this._SteamClient.SteamApps008.GetCurrentGameLanguage();
+                _LanguageComboBox.Text = currentLanguage;
+            }
+            else
+            {
+                currentLanguage = _LanguageComboBox.Text;
+            }
 
             this._AchievementDefinitions.Clear();
             this._StatDefinitions.Clear();
@@ -459,8 +467,14 @@ namespace SAM.Game
 
                 if (textSearch != null)
                 {
-                    if (def.Name.IndexOf(textSearch, StringComparison.OrdinalIgnoreCase) < 0 ||
-                        def.Description.IndexOf(textSearch, StringComparison.OrdinalIgnoreCase) < 0)
+                    // 首先判別 Name，因為它一定不為 null
+                    if (def.Name.IndexOf(textSearch, StringComparison.OrdinalIgnoreCase) < 0)
+                    {
+                        continue;
+                    }
+
+                    // 接著判別 Description，必須檢查是否為 null
+                    if (def.Description != null && def.Description.IndexOf(textSearch, StringComparison.OrdinalIgnoreCase) < 0)
                     {
                         continue;
                     }

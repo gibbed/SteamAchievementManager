@@ -339,9 +339,20 @@ namespace SAM.Picker
         {
             string candidate;
 
-            var currentLanguage = this._SteamClient.SteamApps008.GetCurrentGameLanguage();
+            var currentLanguage = "";
+
+            if (_LanguageComboBox.Text.Length == 0 )
+            {
+                currentLanguage = this._SteamClient.SteamApps008.GetCurrentGameLanguage();
+                _LanguageComboBox.Text = currentLanguage;
+            }
+            else
+            {
+                currentLanguage = _LanguageComboBox.Text;                
+            }
 
             candidate = this._SteamClient.SteamApps001.GetAppData(id, _($"small_capsule/{currentLanguage}"));
+
             if (string.IsNullOrEmpty(candidate) == false)
             {
                 return _($"https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/{id}/{candidate}");
