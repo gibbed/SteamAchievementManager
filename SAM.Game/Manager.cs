@@ -30,6 +30,7 @@ using System.Linq;
 using System.Net;
 using System.Windows.Forms;
 using static SAM.Game.InvariantShorthand;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using APITypes = SAM.API.Types;
 
 namespace SAM.Game
@@ -51,6 +52,8 @@ namespace SAM.Game
         private readonly API.Callbacks.UserStatsReceived _UserStatsReceivedCallback;
 
         //private API.Callback<APITypes.UserStatsStored> UserStatsStoredCallback;
+
+        private Dictionary<string, int> achievementCounters = new Dictionary<string, int>();
 
         public Manager(long gameId, API.Client client)
         {
@@ -104,6 +107,7 @@ namespace SAM.Game
             //this.UserStatsStoredCallback = new API.Callback(1102, new API.Callback.CallbackFunction(this.OnUserStatsStored));
 
             this.RefreshStats();
+            this.UpdateButtonText();
         }
 
         private void AddAchievementIcon(Stats.AchievementInfo info, Image icon)
@@ -399,6 +403,17 @@ namespace SAM.Game
                 return;
             }
 
+            // Synchronize ListView with achievementCounters
+            foreach (ListViewItem item in _AchievementListView.Items)
+            {
+                string key = item.SubItems[3].Text; // 3rd column is Key
+
+                if (achievementCounters.TryGetValue(key, out int counter))
+                {
+                    item.SubItems[4].Text = counter.ToString(); // Update the Counter column
+                }
+            }
+
             this._GameStatusLabel.Text = $"Retrieved {this._AchievementListView.Items.Count} achievements and {this._StatisticsDataGridView.Rows.Count} statistics.";
             this.EnableInput();
         }
@@ -512,6 +527,11 @@ namespace SAM.Game
                     ? info.UnlockTime.Value.ToString()
                     : "");
 
+                //----------------
+                item.SubItems.Add(info.Id);
+                item.SubItems.Add("-1");
+                //----------------
+
                 info.ImageIndex = 0;
 
                 this.AddAchievementToIconQueue(info, false);
@@ -589,7 +609,7 @@ namespace SAM.Game
             }
         }
 
-        private int StoreAchievements()
+        private int StoreAchievements(bool silent = false)
         {
             if (this._AchievementListView.Items.Count == 0)
             {
@@ -618,12 +638,15 @@ namespace SAM.Game
             {
                 if (this._SteamClient.SteamUserStats.SetAchievement(info.Id, info.IsAchieved) == false)
                 {
-                    MessageBox.Show(
-                        this,
-                        $"An error occurred while setting the state for {info.Id}, aborting store.",
-                        "Error",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Error);
+                    if (!silent)
+                    {
+                        MessageBox.Show(
+                            this,
+                            $"An error occurred while setting the state for {info.Id}, aborting store.",
+                            "Error",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
+                    }
                     return -1;
                 }
             }
@@ -631,7 +654,7 @@ namespace SAM.Game
             return achievements.Count;
         }
 
-        private int StoreStatistics()
+        private int StoreStatistics(bool silent = false)
         {
             if (this._Statistics.Count == 0)
             {
@@ -652,12 +675,15 @@ namespace SAM.Game
                         intStat.Id,
                         intStat.IntValue) == false)
                     {
-                        MessageBox.Show(
-                            this,
-                            $"An error occurred while setting the value for {stat.Id}, aborting store.",
-                            "Error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
+                        if (!silent)
+                        {
+                            MessageBox.Show(
+                                this,
+                                $"An error occurred while setting the value for {stat.Id}, aborting store.",
+                                "Error",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+                        }
                         return -1;
                     }
                 }
@@ -667,12 +693,15 @@ namespace SAM.Game
                         floatStat.Id,
                         floatStat.FloatValue) == false)
                     {
-                        MessageBox.Show(
-                            this,
-                            $"An error occurred while setting the value for {stat.Id}, aborting store.",
-                            "Error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
+                        if (!silent)
+                        {
+                            MessageBox.Show(
+                                this,
+                                $"An error occurred while setting the value for {stat.Id}, aborting store.",
+                                "Error",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+                        }
                         return -1;
                     }
                 }
@@ -748,36 +777,54 @@ namespace SAM.Game
 
             return true;
         }
-
-        private void OnStore(object sender, EventArgs e)
+        private void PerformStore(bool silent = false)
         {
-            int achievements = this.StoreAchievements();
+            int achievements = this.StoreAchievements(silent);
             if (achievements < 0)
             {
-                this.RefreshStats();
+                if (!silent)
+                {
+                    this.RefreshStats();
+                }
                 return;
             }
 
-            int stats = this.StoreStatistics();
+            int stats = this.StoreStatistics(silent);
             if (stats < 0)
             {
-                this.RefreshStats();
+                if (!silent)
+                {
+                    this.RefreshStats();
+                }
                 return;
             }
 
             if (this.Store() == false)
             {
-                this.RefreshStats();
+                if (!silent)
+                {
+                    this.RefreshStats();
+                }
                 return;
             }
 
-            MessageBox.Show(
-                this,
-                $"Stored {achievements} achievements and {stats} statistics.",
-                "Information",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
-            this.RefreshStats();
+            if (!silent)
+            {
+                MessageBox.Show(
+                    this,
+                    $"Stored {achievements} achievements and {stats} statistics.",
+                    "Information",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            else
+            {
+                this.RefreshStats(); // Silent mode still refreshes stats
+            }
+        }
+        private void OnStore(object sender, EventArgs e)
+        {
+            PerformStore(false);
         }
 
         private void OnStatDataError(object sender, DataGridViewDataErrorEventArgs e)
@@ -901,5 +948,125 @@ namespace SAM.Game
         {
             this.GetAchievements();
         }
+
+        private void _TimeNowtimer_Tick(object sender, EventArgs e)
+        {
+            _TimeNowLabel.Text = "   Cur. Time: " + DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
+        }
+
+        private void _AddTimerTextBox_TextChanged(object sender, EventArgs e)
+        {
+            // 6 digits
+            if (_AddTimerTextBox.Text.Length > 6)
+            {
+                _AddTimerTextBox.Text = _AddTimerTextBox.Text.Substring(0, 6);
+                _AddTimerTextBox.SelectionStart = _AddTimerTextBox.Text.Length; // move cursor to last
+            }
+        }
+
+        private void _AddTimerTextBox_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            // number char only
+            if (!char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void _TimerSwitchButton_Click(object sender, EventArgs e)
+        {
+            // Toggle the timer's Enabled state
+            _SumbitAchievementsTimer.Enabled = !_SumbitAchievementsTimer.Enabled;
+
+            // Update the button's text to reflect the new state
+            UpdateButtonText();
+        }
+
+        private void _AddTimerButton_Click(object sender, EventArgs e)
+        {
+            // Ensure the value in _AddTimerTextBox is a valid number
+            if (!int.TryParse(_AddTimerTextBox.Text, out int timerValue))
+            {
+                MessageBox.Show("Please enter a valid number!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            // Check if any rows are selected in the ListView
+            if (_AchievementListView.SelectedItems.Count == 0)
+            {
+                MessageBox.Show("Please select at least one row!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Update the fifth column of the selected rows with the specified value
+            foreach (ListViewItem item in _AchievementListView.SelectedItems)
+            {
+                item.SubItems[4].Text = timerValue.ToString(); // Fifth column (Display Index 4)
+            }
+
+            MessageBox.Show("Selected rows have been successfully updated!", "Completed", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void UpdateButtonText()
+        {
+            // Change the button's text based on the timer's current state
+            if (_SumbitAchievementsTimer.Enabled)
+            {
+                _TimerSwitchButton.Text = "Disable Timer";
+            }
+            else
+            {
+                _TimerSwitchButton.Text = "Enable Timer";
+            }
+        }
+
+        // Method to trigger the _StoreButton's Click event
+
+        private void _SumbitAchievementsTimer_Tick(object sender, EventArgs e)
+        {
+            bool shouldTriggerStore = false; // Flag to determine if we need to trigger the store button
+            int seconds = DateTime.Now.Second;
+
+            _TimerLabel.Text = (seconds % 2 == 0) ? "*" : "-";
+
+            foreach (ListViewItem item in _AchievementListView.Items)
+            {
+                // Get the Key (3rd column) and Counter (4th column)
+                string key = item.SubItems[3].Text; // 3rd column is Key
+                string valueText = item.SubItems[4].Text; // 4th column is Counter
+                //_TimerLabel.Text = $"{key} {valueText}";
+
+                // Check if the value is a number and not "-1"
+                if (int.TryParse(valueText, out int counter) && counter > 0)
+                {
+                    // Decrease the counter by 1
+                    counter -= 1;
+
+                    // Update the Counter column in ListView
+                    item.SubItems[4].Text = counter.ToString();
+
+                    // Update the Dictionary
+                    achievementCounters[key] = counter;
+
+                    // If the counter becomes 0, check the row and set the flag
+                    if (counter == 0)
+                    {
+                        item.Checked = true; // Check the row
+                        shouldTriggerStore = true; // Set the flag to trigger the store action
+
+                        // Reset the counter to -1 to prevent multiple triggers
+                        item.SubItems[4].Text = "-1000";
+                        achievementCounters[key] = -1; // Update the dictionary as well
+                    }
+                }
+            }
+
+            // Trigger the store process only once if necessary
+            if (shouldTriggerStore)
+            {
+                PerformStore(true); // Silent mode
+            }
+        }
+
     }
 }
