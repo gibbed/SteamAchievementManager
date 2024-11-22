@@ -1,19 +1,22 @@
-# Steam Achievement Manager
+### 📝 **Disclaimer**  
 
-Steam Achievement Manager (SAM) is a lightweight, portable application used to manage achievements and statistics in the popular PC gaming platform Steam. This application requires the [Steam client](https://store.steampowered.com/about/), a Steam account and network access. Steam must be running and the user must be logged in.
+1. **Source**  
+This project is a fork of [gibbed/SteamAchievementManager](https://github.com/gibbed/SteamAchievementManager). Many thanks to the original contributors for their excellent work on the foundational code.
 
-This is the code for SAM. The closed-source version originally released in 2008, last major release in 2011, and last updated in 2013 (a hotfix).
+2. **Relationship with the Original Project**  
+This is an **independently maintained fork** and is **not officially affiliated** with the original project.  
+I do not intend to submit any changes or pull requests back to the original repository. This fork may include features and modifications that are not present in the original project.
 
-The code is being made available so that those interested can do as they like with it.
+3. **Purpose**  
+The primary goal of this fork is to add features and functionalities that I personally find useful or interesting.  
+These changes are tailored to my own preferences and use cases.
 
-There are some changes to the code since the last closed-source release:
-- General code maintenance to bring it into a more modern state.
-- Icons have been replaced with ones from the Fugue Icons set.
-- Version has been bumped to 7.0.x.x to indicate the open-source release.
+4. **License and Copyright**  
+This project follows the same license as the original repository (e.g., MIT, GPL, etc.). For further details, please refer to the [LICENSE](LICENSE) file.  
 
-[Download latest release](https://github.com/gibbed/SteamAchievementManager/releases/latest).
-
-[![Build status](https://ci.appveyor.com/api/projects/status/00vic6jliar6j0ol/branch/master?svg=true)](https://ci.appveyor.com/project/gibbed/steamachievementmanager/branch/master)
+5. **Disclaimer**  
+This software is provided "as-is" for educational and personal use only.  
+It is the user's responsibility to comply with any applicable laws and terms of service.
 
 ## Attribution
 
