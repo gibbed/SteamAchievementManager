@@ -1004,7 +1004,7 @@ namespace SAM.Game
                 item.SubItems[4].Text = timerValue.ToString(); // Fifth column (Display Index 4)
             }
 
-            MessageBox.Show("Selected rows have been successfully updated!", "Completed", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            //MessageBox.Show("Selected rows have been successfully updated!", "Completed", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void UpdateButtonText()
@@ -1022,49 +1022,59 @@ namespace SAM.Game
 
         // Method to trigger the _StoreButton's Click event
 
+        private void UpdateAchievementItem(ListViewItem item, ref bool shouldTriggerStore)
+        {
+            // Get the Key (3rd column) and Counter (4th column)
+            string key = item.SubItems[3].Text; // 3rd column is Key
+
+            string valueText = item.SubItems[4].Text; // 4th column is Counter
+
+            if (int.TryParse(valueText, out int counter) && counter > 0)
+            {
+                counter -= 1;
+
+                // Update the Counter column in ListView
+                item.SubItems[4].Text = counter.ToString();
+
+                // Update the Dictionary
+                achievementCounters[key] = counter;
+
+                // If the counter becomes 0, check the row and set the flag
+                if (counter == 0)
+                {
+                    item.Checked = true; // Check the row
+                    shouldTriggerStore = true; // Set the flag to trigger the store action
+
+                    item.SubItems[4].Text = "-1000";
+                    achievementCounters[key] = -1; // Update the dictionary as well
+                }
+            }
+        }
+
         private void _SumbitAchievementsTimer_Tick(object sender, EventArgs e)
         {
-            bool shouldTriggerStore = false; // Flag to determine if we need to trigger the store button
+            bool shouldTriggerStore = false; // Flag to determine if we need to trigger the commit button
             int seconds = DateTime.Now.Second;
 
             _TimerLabel.Text = (seconds % 2 == 0) ? "*" : "-";
 
-            foreach (ListViewItem item in _AchievementListView.Items)
+            _AchievementListView.BeginUpdate();
+            try
             {
-                // Get the Key (3rd column) and Counter (4th column)
-                string key = item.SubItems[3].Text; // 3rd column is Key
-                string valueText = item.SubItems[4].Text; // 4th column is Counter
-                //_TimerLabel.Text = $"{key} {valueText}";
-
-                // Check if the value is a number and not "-1"
-                if (int.TryParse(valueText, out int counter) && counter > 0)
+                foreach (ListViewItem item in _AchievementListView.Items)
                 {
-                    // Decrease the counter by 1
-                    counter -= 1;
+                    UpdateAchievementItem(item, ref shouldTriggerStore);
+                }
 
-                    // Update the Counter column in ListView
-                    item.SubItems[4].Text = counter.ToString();
-
-                    // Update the Dictionary
-                    achievementCounters[key] = counter;
-
-                    // If the counter becomes 0, check the row and set the flag
-                    if (counter == 0)
-                    {
-                        item.Checked = true; // Check the row
-                        shouldTriggerStore = true; // Set the flag to trigger the store action
-
-                        // Reset the counter to -1 to prevent multiple triggers
-                        item.SubItems[4].Text = "-1000";
-                        achievementCounters[key] = -1; // Update the dictionary as well
-                    }
+                // Trigger the store process only once if necessary
+                if (shouldTriggerStore)
+                {
+                    PerformStore(true); // Silent mode
                 }
             }
-
-            // Trigger the store process only once if necessary
-            if (shouldTriggerStore)
+            finally
             {
-                PerformStore(true); // Silent mode
+                _AchievementListView.EndUpdate();
             }
         }
 

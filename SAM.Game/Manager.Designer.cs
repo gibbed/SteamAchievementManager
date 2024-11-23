@@ -46,6 +46,12 @@
             this._CallbackTimer = new System.Windows.Forms.Timer(this.components);
             this._MainTabControl = new System.Windows.Forms.TabControl();
             this._AchievementsTabPage = new System.Windows.Forms.TabPage();
+            this._AchievementListView = new SAM.Game.DoubleBufferedListView();
+            this._AchievementNameColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this._AchievementDescriptionColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this._AchievementUnlockTimeColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this._AchievementIDColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this._AchievementTimerColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this._AchievementsToolStrip = new System.Windows.Forms.ToolStrip();
             this._LockAllButton = new System.Windows.Forms.ToolStripButton();
             this._InvertAllButton = new System.Windows.Forms.ToolStripButton();
@@ -66,12 +72,6 @@
             this._StatisticsDataGridView = new System.Windows.Forms.DataGridView();
             this._TimeNowtimer = new System.Windows.Forms.Timer(this.components);
             this._SumbitAchievementsTimer = new System.Windows.Forms.Timer(this.components);
-            this._AchievementListView = new SAM.Game.DoubleBufferedListView();
-            this._AchievementNameColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this._AchievementDescriptionColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this._AchievementUnlockTimeColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this._AchievementIDColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this._AchievementTimerColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             _ToolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             _ToolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this._MainToolStrip.SuspendLayout();
@@ -151,8 +151,8 @@
             // _TimerLabel
             // 
             this._TimerLabel.Name = "_TimerLabel";
-            this._TimerLabel.Size = new System.Drawing.Size(63, 39);
-            this._TimerLabel.Text = "000";
+            this._TimerLabel.Size = new System.Drawing.Size(27, 39);
+            this._TimerLabel.Text = "-";
             // 
             // _AchievementImageList
             // 
@@ -224,6 +224,60 @@
             this._AchievementsTabPage.TabIndex = 0;
             this._AchievementsTabPage.Text = "Achievements";
             this._AchievementsTabPage.UseVisualStyleBackColor = true;
+            // 
+            // _AchievementListView
+            // 
+            this._AchievementListView.Activation = System.Windows.Forms.ItemActivation.OneClick;
+            this._AchievementListView.BackColor = System.Drawing.Color.Black;
+            this._AchievementListView.BackgroundImageTiled = true;
+            this._AchievementListView.CheckBoxes = true;
+            this._AchievementListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this._AchievementNameColumnHeader,
+            this._AchievementDescriptionColumnHeader,
+            this._AchievementUnlockTimeColumnHeader,
+            this._AchievementIDColumnHeader,
+            this._AchievementTimerColumnHeader});
+            this._AchievementListView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this._AchievementListView.ForeColor = System.Drawing.Color.White;
+            this._AchievementListView.FullRowSelect = true;
+            this._AchievementListView.GridLines = true;
+            this._AchievementListView.HideSelection = false;
+            this._AchievementListView.LargeImageList = this._AchievementImageList;
+            this._AchievementListView.Location = new System.Drawing.Point(8, 51);
+            this._AchievementListView.Margin = new System.Windows.Forms.Padding(8, 6, 8, 6);
+            this._AchievementListView.Name = "_AchievementListView";
+            this._AchievementListView.Size = new System.Drawing.Size(1600, 572);
+            this._AchievementListView.SmallImageList = this._AchievementImageList;
+            this._AchievementListView.Sorting = System.Windows.Forms.SortOrder.Ascending;
+            this._AchievementListView.TabIndex = 4;
+            this._AchievementListView.UseCompatibleStateImageBehavior = false;
+            this._AchievementListView.View = System.Windows.Forms.View.Details;
+            this._AchievementListView.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.OnCheckAchievement);
+            // 
+            // _AchievementNameColumnHeader
+            // 
+            this._AchievementNameColumnHeader.Text = "Name";
+            this._AchievementNameColumnHeader.Width = 200;
+            // 
+            // _AchievementDescriptionColumnHeader
+            // 
+            this._AchievementDescriptionColumnHeader.Text = "Description";
+            this._AchievementDescriptionColumnHeader.Width = 300;
+            // 
+            // _AchievementUnlockTimeColumnHeader
+            // 
+            this._AchievementUnlockTimeColumnHeader.Text = "Unlock Time";
+            this._AchievementUnlockTimeColumnHeader.Width = 160;
+            // 
+            // _AchievementIDColumnHeader
+            // 
+            this._AchievementIDColumnHeader.Text = "ID";
+            this._AchievementIDColumnHeader.Width = 5;
+            // 
+            // _AchievementTimerColumnHeader
+            // 
+            this._AchievementTimerColumnHeader.Text = "Commit Timer";
+            this._AchievementTimerColumnHeader.Width = 208;
             // 
             // _AchievementsToolStrip
             // 
@@ -459,60 +513,6 @@
             // 
             this._SumbitAchievementsTimer.Interval = 1000;
             this._SumbitAchievementsTimer.Tick += new System.EventHandler(this._SumbitAchievementsTimer_Tick);
-            // 
-            // _AchievementListView
-            // 
-            this._AchievementListView.Activation = System.Windows.Forms.ItemActivation.OneClick;
-            this._AchievementListView.BackColor = System.Drawing.Color.Black;
-            this._AchievementListView.BackgroundImageTiled = true;
-            this._AchievementListView.CheckBoxes = true;
-            this._AchievementListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this._AchievementNameColumnHeader,
-            this._AchievementDescriptionColumnHeader,
-            this._AchievementUnlockTimeColumnHeader,
-            this._AchievementIDColumnHeader,
-            this._AchievementTimerColumnHeader});
-            this._AchievementListView.Dock = System.Windows.Forms.DockStyle.Fill;
-            this._AchievementListView.ForeColor = System.Drawing.Color.White;
-            this._AchievementListView.FullRowSelect = true;
-            this._AchievementListView.GridLines = true;
-            this._AchievementListView.HideSelection = false;
-            this._AchievementListView.LargeImageList = this._AchievementImageList;
-            this._AchievementListView.Location = new System.Drawing.Point(8, 51);
-            this._AchievementListView.Margin = new System.Windows.Forms.Padding(8, 6, 8, 6);
-            this._AchievementListView.Name = "_AchievementListView";
-            this._AchievementListView.Size = new System.Drawing.Size(1600, 572);
-            this._AchievementListView.SmallImageList = this._AchievementImageList;
-            this._AchievementListView.Sorting = System.Windows.Forms.SortOrder.Ascending;
-            this._AchievementListView.TabIndex = 4;
-            this._AchievementListView.UseCompatibleStateImageBehavior = false;
-            this._AchievementListView.View = System.Windows.Forms.View.Details;
-            this._AchievementListView.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.OnCheckAchievement);
-            // 
-            // _AchievementNameColumnHeader
-            // 
-            this._AchievementNameColumnHeader.Text = "Name";
-            this._AchievementNameColumnHeader.Width = 200;
-            // 
-            // _AchievementDescriptionColumnHeader
-            // 
-            this._AchievementDescriptionColumnHeader.Text = "Description";
-            this._AchievementDescriptionColumnHeader.Width = 300;
-            // 
-            // _AchievementUnlockTimeColumnHeader
-            // 
-            this._AchievementUnlockTimeColumnHeader.Text = "Unlock Time";
-            this._AchievementUnlockTimeColumnHeader.Width = 160;
-            // 
-            // _AchievementIDColumnHeader
-            // 
-            this._AchievementIDColumnHeader.Text = "ID";
-            this._AchievementIDColumnHeader.Width = 5;
-            // 
-            // _AchievementTimerColumnHeader
-            // 
-            this._AchievementTimerColumnHeader.Text = "Commit Timer";
-            this._AchievementTimerColumnHeader.Width = 208;
             // 
             // Manager
             // 
