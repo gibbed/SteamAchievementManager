@@ -1,7 +1,7 @@
 ### 📝 **Disclaimer**  
 
 1. **Source**  
-This project is a fork of [gibbed/SteamAchievementManager](https://github.com/gibbed/SteamAchievementManager). Many thanks to the original contributors for their excellent work on the foundational code.
+This is a fork of [gibbed/SteamAchievementManager](https://github.com/gibbed/SteamAchievementManager). Many thanks to the original contributors for their excellent work on the foundational code.
 
 2. **Relationship with the Original Project**  
 This is an **independently maintained fork** and is **not officially affiliated** with the original project.  
