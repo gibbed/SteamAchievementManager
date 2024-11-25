@@ -953,21 +953,37 @@ namespace SAM.Game
         {
             _TimeNowLabel.Text = "   Cur. Time: " + DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
         }
-
+        private bool IsInteger(string text)
+        {
+            int result;
+            return int.TryParse(text, out result);
+        }
         private void _AddTimerTextBox_TextChanged(object sender, EventArgs e)
         {
-            // 6 digits
             if (_AddTimerTextBox.Text.Length > 6)
-            {
                 _AddTimerTextBox.Text = _AddTimerTextBox.Text.Substring(0, 6);
-                _AddTimerTextBox.SelectionStart = _AddTimerTextBox.Text.Length; // move cursor to last
+
+            if (_AddTimerTextBox.Text != "-" && _AddTimerTextBox.Text != "" && !IsInteger(_AddTimerTextBox.Text))
+            {
+                _AddTimerTextBox.Text = "-1";
+                _AddTimerTextBox.SelectionStart = _AddTimerTextBox.Text.Length;
             }
         }
 
         private void _AddTimerTextBox_KeyPress(object sender, KeyPressEventArgs e)
         {
-            // number char only
-            if (!char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar))
+            if (e.KeyChar == '-')
+            {
+                if (_AddTimerTextBox.SelectionStart == 0 && !_AddTimerTextBox.Text.Contains("-"))
+                {
+                    e.Handled = false;
+                }
+                else
+                {
+                    e.Handled = true;
+                }
+            }
+            else if (!char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar))
             {
                 e.Handled = true;
             }
@@ -1058,9 +1074,9 @@ namespace SAM.Game
 
             _TimerLabel.Text = (seconds % 2 == 0) ? "*" : "-";
 
-            _AchievementListView.BeginUpdate();
             try
             {
+                _AchievementListView.BeginUpdate();
                 foreach (ListViewItem item in _AchievementListView.Items)
                 {
                     UpdateAchievementItem(item, ref shouldTriggerStore);

@@ -106,7 +106,7 @@
             this._MainToolStrip.Location = new System.Drawing.Point(0, 0);
             this._MainToolStrip.Name = "_MainToolStrip";
             this._MainToolStrip.Padding = new System.Windows.Forms.Padding(0, 0, 5, 0);
-            this._MainToolStrip.Size = new System.Drawing.Size(1661, 45);
+            this._MainToolStrip.Size = new System.Drawing.Size(1778, 45);
             this._MainToolStrip.TabIndex = 1;
             // 
             // _StoreButton
@@ -170,7 +170,7 @@
             this._MainStatusStrip.Location = new System.Drawing.Point(0, 762);
             this._MainStatusStrip.Name = "_MainStatusStrip";
             this._MainStatusStrip.Padding = new System.Windows.Forms.Padding(3, 0, 33, 0);
-            this._MainStatusStrip.Size = new System.Drawing.Size(1661, 22);
+            this._MainStatusStrip.Size = new System.Drawing.Size(1778, 22);
             this._MainStatusStrip.TabIndex = 4;
             // 
             // _CountryStatusLabel
@@ -181,7 +181,7 @@
             // _GameStatusLabel
             // 
             this._GameStatusLabel.Name = "_GameStatusLabel";
-            this._GameStatusLabel.Size = new System.Drawing.Size(1625, 13);
+            this._GameStatusLabel.Size = new System.Drawing.Size(1742, 13);
             this._GameStatusLabel.Spring = true;
             this._GameStatusLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
@@ -209,7 +209,7 @@
             this._MainTabControl.Margin = new System.Windows.Forms.Padding(8, 6, 8, 6);
             this._MainTabControl.Name = "_MainTabControl";
             this._MainTabControl.SelectedIndex = 0;
-            this._MainTabControl.Size = new System.Drawing.Size(1624, 669);
+            this._MainTabControl.Size = new System.Drawing.Size(1741, 669);
             this._MainTabControl.TabIndex = 5;
             // 
             // _AchievementsTabPage
@@ -220,7 +220,7 @@
             this._AchievementsTabPage.Margin = new System.Windows.Forms.Padding(8, 6, 8, 6);
             this._AchievementsTabPage.Name = "_AchievementsTabPage";
             this._AchievementsTabPage.Padding = new System.Windows.Forms.Padding(8, 6, 8, 6);
-            this._AchievementsTabPage.Size = new System.Drawing.Size(1616, 629);
+            this._AchievementsTabPage.Size = new System.Drawing.Size(1733, 629);
             this._AchievementsTabPage.TabIndex = 0;
             this._AchievementsTabPage.Text = "Achievements";
             this._AchievementsTabPage.UseVisualStyleBackColor = true;
@@ -246,7 +246,7 @@
             this._AchievementListView.Location = new System.Drawing.Point(8, 51);
             this._AchievementListView.Margin = new System.Windows.Forms.Padding(8, 6, 8, 6);
             this._AchievementListView.Name = "_AchievementListView";
-            this._AchievementListView.Size = new System.Drawing.Size(1600, 572);
+            this._AchievementListView.Size = new System.Drawing.Size(1717, 572);
             this._AchievementListView.SmallImageList = this._AchievementImageList;
             this._AchievementListView.Sorting = System.Windows.Forms.SortOrder.Ascending;
             this._AchievementListView.TabIndex = 4;
@@ -303,7 +303,7 @@
             this._AchievementsToolStrip.Location = new System.Drawing.Point(8, 6);
             this._AchievementsToolStrip.Name = "_AchievementsToolStrip";
             this._AchievementsToolStrip.Padding = new System.Windows.Forms.Padding(0, 0, 5, 0);
-            this._AchievementsToolStrip.Size = new System.Drawing.Size(1600, 45);
+            this._AchievementsToolStrip.Size = new System.Drawing.Size(1717, 45);
             this._AchievementsToolStrip.TabIndex = 5;
             // 
             // _LockAllButton
@@ -425,8 +425,8 @@
             // AddTimerLabel
             // 
             this.AddTimerLabel.Name = "AddTimerLabel";
-            this.AddTimerLabel.Size = new System.Drawing.Size(93, 39);
-            this.AddTimerLabel.Text = "Timer:";
+            this.AddTimerLabel.Size = new System.Drawing.Size(123, 39);
+            this.AddTimerLabel.Text = "Counter:";
             // 
             // _AddTimerTextBox
             // 
@@ -443,8 +443,8 @@
             this._AddTimerButton.Image = ((System.Drawing.Image)(resources.GetObject("_AddTimerButton.Image")));
             this._AddTimerButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this._AddTimerButton.Name = "_AddTimerButton";
-            this._AddTimerButton.Size = new System.Drawing.Size(146, 39);
-            this._AddTimerButton.Text = "Add timer";
+            this._AddTimerButton.Size = new System.Drawing.Size(181, 39);
+            this._AddTimerButton.Text = "Add Counter";
             this._AddTimerButton.Click += new System.EventHandler(this._AddTimerButton_Click);
             // 
             // _TimerSwitchButton
@@ -518,7 +518,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(168F, 168F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
-            this.ClientSize = new System.Drawing.Size(1661, 784);
+            this.ClientSize = new System.Drawing.Size(1778, 784);
             this.Controls.Add(this._MainToolStrip);
             this.Controls.Add(this._MainTabControl);
             this.Controls.Add(this._MainStatusStrip);
