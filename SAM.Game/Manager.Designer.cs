@@ -38,6 +38,7 @@
             this._ResetButton = new System.Windows.Forms.ToolStripButton();
             this._TimeNowLabel = new System.Windows.Forms.ToolStripLabel();
             this._TimerLabel = new System.Windows.Forms.ToolStripLabel();
+            this._autoMouseMoveButton = new System.Windows.Forms.ToolStripButton();
             this._AchievementImageList = new System.Windows.Forms.ImageList(this.components);
             this._MainStatusStrip = new System.Windows.Forms.StatusStrip();
             this._CountryStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
@@ -72,6 +73,7 @@
             this._StatisticsDataGridView = new System.Windows.Forms.DataGridView();
             this._TimeNowtimer = new System.Windows.Forms.Timer(this.components);
             this._SumbitAchievementsTimer = new System.Windows.Forms.Timer(this.components);
+            this._idleTimer = new System.Windows.Forms.Timer(this.components);
             _ToolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             _ToolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this._MainToolStrip.SuspendLayout();
@@ -102,7 +104,8 @@
             this._ReloadButton,
             this._ResetButton,
             this._TimeNowLabel,
-            this._TimerLabel});
+            this._TimerLabel,
+            this._autoMouseMoveButton});
             this._MainToolStrip.Location = new System.Drawing.Point(0, 0);
             this._MainToolStrip.Name = "_MainToolStrip";
             this._MainToolStrip.Padding = new System.Windows.Forms.Padding(0, 0, 5, 0);
@@ -153,6 +156,18 @@
             this._TimerLabel.Name = "_TimerLabel";
             this._TimerLabel.Size = new System.Drawing.Size(27, 39);
             this._TimerLabel.Text = "-";
+            // 
+            // _autoMouseMoveButton
+            // 
+            this._autoMouseMoveButton.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
+            this._autoMouseMoveButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this._autoMouseMoveButton.Image = ((System.Drawing.Image)(resources.GetObject("_autoMouseMoveButton.Image")));
+            this._autoMouseMoveButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this._autoMouseMoveButton.Name = "_autoMouseMoveButton";
+            this._autoMouseMoveButton.Size = new System.Drawing.Size(320, 39);
+            this._autoMouseMoveButton.Text = "Start Auto Mouse Move";
+            this._autoMouseMoveButton.ToolTipText = "Auto mouse movement/every 60 seconds when program in foreground";
+            this._autoMouseMoveButton.Click += new System.EventHandler(this._autoMouseMoveButton_Click);
             // 
             // _AchievementImageList
             // 
@@ -466,7 +481,7 @@
             this._StatisticsTabPage.Margin = new System.Windows.Forms.Padding(8, 6, 8, 6);
             this._StatisticsTabPage.Name = "_StatisticsTabPage";
             this._StatisticsTabPage.Padding = new System.Windows.Forms.Padding(8, 6, 8, 6);
-            this._StatisticsTabPage.Size = new System.Drawing.Size(1616, 629);
+            this._StatisticsTabPage.Size = new System.Drawing.Size(1733, 629);
             this._StatisticsTabPage.TabIndex = 1;
             this._StatisticsTabPage.Text = "Statistics";
             this._StatisticsTabPage.UseVisualStyleBackColor = true;
@@ -513,6 +528,11 @@
             // 
             this._SumbitAchievementsTimer.Interval = 1000;
             this._SumbitAchievementsTimer.Tick += new System.EventHandler(this._SumbitAchievementsTimer_Tick);
+            // 
+            // _idleTimer
+            // 
+            this._idleTimer.Interval = 60000;
+            this._idleTimer.Tick += new System.EventHandler(this._idleTimer_Tick);
             // 
             // Manager
             // 
@@ -587,5 +607,7 @@
         private System.Windows.Forms.ToolStripButton _TimerSwitchButton;
         private System.Windows.Forms.Timer _SumbitAchievementsTimer;
         private System.Windows.Forms.ToolStripLabel _TimerLabel;
+        private System.Windows.Forms.Timer _idleTimer;
+        private System.Windows.Forms.ToolStripButton _autoMouseMoveButton;
     }
 }
