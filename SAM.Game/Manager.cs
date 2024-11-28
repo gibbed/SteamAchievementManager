@@ -28,10 +28,13 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Runtime.InteropServices;
+using System.Threading;
 using System.Windows.Forms;
 using static SAM.Game.InvariantShorthand;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using APITypes = SAM.API.Types;
+
 
 namespace SAM.Game
 {
@@ -52,9 +55,40 @@ namespace SAM.Game
         private readonly API.Callbacks.UserStatsReceived _UserStatsReceivedCallback;
 
         //private API.Callback<APITypes.UserStatsStored> UserStatsStoredCallback;
-
+        // *****************************************************************
         private Dictionary<string, int> achievementCounters = new Dictionary<string, int>();
 
+        private bool _moveRight = true;
+        private POINT _lastMousePos;
+
+        [DllImport("user32.dll")]
+        static extern bool SetCursorPos(int X, int Y);
+
+        [DllImport("user32.dll")]
+        static extern bool GetCursorPos(out POINT lpPoint);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
+        public static extern void SetThreadExecutionState(ExecutionState esFlags);
+
+        [DllImport("user32.dll")]
+        static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, UIntPtr dwExtraInfo);
+
+        private const uint MOUSEEVENTF_MOVE = 0x0001;
+        private bool _isAutoMouseMoveEnabled = false;
+        [Flags]
+        public enum ExecutionState : uint
+        {
+            ES_AWAYMODE_REQUIRED = 0x00000040,
+            ES_CONTINUOUS = 0x80000000,
+            ES_DISPLAY_REQUIRED = 0x00000002,
+            ES_SYSTEM_REQUIRED = 0x00000001
+        }
+        public struct POINT
+        {
+            public int X;
+            public int Y;
+        }
+        // *****************************************************************
         public Manager(long gameId, API.Client client)
         {
             this.InitializeComponent();
@@ -953,21 +987,37 @@ namespace SAM.Game
         {
             _TimeNowLabel.Text = "   Cur. Time: " + DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
         }
-
+        private bool IsInteger(string text)
+        {
+            int result;
+            return int.TryParse(text, out result);
+        }
         private void _AddTimerTextBox_TextChanged(object sender, EventArgs e)
         {
-            // 6 digits
             if (_AddTimerTextBox.Text.Length > 6)
-            {
                 _AddTimerTextBox.Text = _AddTimerTextBox.Text.Substring(0, 6);
-                _AddTimerTextBox.SelectionStart = _AddTimerTextBox.Text.Length; // move cursor to last
+
+            if (_AddTimerTextBox.Text != "-" && _AddTimerTextBox.Text != "" && !IsInteger(_AddTimerTextBox.Text))
+            {
+                _AddTimerTextBox.Text = "-1";
+                _AddTimerTextBox.SelectionStart = _AddTimerTextBox.Text.Length;
             }
         }
 
         private void _AddTimerTextBox_KeyPress(object sender, KeyPressEventArgs e)
         {
-            // number char only
-            if (!char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar))
+            if (e.KeyChar == '-')
+            {
+                if (_AddTimerTextBox.SelectionStart == 0 && !_AddTimerTextBox.Text.Contains("-"))
+                {
+                    e.Handled = false;
+                }
+                else
+                {
+                    e.Handled = true;
+                }
+            }
+            else if (!char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar))
             {
                 e.Handled = true;
             }
@@ -1004,7 +1054,7 @@ namespace SAM.Game
                 item.SubItems[4].Text = timerValue.ToString(); // Fifth column (Display Index 4)
             }
 
-            MessageBox.Show("Selected rows have been successfully updated!", "Completed", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            //MessageBox.Show("Selected rows have been successfully updated!", "Completed", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void UpdateButtonText()
@@ -1020,53 +1070,112 @@ namespace SAM.Game
             }
         }
 
-        // Method to trigger the _StoreButton's Click event
+        private void UpdateAchievementItem(ListViewItem item, ref bool shouldTriggerStore)
+        {
+            // Get the Key (3rd column) and Counter (4th column)
+            string key = item.SubItems[3].Text; // 3rd column is Key
+
+            string valueText = item.SubItems[4].Text; // 4th column is Counter
+
+            if (int.TryParse(valueText, out int counter) && counter > 0)
+            {
+                counter -= 1;
+
+                // Update the Counter column in ListView
+                item.SubItems[4].Text = counter.ToString();
+
+                // Update the Dictionary
+                achievementCounters[key] = counter;
+
+                // If the counter becomes 0, check the row and set the flag
+                if (counter == 0)
+                {
+                    item.Checked = true; // Check the row
+                    shouldTriggerStore = true; // Set the flag to trigger the store action
+
+                    item.SubItems[4].Text = "-1000";
+                    achievementCounters[key] = -1; // Update the dictionary as well
+                }
+            }
+        }
 
         private void _SumbitAchievementsTimer_Tick(object sender, EventArgs e)
         {
-            bool shouldTriggerStore = false; // Flag to determine if we need to trigger the store button
+            bool shouldTriggerStore = false; // Flag to determine if we need to trigger the commit button
             int seconds = DateTime.Now.Second;
 
             _TimerLabel.Text = (seconds % 2 == 0) ? "*" : "-";
 
-            foreach (ListViewItem item in _AchievementListView.Items)
+            try
             {
-                // Get the Key (3rd column) and Counter (4th column)
-                string key = item.SubItems[3].Text; // 3rd column is Key
-                string valueText = item.SubItems[4].Text; // 4th column is Counter
-                //_TimerLabel.Text = $"{key} {valueText}";
-
-                // Check if the value is a number and not "-1"
-                if (int.TryParse(valueText, out int counter) && counter > 0)
+                _AchievementListView.BeginUpdate();
+                foreach (ListViewItem item in _AchievementListView.Items)
                 {
-                    // Decrease the counter by 1
-                    counter -= 1;
+                    UpdateAchievementItem(item, ref shouldTriggerStore);
+                }
 
-                    // Update the Counter column in ListView
-                    item.SubItems[4].Text = counter.ToString();
-
-                    // Update the Dictionary
-                    achievementCounters[key] = counter;
-
-                    // If the counter becomes 0, check the row and set the flag
-                    if (counter == 0)
-                    {
-                        item.Checked = true; // Check the row
-                        shouldTriggerStore = true; // Set the flag to trigger the store action
-
-                        // Reset the counter to -1 to prevent multiple triggers
-                        item.SubItems[4].Text = "-1000";
-                        achievementCounters[key] = -1; // Update the dictionary as well
-                    }
+                // Trigger the store process only once if necessary
+                if (shouldTriggerStore)
+                {
+                    PerformStore(true); // Silent mode
                 }
             }
-
-            // Trigger the store process only once if necessary
-            if (shouldTriggerStore)
+            finally
             {
-                PerformStore(true); // Silent mode
+                _AchievementListView.EndUpdate();
+            }
+        }
+        private void MoveMouseIfNeeded()
+        {
+            GetCursorPos(out POINT currentPos);
+            if (currentPos.X == _lastMousePos.X && currentPos.Y == _lastMousePos.Y)
+            {
+                int moveDistance = 15;
+                int newX = _moveRight ? currentPos.X + moveDistance : currentPos.X - moveDistance;
+                for (int i = 0; i < moveDistance; i++)
+                {
+                    int intermediateX = _moveRight ? currentPos.X + i : currentPos.X - i;
+                    SetCursorPos(intermediateX, currentPos.Y);
+                    mouse_event(MOUSEEVENTF_MOVE, (uint)(intermediateX - currentPos.X), 0, 0, UIntPtr.Zero);
+                    Thread.Sleep(12); // Wait ??ms between each pixel movement
+                }
+                _moveRight = !_moveRight;
+            }
+            GetCursorPos(out _lastMousePos); // Update last mouse position
+        }
+
+        private void PreventSleep()
+        {
+            SetThreadExecutionState(ExecutionState.ES_CONTINUOUS | ExecutionState.ES_DISPLAY_REQUIRED | ExecutionState.ES_SYSTEM_REQUIRED);
+        }
+
+        private bool IsForeground()
+        {
+            return this == Form.ActiveForm;
+        }
+
+        private void _idleTimer_Tick(object sender, EventArgs e)
+        {
+            if (IsForeground())
+            {
+                MoveMouseIfNeeded();
+                PreventSleep();
             }
         }
 
+        private void _autoMouseMoveButton_Click(object sender, EventArgs e)
+        {
+            _isAutoMouseMoveEnabled = !_isAutoMouseMoveEnabled;
+            if (_isAutoMouseMoveEnabled)
+            {
+                _idleTimer.Start();
+                _autoMouseMoveButton.Text = "Stop Auto Mouse Move";
+            }
+            else
+            {
+                _idleTimer.Stop();
+                _autoMouseMoveButton.Text = "Start Auto Mouse Move";
+            }
+        }
     }
 }
