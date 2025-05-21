@@ -331,7 +331,14 @@ namespace SAM.Picker
                 this._DownloadStatusLabel.Text = $"Downloading {1 + this._LogoQueue.Count} game icons...";
                 this._DownloadStatusLabel.Visible = true;
 
-                this._LogoWorker.RunWorkerAsync(info);
+                try // Fix race condition that gave BackgroundWorker is busy error
+                {
+                    this._LogoWorker.RunWorkerAsync(info);
+                }
+                catch (InvalidOperationException)
+                {
+                    this._LogoQueue.Enqueue(info);
+                }
             }
         }
 
