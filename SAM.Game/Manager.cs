@@ -1052,6 +1052,9 @@ namespace SAM.Game
             foreach (ListViewItem item in _AchievementListView.SelectedItems)
             {
                 item.SubItems[4].Text = timerValue.ToString(); // Fifth column (Display Index 4)
+
+                string key = item.SubItems[3].Text;
+                achievementCounters[key] = timerValue; // Store value for refresh
             }
 
             //MessageBox.Show("Selected rows have been successfully updated!", "Completed", MessageBoxButtons.OK, MessageBoxIcon.Information);
