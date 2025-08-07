@@ -1180,5 +1180,64 @@ namespace SAM.Game
                 _autoMouseMoveButton.Text = "Start Auto Mouse Move";
             }
         }
+
+        private int sortColumn = -1; // Currently sorted column index
+
+        private void AchievementListView_ColumnClick(object sender, ColumnClickEventArgs e)
+        {
+            this._AchievementListView.BeginUpdate();
+
+            // Check if clicked column is different from current sort column
+            if (e.Column != sortColumn)
+            {
+                sortColumn = e.Column;
+                this._AchievementListView.Sorting = SortOrder.Ascending;
+            }
+            else
+            {
+                this._AchievementListView.Sorting = (this._AchievementListView.Sorting == SortOrder.Ascending)
+                    ? SortOrder.Descending
+                    : SortOrder.Ascending;
+            }
+
+            // Assign new sorter and sort items
+            this._AchievementListView.ListViewItemSorter = new ListViewItemComparer(e.Column, this._AchievementListView.Sorting);
+            this._AchievementListView.Sort();
+
+            this._AchievementListView.EndUpdate();
+        }
+
+        class ListViewItemComparer : System.Collections.IComparer
+        {
+            private readonly int col;
+            private readonly SortOrder order;
+
+            public ListViewItemComparer(int column, SortOrder order)
+            {
+                col = column;
+                this.order = order;
+            }
+
+            public int Compare(object x, object y)
+            {
+                var s1 = ((ListViewItem)x).SubItems[col].Text;
+                var s2 = ((ListViewItem)y).SubItems[col].Text;
+
+                int result;
+
+                // Try to parse as DateTime for date comparison
+                if (DateTime.TryParse(s1, out DateTime d1) && DateTime.TryParse(s2, out DateTime d2))
+                {
+                    result = DateTime.Compare(d1, d2);
+                }
+                else
+                {
+                    // Default to string comparison
+                    result = String.Compare(s1, s2);
+                }
+
+                return (order == SortOrder.Ascending) ? result : -result;
+            }
+        }
     }
 }
