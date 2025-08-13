@@ -24,6 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -45,6 +46,9 @@ namespace SAM.Game
 
         //private readonly WebClient _IconDownloader = new();
         private WebClient _IconDownloader;
+
+        private readonly string _IconCacheDirectory;
+        private bool _UseIconCache;
 
         private readonly List<Stats.AchievementInfo> _IconQueue = new();
         private readonly List<Stats.StatDefinition> _StatDefinitions = new();
@@ -127,6 +131,20 @@ namespace SAM.Game
             this._IconDownloader = new();
             this._IconDownloader.DownloadDataCompleted += this.OnIconDownload;
 
+            this._IconCacheDirectory = Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                "appcache",
+                gameId.ToString(CultureInfo.InvariantCulture));
+            try
+            {
+                Directory.CreateDirectory(this._IconCacheDirectory);
+                this._UseIconCache = true;
+            }
+            catch (Exception)
+            {
+                this._UseIconCache = false;
+            }
+
             string name = this._SteamClient.SteamApps001.GetAppData((uint)this._GameId, "name");
             if (name != null)
             {
@@ -146,6 +164,16 @@ namespace SAM.Game
             this.UpdateButtonText();
         }
 
+        private string GetAchievementCachePath(Stats.AchievementInfo info)
+        {
+            if (this._UseIconCache == false)
+            {
+                return null;
+            }
+            var fileName = info.Id + "_" + (info.IsAchieved == true ? "achieved" : "locked") + ".png";
+            return Path.Combine(this._IconCacheDirectory, fileName);
+        }
+
         private void AddAchievementIcon(Stats.AchievementInfo info, Image icon)
         {
             if (icon == null)
@@ -154,8 +182,9 @@ namespace SAM.Game
             }
             else
             {
+                var key = info.Id + "_" + (info.IsAchieved == true ? "achieved" : "locked");
                 info.ImageIndex = this._AchievementImageList.Images.Count;
-                this._AchievementImageList.Images.Add(info.IsAchieved == true ? info.IconNormal : info.IconLocked, icon);
+                this._AchievementImageList.Images.Add(key, icon);
             }
         }
 
@@ -165,18 +194,32 @@ namespace SAM.Game
             {
                 var info = (Stats.AchievementInfo)e.UserState;
 
-                Bitmap bitmap;
+                Bitmap bitmap = null;
                 try
                 {
-                    using (MemoryStream stream = new())
-                    {
-                        stream.Write(e.Result, 0, e.Result.Length);
-                        bitmap = new(stream);
-                    }
+                    using var stream = new MemoryStream(e.Result);
+                    using var image = Image.FromStream(stream);
+                    bitmap = new Bitmap(image);
                 }
                 catch (Exception)
                 {
                     bitmap = null;
+                }
+
+                if (bitmap != null && this._UseIconCache == true)
+                {
+                    var cachePath = this.GetAchievementCachePath(info);
+                    if (cachePath != null)
+                    {
+                        try
+                        {
+                            bitmap.Save(cachePath, ImageFormat.Png);
+                        }
+                        catch (Exception)
+                        {
+                            this._UseIconCache = false;
+                        }
+                    }
                 }
 
                 this.AddAchievementIcon(info, bitmap);
@@ -632,21 +675,45 @@ namespace SAM.Game
 
         private void AddAchievementToIconQueue(Stats.AchievementInfo info, bool startDownload)
         {
-            int imageIndex = this._AchievementImageList.Images.IndexOfKey(
-                info.IsAchieved == true ? info.IconNormal : info.IconLocked);
+            var key = info.Id + "_" + (info.IsAchieved == true ? "achieved" : "locked");
+            int imageIndex = this._AchievementImageList.Images.IndexOfKey(key);
 
             if (imageIndex >= 0)
             {
                 info.ImageIndex = imageIndex;
+                return;
             }
-            else
-            {
-                this._IconQueue.Add(info);
 
-                if (startDownload == true)
+            if (this._UseIconCache == true)
+            {
+                var cachePath = this.GetAchievementCachePath(info);
+                if (cachePath != null)
                 {
-                    this.DownloadNextIcon();
+                    try
+                    {
+                        if (File.Exists(cachePath) == true)
+                        {
+                            using (var file = File.OpenRead(cachePath))
+                            {
+                                using var image = Image.FromStream(file);
+                                Bitmap bitmap = new(image);
+                                this.AddAchievementIcon(info, bitmap);
+                                return;
+                            }
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        this._UseIconCache = false;
+                    }
                 }
+            }
+
+            this._IconQueue.Add(info);
+
+            if (startDownload == true)
+            {
+                this.DownloadNextIcon();
             }
         }
 
