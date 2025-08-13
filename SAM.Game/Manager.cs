@@ -213,7 +213,7 @@ namespace SAM.Game
                     {
                         try
                         {
-                            bitmap.Save(cachePath, ImageFormat.Png);
+                            File.WriteAllBytes(cachePath, e.Result);
                         }
                         catch (Exception)
                         {
