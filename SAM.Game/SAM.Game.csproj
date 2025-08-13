@@ -7,9 +7,9 @@
     <Copyright>Copyright © Gibbed 2019</Copyright>
   </PropertyGroup>
   <PropertyGroup>
-    <Version>7.0.0</Version>
-    <AssemblyVersion>7.0.0.0</AssemblyVersion>
-    <FileVersion>7.0.0.0</FileVersion>
+    <Version>7.0.37</Version>
+    <AssemblyVersion>7.0.37.0</AssemblyVersion>
+    <FileVersion>7.0.37.0</FileVersion>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>Blank.ico</ApplicationIcon>
