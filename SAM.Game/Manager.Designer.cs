@@ -267,6 +267,7 @@
             this._AchievementListView.TabIndex = 4;
             this._AchievementListView.UseCompatibleStateImageBehavior = false;
             this._AchievementListView.View = System.Windows.Forms.View.Details;
+            this._AchievementListView.ColumnClick += new System.Windows.Forms.ColumnClickEventHandler(this.AchievementListView_ColumnClick);
             this._AchievementListView.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.OnCheckAchievement);
             // 
             // _AchievementNameColumnHeader
