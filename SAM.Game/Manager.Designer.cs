@@ -250,7 +250,7 @@
             this._AchievementListView.Name = "_AchievementListView";
             this._AchievementListView.Size = new System.Drawing.Size(1717, 572);
             this._AchievementListView.SmallImageList = this._AchievementImageList;
-            this._AchievementListView.Sorting = System.Windows.Forms.SortOrder.Ascending;
+            this._AchievementListView.Sorting = System.Windows.Forms.SortOrder.None;
             this._AchievementListView.TabIndex = 4;
             this._AchievementListView.UseCompatibleStateImageBehavior = false;
             this._AchievementListView.View = System.Windows.Forms.View.Details;

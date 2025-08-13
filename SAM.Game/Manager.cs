@@ -622,6 +622,9 @@ namespace SAM.Game
                 this._AchievementListView.Items.Add(item);
             }
 
+            // Sort using the current column/order before displaying
+            this._AchievementListView.ListViewItemSorter = new ListViewItemComparer(sortColumn, sortOrder);
+            this._AchievementListView.Sort();
             this._AchievementListView.EndUpdate();
             this._IsUpdatingAchievementList = false;
 
@@ -1255,30 +1258,36 @@ namespace SAM.Game
             }
         }
 
-        private int sortColumn = -1; // Currently sorted column index
+        // Track the current column and sort order for the achievement list
+        private int sortColumn = 0; // default to name column
+        private SortOrder sortOrder = SortOrder.Ascending;
 
         private void AchievementListView_ColumnClick(object sender, ColumnClickEventArgs e)
         {
-            this._AchievementListView.BeginUpdate();
-
-            // Check if clicked column is different from current sort column
-            if (e.Column != sortColumn)
+            _AchievementListView.BeginUpdate();
+            _AchievementListView.SuspendLayout();
+            try
             {
-                sortColumn = e.Column;
-                this._AchievementListView.Sorting = SortOrder.Ascending;
+                if (e.Column != sortColumn)
+                {
+                    sortColumn = e.Column;
+                    sortOrder = SortOrder.Ascending;
+                }
+                else
+                {
+                    sortOrder = (sortOrder == SortOrder.Ascending)
+                        ? SortOrder.Descending
+                        : SortOrder.Ascending;
+                }
+
+                _AchievementListView.ListViewItemSorter = new ListViewItemComparer(e.Column, sortOrder);
+                _AchievementListView.Sort();
             }
-            else
+            finally
             {
-                this._AchievementListView.Sorting = (this._AchievementListView.Sorting == SortOrder.Ascending)
-                    ? SortOrder.Descending
-                    : SortOrder.Ascending;
+                _AchievementListView.ResumeLayout();
+                _AchievementListView.EndUpdate();
             }
-
-            // Assign new sorter and sort items
-            this._AchievementListView.ListViewItemSorter = new ListViewItemComparer(e.Column, this._AchievementListView.Sorting);
-            this._AchievementListView.Sort();
-
-            this._AchievementListView.EndUpdate();
         }
         protected override void Dispose(bool disposing)
         {
