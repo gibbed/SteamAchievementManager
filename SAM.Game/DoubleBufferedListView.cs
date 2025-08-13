@@ -28,12 +28,11 @@ namespace SAM.Game
         {
                 public DoubleBufferedListView()
                 {
-                        // Reduce flicker by enabling additional double buffering
-                        // styles and preventing background erase messages.
+                        // Reduce flicker by enabling double buffering styles
+                        // while relying on default ListView painting behavior.
                         SetStyle(
                             ControlStyles.OptimizedDoubleBuffer |
-                            ControlStyles.AllPaintingInWmPaint |
-                            ControlStyles.UserPaint,
+                            ControlStyles.AllPaintingInWmPaint,
                             true);
                         DoubleBuffered = true;
                         UpdateStyles();
