@@ -49,7 +49,7 @@ namespace SAM.Picker
                 case 0x0100: // WM_KEYDOWN
                 {
                     ScrollEventType type;
-                    if (TranslateKeyScrollEvent((Keys)m.WParam.ToInt32(), out type) == true)
+                    if (TranslateKeyScrollEvent((Keys)(int)m.WParam.ToInt64(), out type) == true)
                     {
                         this.OnScroll(new(type, Win32.GetScrollPos(this.Handle, 1 /*SB_VERT*/)));
                     }
@@ -117,3 +117,4 @@ namespace SAM.Picker
         }
     }
 }
+
