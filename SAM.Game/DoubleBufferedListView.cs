@@ -24,11 +24,29 @@ using System.Windows.Forms;
 
 namespace SAM.Game
 {
-	internal class DoubleBufferedListView : ListView
-	{
-		public DoubleBufferedListView()
-		{
-			base.DoubleBuffered = true;
-		}
-	}
+        internal class DoubleBufferedListView : ListView
+        {
+                public DoubleBufferedListView()
+                {
+                        // Reduce flicker by enabling additional double buffering
+                        // styles and preventing background erase messages.
+                        SetStyle(
+                            ControlStyles.OptimizedDoubleBuffer |
+                            ControlStyles.AllPaintingInWmPaint |
+                            ControlStyles.UserPaint,
+                            true);
+                        DoubleBuffered = true;
+                        UpdateStyles();
+                }
+
+                // Ignore background erase messages to avoid visible blinking
+                // when the control repaints during sorting.
+                protected override void OnNotifyMessage(Message m)
+                {
+                        if (m.Msg != 0x14) // WM_ERASEBKGND
+                        {
+                                base.OnNotifyMessage(m);
+                        }
+                }
+        }
 }
