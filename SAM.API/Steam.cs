@@ -63,7 +63,27 @@ namespace SAM.API
 
         public static string GetInstallPath()
         {
-            return (string)Registry.GetValue(@"HKEY_LOCAL_MACHINE\Software\Valve\Steam", "InstallPath", null);
+            const string subKey = @"Software\Valve\Steam";
+
+            // Query 64-bit view first, then fall back to 32-bit view (WOW6432Node)
+            foreach (var view in new[] { RegistryView.Registry64, RegistryView.Registry32 })
+            {
+                using (var key = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, view).OpenSubKey(subKey))
+                {
+                    if (key == null)
+                    {
+                        continue;
+                    }
+
+                    var path = key.GetValue("InstallPath") as string;
+                    if (string.IsNullOrEmpty(path) == false)
+                    {
+                        return path;
+                    }
+                }
+            }
+
+            return null;
         }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
@@ -123,8 +143,9 @@ namespace SAM.API
 
             Native.SetDllDirectory(path + ";" + Path.Combine(path, "bin"));
 
-            path = Path.Combine(path, "steamclient.dll");
-            IntPtr module = Native.LoadLibraryEx(path, IntPtr.Zero, Native.LoadWithAlteredSearchPath);
+            string library = Environment.Is64BitProcess ? "steamclient64.dll" : "steamclient.dll";
+            string libraryPath = Path.Combine(path, library);
+            IntPtr module = Native.LoadLibraryEx(libraryPath, IntPtr.Zero, Native.LoadWithAlteredSearchPath);
             if (module == IntPtr.Zero)
             {
                 return false;
