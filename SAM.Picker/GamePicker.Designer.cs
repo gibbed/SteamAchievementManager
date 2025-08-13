@@ -13,9 +13,30 @@
         /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
-            if (disposing && (components != null))
+            if (disposing)
             {
-                components.Dispose();
+                if (this._LogoWorker != null && this._LogoWorker.IsBusy)
+                {
+                    this._LogoWorker.CancelAsync();
+                    while (this._LogoWorker.IsBusy)
+                    {
+                        System.Windows.Forms.Application.DoEvents();
+                    }
+                }
+
+                if (this._ListWorker != null && this._ListWorker.IsBusy)
+                {
+                    this._ListWorker.CancelAsync();
+                    while (this._ListWorker.IsBusy)
+                    {
+                        System.Windows.Forms.Application.DoEvents();
+                    }
+                }
+
+                if (components != null)
+                {
+                    components.Dispose();
+                }
             }
             base.Dispose(disposing);
         }
@@ -265,12 +286,14 @@
             this._LogoWorker.WorkerSupportsCancellation = true;
             this._LogoWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.DoDownloadLogo);
             this._LogoWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.OnDownloadLogo);
+            this.components.Add(this._LogoWorker);
             // 
             // _ListWorker
             // 
             this._ListWorker.WorkerSupportsCancellation = true;
             this._ListWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.DoDownloadList);
             this._ListWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.OnDownloadList);
+            this.components.Add(this._ListWorker);
             // 
             // _GameListView
             // 

@@ -37,6 +37,9 @@ namespace SAM.API
             [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
             internal static extern IntPtr LoadLibraryEx(string path, IntPtr file, uint flags);
 
+            [DllImport("kernel32.dll", SetLastError = true)]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            internal static extern bool FreeLibrary(IntPtr module);
             [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
             [return: MarshalAs(UnmanagedType.Bool)]
             internal static extern bool SetDllDirectory(string path);
@@ -147,6 +150,14 @@ namespace SAM.API
 
             _Handle = module;
             return true;
+        }
+        public static void Unload()
+        {
+            if (_Handle != IntPtr.Zero)
+            {
+                Native.FreeLibrary(_Handle);
+                _Handle = IntPtr.Zero;
+            }
         }
     }
 }

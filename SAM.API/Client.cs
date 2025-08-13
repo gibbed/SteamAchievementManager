@@ -112,7 +112,7 @@ namespace SAM.API
                 this.SteamClient.ReleaseSteamPipe(this._Pipe);
                 this._Pipe = 0;
             }
-
+            Steam.Unload();
             this._IsDisposed = true;
         }
 
