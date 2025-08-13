@@ -278,13 +278,12 @@ namespace SAM.Picker
                 {
                     if (File.Exists(cacheFile) == true)
                     {
-                        using (var file = File.OpenRead(cacheFile))
-                        {
-                            using var image = Image.FromStream(file);
-                            Bitmap bitmap = new(image);
-                            e.Result = new LogoInfo(info.Id, bitmap);
-                            return;
-                        }
+                        var bytes = File.ReadAllBytes(cacheFile);
+                        using var stream = new MemoryStream(bytes, false);
+                        using var image = Image.FromStream(stream, false, false);
+                        Bitmap bitmap = new(image);
+                        e.Result = new LogoInfo(info.Id, bitmap);
+                        return;
                     }
                 }
                 catch (Exception)
