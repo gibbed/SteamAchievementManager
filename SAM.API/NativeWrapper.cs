@@ -39,6 +39,9 @@ namespace SAM.API
 
         public void SetupFunctions(IntPtr objectAddress)
         {
+            if (objectAddress == IntPtr.Zero)
+                throw new ArgumentNullException(nameof(objectAddress), "Interface pointer is null.");
+
             this.ObjectAddress = objectAddress;
 
             var iface = (NativeClass)Marshal.PtrToStructure(
