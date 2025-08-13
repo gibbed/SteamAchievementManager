@@ -26,6 +26,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -49,6 +50,9 @@ namespace SAM.Picker
         private readonly HashSet<string> _LogosAttempted;
         private readonly ConcurrentQueue<GameInfo> _LogoQueue;
 
+        private readonly string _IconCacheDirectory;
+        private bool _UseIconCache;
+
         private readonly API.Callbacks.AppDataChanged _AppDataChangedCallback;
 
         public GamePicker(API.Client client)
@@ -59,6 +63,17 @@ namespace SAM.Picker
             this._LogosAttempting = new();
             this._LogosAttempted = new();
             this._LogoQueue = new();
+
+            this._IconCacheDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appcache");
+            try
+            {
+                Directory.CreateDirectory(this._IconCacheDirectory);
+                this._UseIconCache = true;
+            }
+            catch (Exception)
+            {
+                this._UseIconCache = false;
+            }
 
             this.InitializeComponent();
 
@@ -255,6 +270,29 @@ namespace SAM.Picker
 
             this._LogosAttempted.Add(info.ImageUrl);
 
+            string cacheFile = null;
+            if (this._UseIconCache == true)
+            {
+                cacheFile = Path.Combine(this._IconCacheDirectory, info.Id + ".png");
+                try
+                {
+                    if (File.Exists(cacheFile) == true)
+                    {
+                        using (var file = File.OpenRead(cacheFile))
+                        {
+                            using var image = Image.FromStream(file);
+                            Bitmap bitmap = new(image);
+                            e.Result = new LogoInfo(info.Id, bitmap);
+                            return;
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    this._UseIconCache = false;
+                }
+            }
+
             using (WebClient downloader = new())
             {
                 try
@@ -264,6 +302,18 @@ namespace SAM.Picker
                     {
                         Bitmap bitmap = new(stream);
                         e.Result = new LogoInfo(info.Id, bitmap);
+
+                        if (this._UseIconCache == true && cacheFile != null)
+                        {
+                            try
+                            {
+                                bitmap.Save(cacheFile, ImageFormat.Png);
+                            }
+                            catch (Exception)
+                            {
+                                this._UseIconCache = false;
+                            }
+                        }
                     }
                 }
                 catch (Exception)
