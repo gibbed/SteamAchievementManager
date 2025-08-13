@@ -194,14 +194,12 @@ namespace SAM.Game
             {
                 var info = (Stats.AchievementInfo)e.UserState;
 
-                Bitmap bitmap;
+                Bitmap bitmap = null;
                 try
                 {
-                    using (MemoryStream stream = new())
-                    {
-                        stream.Write(e.Result, 0, e.Result.Length);
-                        bitmap = new(stream);
-                    }
+                    using var stream = new MemoryStream(e.Result);
+                    using var image = Image.FromStream(stream);
+                    bitmap = new Bitmap(image);
                 }
                 catch (Exception)
                 {
