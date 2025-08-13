@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28803.156
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36408.4 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SAM.Picker", "SAM.Picker\SAM.Picker.csproj", "{E89E57BB-0F09-47F3-98A0-2026E2E65FBA}"
 EndProject
@@ -10,24 +10,24 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SAM.Game", "SAM.Game\SAM.Game.csproj", "{7640DE31-E54E-45F9-9CF0-8DF3A3EA30FC}"
 EndProject
 Global
-        GlobalSection(SolutionConfigurationPlatforms) = preSolution
-                Debug|x64 = Debug|x64
-                Release|x64 = Release|x64
-        EndGlobalSection
-        GlobalSection(ProjectConfigurationPlatforms) = postSolution
-                {E89E57BB-0F09-47F3-98A0-2026E2E65FBA}.Debug|x64.ActiveCfg = Debug|x64
-                {E89E57BB-0F09-47F3-98A0-2026E2E65FBA}.Debug|x64.Build.0 = Debug|x64
-                {E89E57BB-0F09-47F3-98A0-2026E2E65FBA}.Release|x64.ActiveCfg = Release|x64
-                {E89E57BB-0F09-47F3-98A0-2026E2E65FBA}.Release|x64.Build.0 = Release|x64
-                {DF9102D5-048A-4D21-8CE3-3544CBDF0ED1}.Debug|x64.ActiveCfg = Debug|x64
-                {DF9102D5-048A-4D21-8CE3-3544CBDF0ED1}.Debug|x64.Build.0 = Debug|x64
-                {DF9102D5-048A-4D21-8CE3-3544CBDF0ED1}.Release|x64.ActiveCfg = Release|x64
-                {DF9102D5-048A-4D21-8CE3-3544CBDF0ED1}.Release|x64.Build.0 = Release|x64
-                {7640DE31-E54E-45F9-9CF0-8DF3A3EA30FC}.Debug|x64.ActiveCfg = Debug|x64
-                {7640DE31-E54E-45F9-9CF0-8DF3A3EA30FC}.Debug|x64.Build.0 = Debug|x64
-                {7640DE31-E54E-45F9-9CF0-8DF3A3EA30FC}.Release|x64.ActiveCfg = Release|x64
-                {7640DE31-E54E-45F9-9CF0-8DF3A3EA30FC}.Release|x64.Build.0 = Release|x64
-        EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E89E57BB-0F09-47F3-98A0-2026E2E65FBA}.Debug|x64.ActiveCfg = Debug|x64
+		{E89E57BB-0F09-47F3-98A0-2026E2E65FBA}.Debug|x64.Build.0 = Debug|x64
+		{E89E57BB-0F09-47F3-98A0-2026E2E65FBA}.Release|x64.ActiveCfg = Release|x64
+		{E89E57BB-0F09-47F3-98A0-2026E2E65FBA}.Release|x64.Build.0 = Release|x64
+		{DF9102D5-048A-4D21-8CE3-3544CBDF0ED1}.Debug|x64.ActiveCfg = Debug|x64
+		{DF9102D5-048A-4D21-8CE3-3544CBDF0ED1}.Debug|x64.Build.0 = Debug|x64
+		{DF9102D5-048A-4D21-8CE3-3544CBDF0ED1}.Release|x64.ActiveCfg = Release|x64
+		{DF9102D5-048A-4D21-8CE3-3544CBDF0ED1}.Release|x64.Build.0 = Release|x64
+		{7640DE31-E54E-45F9-9CF0-8DF3A3EA30FC}.Debug|x64.ActiveCfg = Debug|x64
+		{7640DE31-E54E-45F9-9CF0-8DF3A3EA30FC}.Debug|x64.Build.0 = Debug|x64
+		{7640DE31-E54E-45F9-9CF0-8DF3A3EA30FC}.Release|x64.ActiveCfg = Release|x64
+		{7640DE31-E54E-45F9-9CF0-8DF3A3EA30FC}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
@@ -35,4 +35,3 @@ Global
 		SolutionGuid = {FB343317-9FA7-49C3-A55C-D95A69E836EC}
 	EndGlobalSection
 EndGlobal
-
