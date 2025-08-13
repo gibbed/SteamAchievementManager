@@ -43,7 +43,8 @@ namespace SAM.Game
         private readonly long _GameId;
         private readonly API.Client _SteamClient;
 
-        private readonly WebClient _IconDownloader = new();
+        //private readonly WebClient _IconDownloader = new();
+        private WebClient _IconDownloader;
 
         private readonly List<Stats.AchievementInfo> _IconQueue = new();
         private readonly List<Stats.StatDefinition> _StatDefinitions = new();
@@ -123,6 +124,7 @@ namespace SAM.Game
             this._GameId = gameId;
             this._SteamClient = client;
 
+            this._IconDownloader = new();
             this._IconDownloader.DownloadDataCompleted += this.OnIconDownload;
 
             string name = this._SteamClient.SteamApps001.GetAppData((uint)this._GameId, "name");
@@ -189,6 +191,11 @@ namespace SAM.Game
             if (this._IconQueue.Count == 0)
             {
                 this._DownloadStatusLabel.Visible = false;
+                return;
+            }
+
+            if (this._IconDownloader == null)
+            {
                 return;
             }
 
@@ -1206,7 +1213,25 @@ namespace SAM.Game
 
             this._AchievementListView.EndUpdate();
         }
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (this._IconDownloader != null)
+                {
+                    this._IconDownloader.CancelAsync();
+                    this._IconDownloader.Dispose();
+                    this._IconDownloader = null;
+                }
 
+                if (components != null)
+                {
+                    components.Dispose();
+                }
+            }
+
+            base.Dispose(disposing);
+        }
         class ListViewItemComparer : System.Collections.IComparer
         {
             private readonly int col;
