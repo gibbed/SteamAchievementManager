@@ -462,7 +462,7 @@ namespace SAM.Game
 
                 if (textSearch != null)
                 {
-                    if (def.Name.IndexOf(textSearch, StringComparison.OrdinalIgnoreCase) < 0 ||
+                    if (def.Name.IndexOf(textSearch, StringComparison.OrdinalIgnoreCase) < 0 &&
                         def.Description.IndexOf(textSearch, StringComparison.OrdinalIgnoreCase) < 0)
                     {
                         continue;
