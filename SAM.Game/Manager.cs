@@ -20,6 +20,7 @@
  *    distribution.
  */
 
+using SAM.Game.Stats;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -38,6 +39,7 @@ namespace SAM.Game
     {
         private readonly long _GameId;
         private readonly API.Client _SteamClient;
+        private readonly DateTime _SAMStartDate;
 
         private readonly WebClient _IconDownloader = new();
 
@@ -52,7 +54,7 @@ namespace SAM.Game
 
         //private API.Callback<APITypes.UserStatsStored> UserStatsStoredCallback;
 
-        public Manager(long gameId, API.Client client)
+        public Manager(long gameId, API.Client client, DateTime samStartDate)
         {
             this.InitializeComponent();
 
@@ -85,6 +87,7 @@ namespace SAM.Game
 
             this._GameId = gameId;
             this._SteamClient = client;
+            this._SAMStartDate = samStartDate;
 
             this._IconDownloader.DownloadDataCompleted += this.OnIconDownload;
 
@@ -459,7 +462,7 @@ namespace SAM.Game
 
                 if (textSearch != null)
                 {
-                    if (def.Name.IndexOf(textSearch, StringComparison.OrdinalIgnoreCase) < 0 &&
+                    if (def.Name.IndexOf(textSearch, StringComparison.OrdinalIgnoreCase) < 0 ||
                         def.Description.IndexOf(textSearch, StringComparison.OrdinalIgnoreCase) < 0)
                     {
                         continue;
@@ -838,6 +841,80 @@ namespace SAM.Game
             }
 
             this.RefreshStats();
+        }
+
+        private void OnRevertAchievements(object sender, EventArgs e)
+        {
+            int unlockedAchievementCount = 0;
+            int totalAchievementCount = this._AchievementListView.Items.Count;
+
+            if (MessageBox.Show(
+                $"Do you want to reset your achievements after {_SAMStartDate}?",
+                "Warning",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning) == DialogResult.No)
+            {
+                return;
+            }
+
+            if (this._AchievementListView.Items.Count == 0 && this._AchievementListView.Items.Count < 5)
+            {
+                return;
+            }
+
+            List<Stats.AchievementInfo> achievements = new();
+            foreach (ListViewItem item in this._AchievementListView.Items)
+            {
+                if (item.Tag is not Stats.AchievementInfo achievementInfo ||
+                    achievementInfo.IsAchieved == false)
+                {
+                    continue;
+                }
+
+                unlockedAchievementCount++;
+
+                // UnlockTime can not be null, because we've already checked if it's achieved.
+                DateTime achievementDate = (DateTime)achievementInfo.UnlockTime;
+
+                if (achievementDate > _SAMStartDate)
+                {
+                    achievementInfo.IsAchieved = false;
+                    achievements.Add(achievementInfo);
+                }
+            }
+
+            if (achievements.Count == 0)
+            {
+                return;
+            }
+
+            if (MessageBox.Show(
+                $"{unlockedAchievementCount} out of {totalAchievementCount} achievements unlocked. There are {achievements.Count} achievements unlocked after {_SAMStartDate}\n" +
+                $"Current Completion Rate: {((unlockedAchievementCount / (float)totalAchievementCount) * 100).ToString("N2", CultureInfo.InvariantCulture)}%\n" +
+                $"Completion Rate After Reset: {(((unlockedAchievementCount - achievements.Count) / (float)totalAchievementCount) * 100).ToString("N2", CultureInfo.InvariantCulture)}%\n" +
+                $"Are you sure?",
+                "Warning",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning) == DialogResult.No)
+            {
+                return;
+            }
+
+            foreach (var info in achievements)
+            {
+                if (this._SteamClient.SteamUserStats.SetAchievement(info.Id, info.IsAchieved) == false)
+                {
+                    MessageBox.Show(
+                        this,
+                        $"An error occurred while setting the state for {info.Id}, aborting store.",
+                        "Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                    return;
+                }
+            }
+
+            Application.Exit();
         }
 
         private void OnCheckAchievement(object sender, ItemCheckEventArgs e)
