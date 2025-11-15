@@ -20,7 +20,6 @@
  *    distribution.
  */
 
-using SAM.Game.Stats;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
