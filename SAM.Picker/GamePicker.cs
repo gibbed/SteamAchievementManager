@@ -53,29 +53,29 @@ namespace SAM.Picker
 
         public GamePicker(API.Client client)
         {
-            this._Games = new();
-            this._FilteredGames = new();
-            this._LogoLock = new();
-            this._LogosAttempting = new();
-            this._LogosAttempted = new();
-            this._LogoQueue = new();
+            _Games = new();
+            _FilteredGames = new();
+            _LogoLock = new();
+            _LogosAttempting = new();
+            _LogosAttempted = new();
+            _LogoQueue = new();
 
-            this.InitializeComponent();
+            InitializeComponent();
 
-            Bitmap blank = new(this._LogoImageList.ImageSize.Width, this._LogoImageList.ImageSize.Height);
+            Bitmap blank = new(_LogoImageList.ImageSize.Width, _LogoImageList.ImageSize.Height);
             using (var g = Graphics.FromImage(blank))
             {
                 g.Clear(Color.DimGray);
             }
 
-            this._LogoImageList.Images.Add("Blank", blank);
+            _LogoImageList.Images.Add("Blank", blank);
 
-            this._SteamClient = client;
+            _SteamClient = client;
 
-            this._AppDataChangedCallback = client.CreateAndRegisterCallback<API.Callbacks.AppDataChanged>();
-            this._AppDataChangedCallback.OnRun += this.OnAppDataChanged;
+            _AppDataChangedCallback = client.CreateAndRegisterCallback<API.Callbacks.AppDataChanged>();
+            _AppDataChangedCallback.OnRun += OnAppDataChanged;
 
-            this.AddGames();
+            AddGames();
         }
 
         private void OnAppDataChanged(APITypes.AppDataChanged param)
@@ -85,48 +85,68 @@ namespace SAM.Picker
                 return;
             }
 
-            if (this._Games.TryGetValue(param.Id, out var game) == false)
+            if (_Games.TryGetValue(param.Id, out var game) == false)
             {
                 return;
             }
 
-            game.Name = this._SteamClient.SteamApps001.GetAppData(game.Id, "name");
+            game.Name = _SteamClient.SteamApps001.GetAppData(game.Id, "name");
 
-            this.AddGameToLogoQueue(game);
-            this.DownloadNextLogo();
+            AddGameToLogoQueue(game);
+            DownloadNextLogo();
         }
 
         private void DoDownloadList(object sender, DoWorkEventArgs e)
         {
-            this._PickerStatusLabel.Text = "Downloading game list...";
+            _PickerStatusLabel.Text = "Downloading game list...";
 
             byte[] bytes;
-            using (WebClient downloader = new())
+            using (API.SafeWebClient downloader = new(API.SecurityConfig.MAX_XML_SIZE_BYTES))
             {
-                bytes = downloader.DownloadData(new Uri("https://gib.me/sam/games.xml"));
+                try
+                {
+                    bytes = downloader.DownloadData(new Uri("https://gib.me/sam/games.xml"));
+                }
+                catch (WebException ex) when (ex.Status == System.Net.WebExceptionStatus.MessageLengthLimitExceeded)
+                {
+                    // XML file too large, fail gracefully
+                    throw new InvalidOperationException("Game list file exceeds maximum size", ex);
+                }
             }
 
             List<KeyValuePair<uint, string>> pairs = new();
             using (MemoryStream stream = new(bytes, false))
             {
-                XPathDocument document = new(stream);
-                var navigator = document.CreateNavigator();
-                var nodes = navigator.Select("/games/game");
-                while (nodes.MoveNext() == true)
+                // XXE Protection: Use XmlReader with secure settings
+                System.Xml.XmlReaderSettings xmlSettings = new()
                 {
-                    string type = nodes.Current.GetAttribute("type", "");
-                    if (string.IsNullOrEmpty(type) == true)
+                    DtdProcessing = System.Xml.DtdProcessing.Prohibit,
+                    XmlResolver = null, // Disable external entity resolution
+                    MaxCharactersFromEntities = 0, // No entity expansion
+                    MaxCharactersInDocument = API.SecurityConfig.MAX_XML_SIZE_BYTES, // Cap total document size
+                };
+
+                using (var xmlReader = System.Xml.XmlReader.Create(stream, xmlSettings))
+                {
+                    XPathDocument document = new(xmlReader);
+                    var navigator = document.CreateNavigator();
+                    var nodes = navigator.Select("/games/game");
+                    while (nodes.MoveNext() == true)
                     {
-                        type = "normal";
+                        string type = nodes.Current.GetAttribute("type", "");
+                        if (string.IsNullOrEmpty(type) == true)
+                        {
+                            type = "normal";
+                        }
+                        pairs.Add(new((uint)nodes.Current.ValueAsLong, type));
                     }
-                    pairs.Add(new((uint)nodes.Current.ValueAsLong, type));
                 }
             }
 
-            this._PickerStatusLabel.Text = "Checking game ownership...";
+            _PickerStatusLabel.Text = "Checking game ownership...";
             foreach (var kv in pairs)
             {
-                this.AddGame(kv.Key, kv.Value);
+                AddGame(kv.Key, kv.Value);
             }
         }
 
@@ -134,28 +154,28 @@ namespace SAM.Picker
         {
             if (e.Error != null || e.Cancelled == true)
             {
-                this.AddDefaultGames();
+                AddDefaultGames();
                 MessageBox.Show(e.Error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
-            this.RefreshGames();
-            this._RefreshGamesButton.Enabled = true;
-            this.DownloadNextLogo();
+            RefreshGames();
+            _RefreshGamesButton.Enabled = true;
+            DownloadNextLogo();
         }
 
         private void RefreshGames()
         {
-            var nameSearch = this._SearchGameTextBox.Text.Length > 0
-                ? this._SearchGameTextBox.Text
+            var nameSearch = _SearchGameTextBox.Text.Length > 0
+                ? _SearchGameTextBox.Text
                 : null;
 
-            var wantNormals = this._FilterGamesMenuItem.Checked == true;
-            var wantDemos = this._FilterDemosMenuItem.Checked == true;
-            var wantMods = this._FilterModsMenuItem.Checked == true;
-            var wantJunk = this._FilterJunkMenuItem.Checked == true;
+            var wantNormals = _FilterGamesMenuItem.Checked == true;
+            var wantDemos = _FilterDemosMenuItem.Checked == true;
+            var wantMods = _FilterModsMenuItem.Checked == true;
+            var wantJunk = _FilterJunkMenuItem.Checked == true;
 
-            this._FilteredGames.Clear();
-            foreach (var info in this._Games.Values.OrderBy(gi => gi.Name))
+            _FilteredGames.Clear();
+            foreach (var info in _Games.Values.OrderBy(gi => gi.Name))
             {
                 if (nameSearch != null &&
                     info.Name.IndexOf(nameSearch, StringComparison.OrdinalIgnoreCase) < 0)
@@ -176,23 +196,23 @@ namespace SAM.Picker
                     continue;
                 }
 
-                this._FilteredGames.Add(info);
+                _FilteredGames.Add(info);
             }
 
-            this._GameListView.VirtualListSize = this._FilteredGames.Count;
-            this._PickerStatusLabel.Text =
-                $"Displaying {this._GameListView.Items.Count} games. Total {this._Games.Count} games.";
+            _GameListView.VirtualListSize = _FilteredGames.Count;
+            _PickerStatusLabel.Text =
+                $"Displaying {_GameListView.Items.Count} games. Total {_Games.Count} games.";
 
-            if (this._GameListView.Items.Count > 0)
+            if (_GameListView.Items.Count > 0)
             {
-                this._GameListView.Items[0].Selected = true;
-                this._GameListView.Select();
+                _GameListView.Items[0].Selected = true;
+                _GameListView.Select();
             }
         }
 
         private void OnGameListViewRetrieveVirtualItem(object sender, RetrieveVirtualItemEventArgs e)
         {
-            var info = this._FilteredGames[e.ItemIndex];
+            var info = _FilteredGames[e.ItemIndex];
             e.Item = info.Item = new()
             {
                 Text = info.Name,
@@ -207,7 +227,7 @@ namespace SAM.Picker
                 return;
             }
 
-            var count = this._FilteredGames.Count;
+            var count = _FilteredGames.Count;
             if (count < 2)
             {
                 return;
@@ -230,19 +250,19 @@ namespace SAM.Picker
             if (e.StartIndex >= count)
             {
                 // starting from the last item in the list
-                index = this._FilteredGames.FindIndex(0, startIndex - 1, predicate);
+                index = _FilteredGames.FindIndex(0, startIndex - 1, predicate);
             }
             else if (startIndex <= 0)
             {
                 // starting from the first item in the list
-                index = this._FilteredGames.FindIndex(0, count, predicate);
+                index = _FilteredGames.FindIndex(0, count, predicate);
             }
             else
             {
-                index = this._FilteredGames.FindIndex(startIndex, count - startIndex, predicate);
+                index = _FilteredGames.FindIndex(startIndex, count - startIndex, predicate);
                 if (index < 0)
                 {
-                    index = this._FilteredGames.FindIndex(0, startIndex - 1, predicate);
+                    index = _FilteredGames.FindIndex(0, startIndex - 1, predicate);
                 }
             }
 
@@ -253,9 +273,9 @@ namespace SAM.Picker
         {
             var info = (GameInfo)e.Argument;
 
-            this._LogosAttempted.Add(info.ImageUrl);
+            _LogosAttempted.Add(info.ImageUrl);
 
-            using (WebClient downloader = new())
+            using (API.SafeWebClient downloader = new(API.SecurityConfig.MAX_ICON_SIZE_BYTES))
             {
                 try
                 {
@@ -265,6 +285,11 @@ namespace SAM.Picker
                         Bitmap bitmap = new(stream);
                         e.Result = new LogoInfo(info.Id, bitmap);
                     }
+                }
+                catch (WebException ex) when (ex.Status == System.Net.WebExceptionStatus.MessageLengthLimitExceeded)
+                {
+                    // Logo too large, return null result
+                    e.Result = new LogoInfo(info.Id, null);
                 }
                 catch (Exception)
                 {
@@ -282,24 +307,24 @@ namespace SAM.Picker
 
             if (e.Result is LogoInfo logoInfo &&
                 logoInfo.Bitmap != null &&
-                this._Games.TryGetValue(logoInfo.Id, out var gameInfo) == true)
+                _Games.TryGetValue(logoInfo.Id, out var gameInfo) == true)
             {
-                this._GameListView.BeginUpdate();
-                var imageIndex = this._LogoImageList.Images.Count;
-                this._LogoImageList.Images.Add(gameInfo.ImageUrl, logoInfo.Bitmap);
+                _GameListView.BeginUpdate();
+                var imageIndex = _LogoImageList.Images.Count;
+                _LogoImageList.Images.Add(gameInfo.ImageUrl, logoInfo.Bitmap);
                 gameInfo.ImageIndex = imageIndex;
-                this._GameListView.EndUpdate();
+                _GameListView.EndUpdate();
             }
 
-            this.DownloadNextLogo();
+            DownloadNextLogo();
         }
 
         private void DownloadNextLogo()
         {
-            lock (this._LogoLock)
+            lock (_LogoLock)
             {
 
-                if (this._LogoWorker.IsBusy == true)
+                if (_LogoWorker.IsBusy == true)
                 {
                     return;
                 }
@@ -307,9 +332,9 @@ namespace SAM.Picker
                 GameInfo info;
                 while (true)
                 {
-                    if (this._LogoQueue.TryDequeue(out info) == false)
+                    if (_LogoQueue.TryDequeue(out info) == false)
                     {
-                        this._DownloadStatusLabel.Visible = false;
+                        _DownloadStatusLabel.Visible = false;
                         return;
                     }
 
@@ -318,20 +343,20 @@ namespace SAM.Picker
                         continue;
                     }
 
-                    if (this._FilteredGames.Contains(info) == false ||
-                        info.Item.Bounds.IntersectsWith(this._GameListView.ClientRectangle) == false)
+                    if (_FilteredGames.Contains(info) == false ||
+                        info.Item.Bounds.IntersectsWith(_GameListView.ClientRectangle) == false)
                     {
-                        this._LogosAttempting.Remove(info.ImageUrl);
+                        _LogosAttempting.Remove(info.ImageUrl);
                         continue;
                     }
 
                     break;
                 }
 
-                this._DownloadStatusLabel.Text = $"Downloading {1 + this._LogoQueue.Count} game icons...";
-                this._DownloadStatusLabel.Visible = true;
+                _DownloadStatusLabel.Text = $"Downloading {1 + _LogoQueue.Count} game icons...";
+                _DownloadStatusLabel.Visible = true;
 
-                this._LogoWorker.RunWorkerAsync(info);
+                _LogoWorker.RunWorkerAsync(info);
             }
         }
 
@@ -339,9 +364,9 @@ namespace SAM.Picker
         {
             string candidate;
 
-            var currentLanguage = this._SteamClient.SteamApps008.GetCurrentGameLanguage();
+            var currentLanguage = _SteamClient.SteamApps008.GetCurrentGameLanguage();
 
-            candidate = this._SteamClient.SteamApps001.GetAppData(id, _($"small_capsule/{currentLanguage}"));
+            candidate = _SteamClient.SteamApps001.GetAppData(id, _($"small_capsule/{currentLanguage}"));
             if (string.IsNullOrEmpty(candidate) == false)
             {
                 return _($"https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/{id}/{candidate}");
@@ -349,14 +374,14 @@ namespace SAM.Picker
 
             if (currentLanguage != "english")
             {
-                candidate = this._SteamClient.SteamApps001.GetAppData(id, "small_capsule/english");
+                candidate = _SteamClient.SteamApps001.GetAppData(id, "small_capsule/english");
                 if (string.IsNullOrEmpty(candidate) == false)
                 {
                     return _($"https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/{id}/{candidate}");
                 }
             }
 
-            candidate = this._SteamClient.SteamApps001.GetAppData(id, "logo");
+            candidate = _SteamClient.SteamApps001.GetAppData(id, "logo");
             if (string.IsNullOrEmpty(candidate) == false)
             {
                 return _($"https://cdn.steamstatic.com/steamcommunity/public/images/apps/{id}/{candidate}.jpg");
@@ -380,71 +405,71 @@ namespace SAM.Picker
 
             info.ImageUrl = imageUrl;
 
-            int imageIndex = this._LogoImageList.Images.IndexOfKey(imageUrl);
+            int imageIndex = _LogoImageList.Images.IndexOfKey(imageUrl);
             if (imageIndex >= 0)
             {
                 info.ImageIndex = imageIndex;
             }
             else if (
-                this._LogosAttempting.Contains(imageUrl) == false &&
-                this._LogosAttempted.Contains(imageUrl) == false)
+                _LogosAttempting.Contains(imageUrl) == false &&
+                _LogosAttempted.Contains(imageUrl) == false)
             {
-                this._LogosAttempting.Add(imageUrl);
-                this._LogoQueue.Enqueue(info);
+                _LogosAttempting.Add(imageUrl);
+                _LogoQueue.Enqueue(info);
             }
         }
 
         private bool OwnsGame(uint id)
         {
-            return this._SteamClient.SteamApps008.IsSubscribedApp(id);
+            return _SteamClient.SteamApps008.IsSubscribedApp(id);
         }
 
         private void AddGame(uint id, string type)
         {
-            if (this._Games.ContainsKey(id) == true)
+            if (_Games.ContainsKey(id) == true)
             {
                 return;
             }
 
-            if (this.OwnsGame(id) == false)
+            if (OwnsGame(id) == false)
             {
                 return;
             }
 
             GameInfo info = new(id, type);
-            info.Name = this._SteamClient.SteamApps001.GetAppData(info.Id, "name");
-            this._Games.Add(id, info);
+            info.Name = _SteamClient.SteamApps001.GetAppData(info.Id, "name");
+            _Games.Add(id, info);
         }
 
         private void AddGames()
         {
-            this._Games.Clear();
-            this._RefreshGamesButton.Enabled = false;
-            this._ListWorker.RunWorkerAsync();
+            _Games.Clear();
+            _RefreshGamesButton.Enabled = false;
+            _ListWorker.RunWorkerAsync();
         }
 
         private void AddDefaultGames()
         {
-            this.AddGame(480, "normal"); // Spacewar
+            AddGame(480, "normal"); // Spacewar
         }
 
         private void OnTimer(object sender, EventArgs e)
         {
-            this._CallbackTimer.Enabled = false;
-            this._SteamClient.RunCallbacks(false);
-            this._CallbackTimer.Enabled = true;
+            _CallbackTimer.Enabled = false;
+            _SteamClient.RunCallbacks(false);
+            _CallbackTimer.Enabled = true;
         }
 
         private void OnActivateGame(object sender, EventArgs e)
         {
             var focusedItem = (sender as MyListView)?.FocusedItem;
             var index = focusedItem != null ? focusedItem.Index : -1;
-            if (index < 0 || index >= this._FilteredGames.Count)
+            if (index < 0 || index >= _FilteredGames.Count)
             {
                 return;
             }
 
-            var info = this._FilteredGames[index];
+            var info = _FilteredGames[index];
             if (info == null)
             {
                 return;
@@ -467,15 +492,15 @@ namespace SAM.Picker
 
         private void OnRefresh(object sender, EventArgs e)
         {
-            this._AddGameTextBox.Text = "";
-            this.AddGames();
+            _AddGameTextBox.Text = "";
+            AddGames();
         }
 
         private void OnAddGame(object sender, EventArgs e)
         {
             uint id;
 
-            if (uint.TryParse(this._AddGameTextBox.Text, out id) == false)
+            if (uint.TryParse(_AddGameTextBox.Text, out id) == false)
             {
                 MessageBox.Show(
                     this,
@@ -486,48 +511,60 @@ namespace SAM.Picker
                 return;
             }
 
-            if (this.OwnsGame(id) == false)
+            // Validate AppId range (STRICT - prevents integer overflow and invalid IDs)
+            if (id < API.SecurityConfig.MIN_APP_ID || id > API.SecurityConfig.MAX_APP_ID)
+            {
+                MessageBox.Show(
+                    this,
+                    $"Game ID must be between {API.SecurityConfig.MIN_APP_ID} and {API.SecurityConfig.MAX_APP_ID}.",
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return;
+            }
+
+            if (OwnsGame(id) == false)
             {
                 MessageBox.Show(this, "You don't own that game.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
-            while (this._LogoQueue.TryDequeue(out var logo) == true)
+            while (_LogoQueue.TryDequeue(out var logo) == true)
             {
                 // clear the download queue because we will be showing only one app
-                this._LogosAttempted.Remove(logo.ImageUrl);
+                _LogosAttempted.Remove(logo.ImageUrl);
             }
 
-            this._AddGameTextBox.Text = "";
-            this._Games.Clear();
-            this.AddGame(id, "normal");
-            this._FilterGamesMenuItem.Checked = true;
-            this.RefreshGames();
-            this.DownloadNextLogo();
+            _AddGameTextBox.Text = "";
+            _Games.Clear();
+            AddGame(id, "normal");
+            _FilterGamesMenuItem.Checked = true;
+            RefreshGames();
+            DownloadNextLogo();
         }
 
         private void OnFilterUpdate(object sender, EventArgs e)
         {
-            this.RefreshGames();
+            RefreshGames();
 
             // Compatibility with _GameListView SearchForVirtualItemEventHandler (otherwise _SearchGameTextBox loose focus on KeyUp)
-            this._SearchGameTextBox.Focus();
+            _SearchGameTextBox.Focus();
         }
 
         private void OnGameListViewDrawItem(object sender, DrawListViewItemEventArgs e)
         {
             e.DrawDefault = true;
 
-            if (e.Item.Bounds.IntersectsWith(this._GameListView.ClientRectangle) == false)
+            if (e.Item.Bounds.IntersectsWith(_GameListView.ClientRectangle) == false)
             {
                 return;
             }
 
-            var info = this._FilteredGames[e.ItemIndex];
+            var info = _FilteredGames[e.ItemIndex];
             if (info.ImageIndex <= 0)
             {
-                this.AddGameToLogoQueue(info);
-                this.DownloadNextLogo();
+                AddGameToLogoQueue(info);
+                DownloadNextLogo();
             }
         }
     }

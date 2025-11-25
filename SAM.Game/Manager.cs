@@ -39,7 +39,7 @@ namespace SAM.Game
         private readonly long _GameId;
         private readonly API.Client _SteamClient;
 
-        private readonly WebClient _IconDownloader = new();
+        private readonly API.SafeWebClient _IconDownloader = new(API.SecurityConfig.MAX_ICON_SIZE_BYTES);
 
         private readonly List<Stats.AchievementInfo> _IconQueue = new();
         private readonly List<Stats.StatDefinition> _StatDefinitions = new();
@@ -216,7 +216,7 @@ namespace SAM.Game
                     return false;
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return false;
             }
@@ -540,6 +540,8 @@ namespace SAM.Game
                         OriginalValue = value,
                         IsIncrementOnly = intStat.IncrementOnly,
                         Permission = intStat.Permission,
+                        MinValue = intStat.MinValue,
+                        MaxValue = intStat.MaxValue,
                     });
                 }
                 else if (stat is Stats.FloatStatDefinition floatStat)
@@ -556,6 +558,8 @@ namespace SAM.Game
                         OriginalValue = value,
                         IsIncrementOnly = floatStat.IncrementOnly,
                         Permission = floatStat.Permission,
+                        MinValue = floatStat.MinValue,
+                        MaxValue = floatStat.MaxValue,
                     });
                 }
             }
