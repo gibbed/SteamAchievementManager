@@ -389,3 +389,9 @@ FodyWeavers.xsd
 # JetBrains Rider
 .idea/
 *.sln.iml
+
+# Claude Codebase Analysis Files
+CLAUDE.md
+
+# Ignore nul file
+nul
