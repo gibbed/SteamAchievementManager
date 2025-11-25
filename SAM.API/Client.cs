@@ -59,61 +59,87 @@ namespace SAM.API
                 throw new ClientInitializeException(ClientInitializeFailure.Load, "failed to load SteamClient");
             }
 
-            this.SteamClient = Steam.CreateInterface<Wrappers.SteamClient018>("SteamClient018");
-            if (this.SteamClient == null)
+            SteamClient = Steam.CreateInterface<Wrappers.SteamClient018>("SteamClient018");
+            if (SteamClient == null)
             {
                 throw new ClientInitializeException(ClientInitializeFailure.CreateSteamClient, "failed to create ISteamClient018");
             }
 
-            this._Pipe = this.SteamClient.CreateSteamPipe();
-            if (this._Pipe == 0)
+            _Pipe = SteamClient.CreateSteamPipe();
+            if (_Pipe == 0)
             {
                 throw new ClientInitializeException(ClientInitializeFailure.CreateSteamPipe, "failed to create pipe");
             }
 
-            this._User = this.SteamClient.ConnectToGlobalUser(this._Pipe);
-            if (this._User == 0)
+            _User = SteamClient.ConnectToGlobalUser(_Pipe);
+            if (_User == 0)
             {
                 throw new ClientInitializeException(ClientInitializeFailure.ConnectToGlobalUser, "failed to connect to global user");
             }
 
-            this.SteamUtils = this.SteamClient.GetSteamUtils004(this._Pipe);
-            if (appId > 0 && this.SteamUtils.GetAppId() != (uint)appId)
+            SteamUtils = SteamClient.GetSteamUtils004(_Pipe);
+            if (appId > 0 && SteamUtils.GetAppId() != (uint)appId)
             {
                 throw new ClientInitializeException(ClientInitializeFailure.AppIdMismatch, "appID mismatch");
             }
 
-            this.SteamUser = this.SteamClient.GetSteamUser012(this._User, this._Pipe);
-            this.SteamUserStats = this.SteamClient.GetSteamUserStats013(this._User, this._Pipe);
-            this.SteamApps001 = this.SteamClient.GetSteamApps001(this._User, this._Pipe);
-            this.SteamApps008 = this.SteamClient.GetSteamApps008(this._User, this._Pipe);
+            SteamUser = SteamClient.GetSteamUser012(_User, _Pipe);
+            SteamUserStats = SteamClient.GetSteamUserStats013(_User, _Pipe);
+            SteamApps001 = SteamClient.GetSteamApps001(_User, _Pipe);
+            SteamApps008 = SteamClient.GetSteamApps008(_User, _Pipe);
         }
 
         ~Client()
         {
-            this.Dispose(false);
+            Dispose(false);
         }
 
         protected virtual void Dispose(bool disposing)
         {
-            if (this._IsDisposed == true)
+            if (_IsDisposed == true)
             {
                 return;
             }
 
-            if (this.SteamClient != null && this._Pipe > 0)
+            try
             {
-                if (this._User > 0)
+                if (SteamClient != null && _Pipe > 0)
                 {
-                    this.SteamClient.ReleaseUser(this._Pipe, this._User);
-                    this._User = 0;
+                    if (_User > 0)
+                    {
+                        try
+                        {
+                            SteamClient.ReleaseUser(_Pipe, _User);
+                        }
+                        catch (Exception ex)
+                        {
+                            SecurityLogger.Log(LogLevel.Error, LogContext.Native, $"Failed to release user: {ex.Message}");
+                        }
+                        finally
+                        {
+                            _User = 0;
+                        }
+                    }
+
+                    try
+                    {
+                        SteamClient.ReleaseSteamPipe(_Pipe);
+                    }
+                    catch (Exception ex)
+                    {
+                        SecurityLogger.Log(LogLevel.Error, LogContext.Native, $"Failed to release pipe: {ex.Message}");
+                    }
+                    finally
+                    {
+                        _Pipe = 0;
+                    }
                 }
-
-                this.SteamClient.ReleaseSteamPipe(this._Pipe);
-                this._Pipe = 0;
             }
-
-            this._IsDisposed = true;
+            finally
+            {
+                // Always set disposed flag, even if cleanup failed
+                _IsDisposed = true;
+            }
         }
 
         public void Dispose()
@@ -126,7 +152,7 @@ namespace SAM.API
             where TCallback : ICallback, new()
         {
             TCallback callback = new();
-            this._Callbacks.Add(callback);
+            _Callbacks.Add(callback);
             return callback;
         }
 
@@ -134,27 +160,57 @@ namespace SAM.API
 
         public void RunCallbacks(bool server)
         {
-            if (this._RunningCallbacks == true)
+            if (_RunningCallbacks == true)
             {
                 return;
             }
 
-            this._RunningCallbacks = true;
+            _RunningCallbacks = true;
 
-            Types.CallbackMessage message;
-            while (Steam.GetCallback(this._Pipe, out message, out _) == true)
+            try
             {
-                var callbackId = message.Id;
-                foreach (ICallback callback in this._Callbacks.Where(
-                    candidate => candidate.Id == callbackId &&
-                                 candidate.IsServer == server))
+                Types.CallbackMessage message;
+                while (Steam.GetCallback(_Pipe, out message, out _) == true)
                 {
-                    callback.Run(message.ParamPointer);
-                }
-                Steam.FreeLastCallback(this._Pipe);
-            }
+                    try
+                    {
+                        var callbackId = message.Id;
 
-            this._RunningCallbacks = false;
+                        // Process each matching callback with individual error handling
+                        foreach (ICallback callback in _Callbacks.Where(
+                            candidate => candidate.Id == callbackId &&
+                                         candidate.IsServer == server))
+                        {
+                            try
+                            {
+                                callback.Run(message.ParamPointer);
+                            }
+                            catch (Exception ex)
+                            {
+                                // Log error but continue processing other callbacks
+                                SecurityLogger.Log(LogLevel.Error, LogContext.Callback, $"Callback {callbackId} failed: {ex.Message}");
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        // Always attempt to free callback even if processing failed
+                        try
+                        {
+                            Steam.FreeLastCallback(_Pipe);
+                        }
+                        catch (Exception ex)
+                        {
+                            SecurityLogger.Log(LogLevel.Error, LogContext.Callback, $"Failed to free callback: {ex.Message}");
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                // Always reset the flag, even if an exception occurs
+                _RunningCallbacks = false;
+            }
         }
     }
 }

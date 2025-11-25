@@ -36,7 +36,22 @@ namespace SAM.API
 
         public void Run(IntPtr param)
         {
-            this.OnRun(param);
+            // Validate pointer is not null
+            if (param == IntPtr.Zero)
+            {
+                SecurityLogger.Log(LogLevel.Warning, LogContext.Callback, $"Null callback pointer received for ID {this.Id}");
+                return;
+            }
+
+            try
+            {
+                // Check if event has subscribers before invoking
+                OnRun?.Invoke(param);
+            }
+            catch (Exception ex)
+            {
+                SecurityLogger.Log(LogLevel.Error, LogContext.Callback, $"Callback {Id} execution failed: {ex.Message}");
+            }
         }
     }
 
@@ -52,8 +67,42 @@ namespace SAM.API
 
         public void Run(IntPtr pvParam)
         {
-            var data = (TParameter)Marshal.PtrToStructure(pvParam, typeof(TParameter));
-            this.OnRun(data);
+            // Validate pointer is not null
+            if (pvParam == IntPtr.Zero)
+            {
+                SecurityLogger.Log(LogLevel.Warning, LogContext.Callback, $"Null callback pointer received for ID {this.Id}");
+                return;
+            }
+
+            // Validate struct size
+            int structSize;
+            try
+            {
+                structSize = Marshal.SizeOf<TParameter>();
+                if (structSize <= 0)
+                {
+                    SecurityLogger.Log(LogLevel.Error, LogContext.Callback, $"Callback {Id} has invalid struct size: {structSize}");
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                SecurityLogger.Log(LogLevel.Error, LogContext.Callback, $"Callback {Id} failed to get struct size: {ex.Message}");
+                return;
+            }
+
+            // Safely marshal with exception handling
+            try
+            {
+                var data = (TParameter)Marshal.PtrToStructure(pvParam, typeof(TParameter));
+
+                // Check if event has subscribers before invoking
+                OnRun?.Invoke(data);
+            }
+            catch (Exception ex)
+            {
+                SecurityLogger.Log(LogLevel.Error, LogContext.Callback, $"Callback {Id} marshaling/execution failed: {ex.Message}");
+            }
         }
     }
 }
