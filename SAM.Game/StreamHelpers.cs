@@ -80,6 +80,14 @@ namespace SAM.Game
             {
                 if (i + characterSize > data.Length)
                 {
+                    // Check total allocation limit (STRICT - prevents memory exhaustion)
+                    if (data.Length + (128 * characterSize) > SecurityConfig.MAX_VDF_STRING_ALLOCATION)
+                    {
+                        var message = $"VDF string allocation exceeds maximum allowed ({SecurityConfig.MAX_VDF_STRING_ALLOCATION} bytes)";
+                        API.SecurityLogger.Log(API.LogLevel.Error, API.LogContext.Validation, message);
+                        throw new InvalidDataException(message);
+                    }
+
                     Array.Resize(ref data, data.Length + (128 * characterSize));
                 }
 
@@ -92,6 +100,14 @@ namespace SAM.Game
                 }
 
                 i += characterSize;
+
+                // Check string length limit (STRICT - reject malformed VDF files)
+                if (i > SecurityConfig.MAX_VDF_STRING_LENGTH * characterSize)
+                {
+                    var message = $"VDF string length exceeds maximum allowed ({SecurityConfig.MAX_VDF_STRING_LENGTH} characters)";
+                    API.SecurityLogger.Log(API.LogLevel.Error, API.LogContext.Validation, message);
+                    throw new InvalidDataException(message);
+                }
             }
 
             if (i == 0)

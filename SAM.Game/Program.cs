@@ -49,6 +49,17 @@ namespace SAM.Game
                 return;
             }
 
+            // Validate AppId range (STRICT - prevents integer overflow and invalid IDs)
+            if (appId < API.SecurityConfig.MIN_APP_ID || appId > API.SecurityConfig.MAX_APP_ID)
+            {
+                MessageBox.Show(
+                    $"Application ID must be between {API.SecurityConfig.MIN_APP_ID} and {API.SecurityConfig.MAX_APP_ID}.",
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return;
+            }
+
             if (API.Steam.GetInstallPath() == Application.StartupPath)
             {
                 MessageBox.Show(

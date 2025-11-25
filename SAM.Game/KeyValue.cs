@@ -223,6 +223,19 @@ namespace SAM.Game
 
         public bool ReadAsBinary(Stream input)
         {
+            return ReadAsBinary(input, 0);
+        }
+
+        private bool ReadAsBinary(Stream input, int depth)
+        {
+            // Check recursion depth limit (STRICT - prevents stack exhaustion)
+            if (depth >= SecurityConfig.MAX_VDF_RECURSION_DEPTH)
+            {
+                var message = $"VDF recursion depth exceeds maximum allowed ({SecurityConfig.MAX_VDF_RECURSION_DEPTH})";
+                API.SecurityLogger.Log(API.LogLevel.Error, API.LogContext.Validation, message);
+                throw new InvalidDataException(message);
+            }
+
             this.Children = new();
             try
             {
@@ -245,7 +258,7 @@ namespace SAM.Game
                     {
                         case KeyValueType.None:
                         {
-                            current.ReadAsBinary(input);
+                            current.ReadAsBinary(input, depth + 1);
                             break;
                         }
 

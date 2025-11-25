@@ -26,22 +26,55 @@ namespace SAM.Game.Stats
     {
         public int OriginalValue;
         public int IntValue;
+        public int MinValue;
+        public int MaxValue;
 
         public override object Value
         {
-            get => this.IntValue;
+            get => IntValue;
             set
             {
                 var i = int.Parse((string)value, System.Globalization.CultureInfo.CurrentCulture);
-                if ((this.Permission & 2) != 0 &&
-                    this.IntValue != i)
+
+                // STRICT: Check protected flag (permission bit 2)
+                if ((Permission & 2) != 0 &&
+                    IntValue != i)
                 {
                     throw new StatIsProtectedException();
                 }
-                this.IntValue = i;
+
+                // STRICT: Check increment-only flag
+                if (IsIncrementOnly && i < IntValue)
+                {
+                    throw new System.InvalidOperationException(
+                        $"Stat '{Id}' is increment-only and cannot be decreased from {IntValue} to {i}.");
+                }
+
+                // GRACEFUL: Clamp to min/max bounds (prevents setting invalid stat values)
+                int originalValue = i;
+                if (i < MinValue)
+                {
+                    i = MinValue;
+                }
+                else if (i > MaxValue)
+                {
+                    i = MaxValue;
+                }
+
+                // Log if value was clamped
+                if (i != originalValue)
+                {
+                    API.SecurityLogger.LogWithRateLimit(
+                        API.LogLevel.Warning,
+                        API.LogContext.Validation,
+                        $"stat_{Id}",
+                        $"Stat '{Id}' value clamped from {originalValue} to {i} (min={MinValue}, max={MaxValue})");
+                }
+
+                IntValue = i;
             }
         }
 
-        public override bool IsModified => this.IntValue != this.OriginalValue;
+        public override bool IsModified => IntValue != OriginalValue;
     }
 }

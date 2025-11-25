@@ -26,22 +26,62 @@ namespace SAM.Game.Stats
     {
         public float OriginalValue;
         public float FloatValue;
+        public float MinValue;
+        public float MaxValue;
 
         public override object Value
         {
-            get => this.FloatValue;
+            get => FloatValue;
             set
             {
                 var f = float.Parse((string)value, System.Globalization.CultureInfo.CurrentCulture);
-                if ((this.Permission & 2) != 0 &&
-                    this.FloatValue.Equals(f) == false)
+
+                // STRICT: Reject NaN and Infinity
+                if (float.IsNaN(f) || float.IsInfinity(f))
+                {
+                    throw new System.InvalidOperationException(
+                        $"Stat '{Id}' cannot be set to NaN or Infinity.");
+                }
+
+                // STRICT: Check protected flag (permission bit 2)
+                if ((Permission & 2) != 0 &&
+                    FloatValue.Equals(f) == false)
                 {
                     throw new StatIsProtectedException();
                 }
-                this.FloatValue = f;
+
+                // STRICT: Check increment-only flag
+                if (IsIncrementOnly && f < FloatValue)
+                {
+                    throw new System.InvalidOperationException(
+                        $"Stat '{Id}' is increment-only and cannot be decreased from {FloatValue} to {f}.");
+                }
+
+                // GRACEFUL: Clamp to min/max bounds (prevents setting invalid stat values)
+                float originalValue = f;
+                if (f < MinValue)
+                {
+                    f = MinValue;
+                }
+                else if (f > MaxValue)
+                {
+                    f = MaxValue;
+                }
+
+                // Log if value was clamped
+                if (!f.Equals(originalValue))
+                {
+                    API.SecurityLogger.LogWithRateLimit(
+                        API.LogLevel.Warning,
+                        API.LogContext.Validation,
+                        $"stat_{Id}",
+                        $"Stat '{Id}' value clamped from {originalValue} to {f} (min={MinValue}, max={MaxValue})");
+                }
+
+                FloatValue = f;
             }
         }
 
-        public override bool IsModified => this.FloatValue.Equals(this.OriginalValue) == false;
+        public override bool IsModified => FloatValue.Equals(OriginalValue) == false;
     }
 }
