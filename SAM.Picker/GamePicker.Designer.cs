@@ -36,6 +36,7 @@
             this._CallbackTimer = new System.Windows.Forms.Timer(this.components);
             this._PickerToolStrip = new System.Windows.Forms.ToolStrip();
             this._RefreshGamesButton = new System.Windows.Forms.ToolStripButton();
+            this._UnlockAllGamesButton = new System.Windows.Forms.ToolStripButton();
             this._AddGameTextBox = new System.Windows.Forms.ToolStripTextBox();
             this._AddGameButton = new System.Windows.Forms.ToolStripButton();
             this._FindGamesLabel = new System.Windows.Forms.ToolStripLabel();
@@ -82,6 +83,7 @@
             //
             this._PickerToolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this._RefreshGamesButton,
+            this._UnlockAllGamesButton,
             _ToolStripSeparator1,
             this._AddGameTextBox,
             this._AddGameButton,
@@ -103,6 +105,13 @@
             this._RefreshGamesButton.Size = new System.Drawing.Size(105, 22);
             this._RefreshGamesButton.Text = "Refresh Games";
             this._RefreshGamesButton.Click += new System.EventHandler(this.OnRefresh);
+            //
+            // _UnlockAllGamesButton
+            //
+            this._UnlockAllGamesButton.Name = "_UnlockAllGamesButton";
+            this._UnlockAllGamesButton.Size = new System.Drawing.Size(72, 22);
+            this._UnlockAllGamesButton.Text = "Unlock All";
+            this._UnlockAllGamesButton.Click += new System.EventHandler(this.OnUnlockAllGames);
             //
             // _AddGameTextBox
             //
@@ -265,6 +274,7 @@
         private System.Windows.Forms.Timer _CallbackTimer;
         private System.Windows.Forms.ToolStrip _PickerToolStrip;
         private System.Windows.Forms.ToolStripButton _RefreshGamesButton;
+        private System.Windows.Forms.ToolStripButton _UnlockAllGamesButton;
         private System.Windows.Forms.ToolStripTextBox _AddGameTextBox;
         private System.Windows.Forms.ToolStripButton _AddGameButton;
         private System.Windows.Forms.ToolStripDropDownButton _FilterDropDownButton;

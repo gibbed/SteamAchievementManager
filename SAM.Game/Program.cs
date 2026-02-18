@@ -109,8 +109,65 @@ namespace SAM.Game
 
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
+
+                if (args.Length >= 2 && args[1] == "--unlock-all")
+                {
+                    UnlockAllAchievements(client);
+                    return;
+                }
+
                 Application.Run(new Manager(appId, client));
             }
+        }
+
+        private static void UnlockAllAchievements(API.Client client)
+        {
+            var steamId = client.SteamUser.GetSteamId();
+            var callHandle = client.SteamUserStats.RequestUserStats(steamId);
+            if (callHandle == API.CallHandle.Invalid)
+            {
+                return;
+            }
+
+            // Run callbacks until stats are received
+            var deadline = DateTime.UtcNow.AddSeconds(10);
+            bool statsReceived = false;
+            var callback = client.CreateAndRegisterCallback<API.Callbacks.UserStatsReceived>();
+            callback.OnRun += param =>
+            {
+                if (param.Result == 1)
+                {
+                    statsReceived = true;
+                }
+            };
+
+            while (statsReceived == false && DateTime.UtcNow < deadline)
+            {
+                client.RunCallbacks(false);
+                System.Threading.Thread.Sleep(100);
+            }
+
+            if (statsReceived == false)
+            {
+                return;
+            }
+
+            uint numAchievements = client.SteamUserStats.GetNumAchievements();
+            if (numAchievements == 0)
+            {
+                return;
+            }
+
+            for (uint i = 0; i < numAchievements; i++)
+            {
+                string name = client.SteamUserStats.GetAchievementName(i);
+                if (string.IsNullOrEmpty(name) == false)
+                {
+                    client.SteamUserStats.SetAchievement(name, true);
+                }
+            }
+
+            client.SteamUserStats.StoreStats();
         }
     }
 }

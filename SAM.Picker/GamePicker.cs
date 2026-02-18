@@ -471,6 +471,76 @@ namespace SAM.Picker
             this.AddGames();
         }
 
+        private void OnUnlockAllGames(object sender, EventArgs e)
+        {
+            var result = MessageBox.Show(
+                this,
+                "This will unlock ALL achievements for ALL of your games in alphabetical order.\n\nAre you sure you want to continue?",
+                "Unlock All Achievements",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (result != DialogResult.Yes)
+            {
+                return;
+            }
+
+            this._UnlockAllGamesButton.Enabled = false;
+            this._RefreshGamesButton.Enabled = false;
+
+            var games = this._Games.Values
+                .OrderBy(g => g.Name, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            int succeeded = 0;
+            int failed = 0;
+
+            foreach (var game in games)
+            {
+                this._PickerStatusLabel.Text = $"Unlocking achievements for: {game.Name}...";
+                this._PickerStatusStrip.Refresh();
+
+                try
+                {
+                    var process = Process.Start(
+                        new ProcessStartInfo("SAM.Game.exe", $"{game.Id.ToString(CultureInfo.InvariantCulture)} --unlock-all")
+                        {
+                            UseShellExecute = false,
+                        });
+                    process?.WaitForExit(30000);
+                    succeeded++;
+                }
+                catch (Win32Exception)
+                {
+                    failed++;
+                }
+            }
+
+            this._UnlockAllGamesButton.Enabled = true;
+            this._RefreshGamesButton.Enabled = true;
+
+            if (failed > 0)
+            {
+                this._PickerStatusLabel.Text = $"Done. Unlocked achievements for {succeeded} game(s). Failed for {failed} game(s).";
+                MessageBox.Show(
+                    this,
+                    $"Unlock All completed with errors.\nSucceeded: {succeeded}\nFailed: {failed}",
+                    "Unlock All",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+            }
+            else
+            {
+                this._PickerStatusLabel.Text = $"Done. Unlocked achievements for {succeeded} game(s).";
+                MessageBox.Show(
+                    this,
+                    $"Successfully unlocked achievements for {succeeded} game(s).",
+                    "Unlock All",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+        }
+
         private void OnAddGame(object sender, EventArgs e)
         {
             uint id;
