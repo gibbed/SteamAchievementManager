@@ -32,6 +32,7 @@ namespace SAM.Game
         public static void Main(string[] args)
         {
             long appId;
+            DateTime samStartDate;
 
             if (args.Length == 0)
             {
@@ -43,6 +44,16 @@ namespace SAM.Game
             {
                 MessageBox.Show(
                     "Could not parse application ID from command line argument.",
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return;
+            }
+
+            if (DateTime.TryParse(args[1], out samStartDate) == false)
+            {
+                MessageBox.Show(
+                    "Could not parse SAM Start Date from command line argument.",
                     "Error",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
@@ -71,7 +82,7 @@ namespace SAM.Game
                     {
                         MessageBox.Show(
                             "Steam is not running. Please start Steam then run this tool again.\n\n" +
-                            "If you have the game through Family Share, the game may be locked due to\n" +
+                            "If you have the game through Family Share, the game may be locked due to\n\n" +
                             "the Family Share account actively playing a game.\n\n" +
                             "(" + e.Message + ")",
                             "Error",
@@ -109,7 +120,7 @@ namespace SAM.Game
 
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
-                Application.Run(new Manager(appId, client));
+                Application.Run(new Manager(appId, client, samStartDate));
             }
         }
     }

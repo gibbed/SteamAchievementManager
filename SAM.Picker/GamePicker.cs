@@ -40,6 +40,7 @@ namespace SAM.Picker
     internal partial class GamePicker : Form
     {
         private readonly API.Client _SteamClient;
+        private DateTimePicker _SAMStartDatePicker;
 
         private readonly Dictionary<uint, GameInfo> _Games;
         private readonly List<GameInfo> _FilteredGames;
@@ -61,6 +62,7 @@ namespace SAM.Picker
             this._LogoQueue = new();
 
             this.InitializeComponent();
+            AddDateTimePickerToToolStrip(); // Creates _SAMStartDatePicker to choose a start date for resetting achievements unlocked via SAM.
 
             Bitmap blank = new(this._LogoImageList.ImageSize.Width, this._LogoImageList.ImageSize.Height);
             using (var g = Graphics.FromImage(blank))
@@ -76,6 +78,17 @@ namespace SAM.Picker
             this._AppDataChangedCallback.OnRun += this.OnAppDataChanged;
 
             this.AddGames();
+        }
+
+        private void AddDateTimePickerToToolStrip()
+        {
+            _SAMStartDatePicker = new DateTimePicker();
+
+            _SAMStartDatePicker.Width = 120;
+            _SAMStartDatePicker.Format = DateTimePickerFormat.Short;
+            ToolStripControlHost dateHost = new ToolStripControlHost(_SAMStartDatePicker);
+
+            this._PickerToolStrip.Items.Add(dateHost);
         }
 
         private void OnAppDataChanged(APITypes.AppDataChanged param)
@@ -452,7 +465,7 @@ namespace SAM.Picker
 
             try
             {
-                Process.Start("SAM.Game.exe", info.Id.ToString(CultureInfo.InvariantCulture));
+                Process.Start("SAM.Game.exe", $"{info.Id.ToString(CultureInfo.InvariantCulture)} {_SAMStartDatePicker.Value}");
             }
             catch (Win32Exception)
             {
