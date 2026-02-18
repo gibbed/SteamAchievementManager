@@ -478,11 +478,17 @@ namespace SAM.Game
                 {
                     continue;
                 }
+                
+                DateTime? unlockTimeValue = isAchieved && unlockTime > 0 ? DateTimeOffset.FromUnixTimeSeconds(unlockTime).LocalDateTime : null;
 
                 if (textSearch != null)
                 {
-                    if (def.Name.IndexOf(textSearch, StringComparison.OrdinalIgnoreCase) < 0 &&
-                        def.Description.IndexOf(textSearch, StringComparison.OrdinalIgnoreCase) < 0)
+
+                    bool matchFound = def.Name.IndexOf(textSearch, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                      def.Description.IndexOf(textSearch, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                      unlockTimeValue.HasValue && unlockTimeValue.Value.ToString(CultureInfo.CurrentCulture).IndexOf(textSearch, StringComparison.OrdinalIgnoreCase) >= 0;
+
+                    if (!matchFound)
                     {
                         continue;
                     }
@@ -492,9 +498,7 @@ namespace SAM.Game
                 {
                     Id = def.Id,
                     IsAchieved = isAchieved,
-                    UnlockTime = isAchieved == true && unlockTime > 0
-                        ? DateTimeOffset.FromUnixTimeSeconds(unlockTime).LocalDateTime
-                        : null,
+                    UnlockTime = unlockTimeValue,
                     IconNormal = string.IsNullOrEmpty(def.IconNormal) ? null : def.IconNormal,
                     IconLocked = string.IsNullOrEmpty(def.IconLocked) ? def.IconNormal : def.IconLocked,
                     Permission = def.Permission,

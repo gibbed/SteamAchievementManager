@@ -323,7 +323,7 @@
             this._MatchingStringTextBox.Font = new System.Drawing.Font("Segoe UI", 9F);
             this._MatchingStringTextBox.Name = "_MatchingStringTextBox";
             this._MatchingStringTextBox.Size = new System.Drawing.Size(100, 25);
-            this._MatchingStringTextBox.ToolTipText = "Type at least 3 characters that must appear in the name or description";
+            this._MatchingStringTextBox.ToolTipText = "Type characters that appear in the name, description or unlock time of the achievement";
             this._MatchingStringTextBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.OnFilterUpdate);
             // 
             // _StatisticsTabPage
