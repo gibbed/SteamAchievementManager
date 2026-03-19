@@ -33,7 +33,7 @@ namespace SAM.Picker
             if (API.Steam.GetInstallPath() == Application.StartupPath)
             {
                 MessageBox.Show(
-                    "This tool declines to being run from the Steam directory.",
+                    "This tool cannot be run from inside the Steam directory.",
                     "Error",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
