@@ -36,6 +36,7 @@
             this._StoreButton = new System.Windows.Forms.ToolStripButton();
             this._ReloadButton = new System.Windows.Forms.ToolStripButton();
             this._ResetButton = new System.Windows.Forms.ToolStripButton();
+            this._RevertButton = new System.Windows.Forms.ToolStripButton();
             this._AchievementImageList = new System.Windows.Forms.ImageList(this.components);
             this._MainStatusStrip = new System.Windows.Forms.StatusStrip();
             this._CountryStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
@@ -86,7 +87,8 @@
             this._MainToolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this._StoreButton,
             this._ReloadButton,
-            this._ResetButton});
+            this._ResetButton,
+            this._RevertButton});
             this._MainToolStrip.Location = new System.Drawing.Point(0, 0);
             this._MainToolStrip.Name = "_MainToolStrip";
             this._MainToolStrip.Size = new System.Drawing.Size(712, 25);
@@ -120,10 +122,20 @@
             this._ResetButton.Image = global::SAM.Game.Resources.Reset;
             this._ResetButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this._ResetButton.Name = "_ResetButton";
-            this._ResetButton.Size = new System.Drawing.Size(55, 22);
-            this._ResetButton.Text = "Reset";
+            this._ResetButton.Size = new System.Drawing.Size(150, 22);
+            this._ResetButton.Text = "Reset All Achievements";
             this._ResetButton.ToolTipText = "Reset achievements and/or statistics for active game.";
             this._ResetButton.Click += new System.EventHandler(this.OnResetAllStats);
+            // 
+            // _RevertButton
+            // 
+            this._RevertButton.Image = global::SAM.Game.Resources.Reset;
+            this._RevertButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this._RevertButton.Name = "_RevertButton";
+            this._RevertButton.Size = new System.Drawing.Size(232, 22);
+            this._RevertButton.Text = "Reset Achievements Unlocked via SAM";
+            this._RevertButton.ToolTipText = "Reset achievements and/or statistics for active game.";
+            this._RevertButton.Click += new System.EventHandler(this.OnRevertAchievements);
             // 
             // _AchievementImageList
             // 
@@ -150,7 +162,7 @@
             // _GameStatusLabel
             // 
             this._GameStatusLabel.Name = "_GameStatusLabel";
-            this._GameStatusLabel.Size = new System.Drawing.Size(555, 17);
+            this._GameStatusLabel.Size = new System.Drawing.Size(697, 17);
             this._GameStatusLabel.Spring = true;
             this._GameStatusLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
@@ -426,5 +438,6 @@
         private System.Windows.Forms.ToolStripTextBox _MatchingStringTextBox;
         private System.Windows.Forms.ColumnHeader _AchievementUnlockTimeColumnHeader;
         private System.Windows.Forms.CheckBox _EnableStatsEditingCheckBox;
+        private System.Windows.Forms.ToolStripButton _RevertButton;
     }
 }
