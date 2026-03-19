@@ -1,4 +1,4 @@
-﻿/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
+/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
  *
  * This software is provided 'as-is', without any express or implied
  * warranty. In no event will the authors be held liable for any damages
@@ -20,16 +20,25 @@
  *    distribution.
  */
 
-namespace SAM.API.Types
+using System;
+using System.Runtime.InteropServices;
+using SAM.API.Interfaces;
+
+namespace SAM.API.Wrappers
 {
-    public enum UserStatType
+    public class SteamFriends015 : NativeWrapper<ISteamFriends015>
     {
-        Invalid = 0,
-        Integer = 1,
-        Int = Integer,
-        Float = 2,
-        AverageRate = 3,
-        Achievements = 4,
-        GroupAchievements = 5,
+        #region SetPersonaState
+        [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
+        private delegate void NativeSetPersonaState(IntPtr self, int personaState);
+
+        public void SetPersonaState(int personaState)
+        {
+            this.Call<NativeSetPersonaState>(
+                this.Functions.SetPersonaState,
+                this.ObjectAddress,
+                personaState);
+        }
+        #endregion
     }
 }

@@ -29,6 +29,7 @@ namespace SAM.API
 {
     public static class Steam
     {
+        public static readonly object SteamLock = new();
         private struct Native
         {
             [DllImport("kernel32.dll", SetLastError = true, BestFitMapping = false, ThrowOnUnmappableChar = true)]

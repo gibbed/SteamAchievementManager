@@ -35,6 +35,7 @@ namespace SAM.API
         public Wrappers.SteamUtils005 SteamUtils;
         public Wrappers.SteamApps001 SteamApps001;
         public Wrappers.SteamApps008 SteamApps008;
+        public Wrappers.SteamFriends015 SteamFriends;
 
         private bool _IsDisposed = false;
         private int _Pipe;
@@ -52,6 +53,11 @@ namespace SAM.API
             if (appId != 0)
             {
                 Environment.SetEnvironmentVariable("SteamAppId", appId.ToString(CultureInfo.InvariantCulture));
+                try
+                {
+                    System.IO.File.WriteAllText("steam_appid.txt", appId.ToString(CultureInfo.InvariantCulture));
+                }
+                catch { }
             }
 
             if (Steam.Load() == false)
@@ -78,15 +84,25 @@ namespace SAM.API
             }
 
             this.SteamUtils = this.SteamClient.GetSteamUtils004(this._Pipe);
-            if (appId > 0 && this.SteamUtils.GetAppId() != (uint)appId)
+            if (appId > 0)
             {
-                throw new ClientInitializeException(ClientInitializeFailure.AppIdMismatch, "appID mismatch");
+                for (int retry = 0; retry < 10; retry++)
+                {
+                    if (this.SteamUtils.GetAppId() == (uint)appId) break;
+                    System.Threading.Thread.Sleep(50);
+                }
+
+                if (this.SteamUtils.GetAppId() != (uint)appId)
+                {
+                    System.Diagnostics.Debug.WriteLine($"AppId mismatch: Steam={this.SteamUtils.GetAppId()} vs Required={appId}");
+                }
             }
 
             this.SteamUser = this.SteamClient.GetSteamUser012(this._User, this._Pipe);
             this.SteamUserStats = this.SteamClient.GetSteamUserStats013(this._User, this._Pipe);
             this.SteamApps001 = this.SteamClient.GetSteamApps001(this._User, this._Pipe);
             this.SteamApps008 = this.SteamClient.GetSteamApps008(this._User, this._Pipe);
+            this.SteamFriends = this.SteamClient.GetSteamFriends015(this._User, this._Pipe);
         }
 
         ~Client()

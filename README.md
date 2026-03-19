@@ -1,20 +1,37 @@
 # Steam Achievement Manager
 
-Steam Achievement Manager (SAM) is a lightweight, portable application used to manage achievements and statistics in the popular PC gaming platform Steam. This application requires the [Steam client](https://store.steampowered.com/about/), a Steam account and network access. Steam must be running and the user must be logged in.
+**Steam Achievement Manager (SAM)** is a powerful, lightweight, open-source utility designed to manage achievements and in-game statistics on the Steam gaming platform.
 
-This is the code for SAM. The closed-source version originally released in 2008, last major release in 2011, and last updated in 2013 (a hotfix).
+---
 
-The code is being made available so that those interested can do as they like with it.
+## ✨ Features
 
-There are some changes to the code since the last closed-source release:
-- General code maintenance to bring it into a more modern state.
-- Icons have been replaced with ones from the Fugue Icons set.
-- Version has been bumped to 7.0.x.x to indicate the open-source release.
+- 🎮 **Modern Steam Dark UI**: Fully redesigned user interface built with WPF adhering to Steam's signature Dark Theme.
+- 🌍 **30-Language Support**: Complete localization with human-readable JSON files in the `languages/` folder.
+- 👁️ **Hidden Achievement Marking & Filtering**: Clear visual badges for hidden achievements and flexible filtering options.
+- 🏆 **Live Achievement & Stat Counter**: Real-time counter showing normal vs. hidden achievements.
+- ⚡ **High Performance & Stability**: Thread-safe Steam IPC synchronization, instant library scanning, and asynchronous capsule rendering.
+- 🛠️ **Automated CI/CD**: Built-in GitHub Actions workflow and `build.bat` script for easy building from source.
 
-[Download latest release](https://github.com/gibbed/SteamAchievementManager/releases/latest).
+---
 
-[![Build status](https://ci.appveyor.com/api/projects/status/00vic6jliar6j0ol/branch/master?svg=true)](https://ci.appveyor.com/project/gibbed/steamachievementmanager/branch/master)
+## 🚀 Requirements
 
-## Attribution
+1. **Steam Client**: Steam must be running and logged in with your account.
+2. **.NET Framework 4.8**: Included in Windows 10 & Windows 11 by default.
 
-Most (if not all) icons are from the [Fugue Icons](https://p.yusukekamiyamane.com/) set.
+---
+
+## 📦 Building from Source
+
+To compile the application locally:
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/gibbed/SteamAchievementManager.git
+   ```
+2. Run the automated build script:
+   ```cmd
+   build.bat
+   ```
+3. Compiled binaries will be located in the `upload/` folder.

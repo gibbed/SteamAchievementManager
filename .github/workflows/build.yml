@@ -1,0 +1,59 @@
+name: Build & Release Steam Achievement Manager
+
+on:
+  push:
+    branches: [ "**" ]
+    tags: [ "*" ]
+  pull_request:
+    branches: [ "**" ]
+  release:
+    types: [ published ]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v2
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Restore NuGet Packages
+      run: nuget restore SAM.sln
+
+    - name: Build Solution (Release x86)
+      run: msbuild SAM.sln /p:Configuration=Release /p:Platform="x86" /m /nologo
+
+    - name: Copy Languages Directory
+      shell: pwsh
+      run: |
+        if (!(Test-Path "upload\languages")) { New-Item -ItemType Directory -Path "upload\languages" -Force }
+        Copy-Item -Path "languages\*" -Destination "upload\languages" -Recurse -Force
+        Remove-Item -Path "upload\*.pdb" -Force -ErrorAction SilentlyContinue
+
+    - name: Compress Release Archive
+      shell: pwsh
+      run: |
+        Compress-Archive -Path upload\* -DestinationPath SteamAchievementManager-Release.zip -Force
+
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: SteamAchievementManager-Release
+        path: SteamAchievementManager-Release.zip
+
+    - name: Create GitHub Release
+      if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'release'
+      uses: softprops/action-gh-release@v2
+      with:
+        files: SteamAchievementManager-Release.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
