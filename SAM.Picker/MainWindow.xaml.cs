@@ -25,7 +25,7 @@ namespace SAM.Picker
             InitializeComponent();
             GamesListBox.ItemsSource = _FilteredGames;
             Loaded += OnLoaded;
-            Title = "SAM v8.0 (Legacy Mode)";
+            Title = "SAM v7.0.42 (Legacy Mode)";
         }
 
         private async void OnLoaded(object sender, RoutedEventArgs e)

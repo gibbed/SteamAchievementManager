@@ -10,6 +10,7 @@
     <PlatformTarget>x86</PlatformTarget>
     <ApplicationIcon>SAM.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Version>7.0.42</Version>
     <AssemblyName>SAM.Picker</AssemblyName>
 
     <StartupObject>SAM.Picker.Program</StartupObject>
