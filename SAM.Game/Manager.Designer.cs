@@ -55,6 +55,18 @@
             this._DisplayLabel = new System.Windows.Forms.ToolStripLabel();
             this._DisplayLockedOnlyButton = new System.Windows.Forms.ToolStripButton();
             this._DisplayUnlockedOnlyButton = new System.Windows.Forms.ToolStripButton();
+            this._LockVisibleButton = new System.Windows.Forms.ToolStripButton();
+            this._DateFilterLabel = new System.Windows.Forms.ToolStripLabel();
+            var innerDatePicker = new System.Windows.Forms.DateTimePicker()
+            {
+                Format = System.Windows.Forms.DateTimePickerFormat.Short,
+                Size = new System.Drawing.Size(100, 22),
+                Enabled = false,
+                Name = "_InnerDatePicker"
+            };
+            this._DateFilterPicker = new System.Windows.Forms.ToolStripControlHost(innerDatePicker);
+            this._DateFilterCheckBox = new System.Windows.Forms.ToolStripButton();
+            _ToolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this._MatchingStringLabel = new System.Windows.Forms.ToolStripLabel();
             this._MatchingStringTextBox = new System.Windows.Forms.ToolStripTextBox();
             this._StatisticsTabPage = new System.Windows.Forms.TabPage();
@@ -237,6 +249,7 @@
             // 
             this._AchievementsToolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this._LockAllButton,
+            this._LockVisibleButton,
             this._InvertAllButton,
             this._UnlockAllButton,
             _ToolStripSeparator1,
@@ -244,6 +257,9 @@
             this._DisplayLockedOnlyButton,
             this._DisplayUnlockedOnlyButton,
             _ToolStripSeparator2,
+            this._DateFilterLabel,
+            this._DateFilterCheckBox,
+            this._DateFilterPicker,
             this._MatchingStringLabel,
             this._MatchingStringTextBox});
             this._AchievementsToolStrip.Location = new System.Drawing.Point(3, 3);
@@ -310,9 +326,44 @@
             this._DisplayUnlockedOnlyButton.Size = new System.Drawing.Size(60, 22);
             this._DisplayUnlockedOnlyButton.Text = "unlocked";
             this._DisplayUnlockedOnlyButton.Click += new System.EventHandler(this.OnDisplayUncheckedOnly);
-            // 
+            //
+            // _LockVisibleButton
+            //
+            this._LockVisibleButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this._LockVisibleButton.Image = global::SAM.Game.Resources.Lock;
+            this._LockVisibleButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this._LockVisibleButton.Name = "_LockVisibleButton";
+            this._LockVisibleButton.Size = new System.Drawing.Size(23, 22);
+            this._LockVisibleButton.Text = "Lock Visible";
+            this._LockVisibleButton.ToolTipText = "Lock all currently visible achievements.";
+            this._LockVisibleButton.Click += new System.EventHandler(this.OnLockVisible);
+            //
+            // _DateFilterLabel
+            //
+            this._DateFilterLabel.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this._DateFilterLabel.Name = "_DateFilterLabel";
+            this._DateFilterLabel.Size = new System.Drawing.Size(33, 22);
+            this._DateFilterLabel.Text = "Date";
+            //
+            // _DateFilterCheckBox
+            //
+            this._DateFilterCheckBox.CheckOnClick = true;
+            this._DateFilterCheckBox.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this._DateFilterCheckBox.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this._DateFilterCheckBox.Name = "_DateFilterCheckBox";
+            this._DateFilterCheckBox.Size = new System.Drawing.Size(60, 22);
+            this._DateFilterCheckBox.Text = "filter on";
+            this._DateFilterCheckBox.ToolTipText = "Toggle date filtering for achievements.";
+            this._DateFilterCheckBox.Click += new System.EventHandler(this.OnDateFilterToggle);
+            //
+            // _DateFilterPicker
+            //
+            innerDatePicker.ValueChanged += new System.EventHandler(this.OnDateFilterChanged);
+            this._DateFilterPicker.Name = "_DateFilterPicker";
+            this._DateFilterPicker.Size = new System.Drawing.Size(110, 25);
+            //
             // _MatchingStringLabel
-            // 
+            //
             this._MatchingStringLabel.Font = new System.Drawing.Font("Segoe UI", 9F);
             this._MatchingStringLabel.Name = "_MatchingStringLabel";
             this._MatchingStringLabel.Size = new System.Drawing.Size(33, 22);
@@ -425,6 +476,10 @@
         private System.Windows.Forms.ToolStripLabel _MatchingStringLabel;
         private System.Windows.Forms.ToolStripTextBox _MatchingStringTextBox;
         private System.Windows.Forms.ColumnHeader _AchievementUnlockTimeColumnHeader;
+        private System.Windows.Forms.ToolStripButton _LockVisibleButton;
+        private System.Windows.Forms.ToolStripLabel _DateFilterLabel;
+        private System.Windows.Forms.ToolStripControlHost _DateFilterPicker;
+        private System.Windows.Forms.ToolStripButton _DateFilterCheckBox;
         private System.Windows.Forms.CheckBox _EnableStatsEditingCheckBox;
     }
 }

@@ -487,6 +487,20 @@ namespace SAM.Game
                     }
                 }
 
+                // Date filtering
+                if (this._DateFilterCheckBox.Checked)
+                {
+                    var innerPicker = (System.Windows.Forms.DateTimePicker)this._DateFilterPicker.Control;
+                    var filterDate = innerPicker.Value.Date;
+
+                    // Only show achievements that were unlocked on the selected date
+                    if (isAchieved == false || unlockTime <= 0 ||
+                        DateTimeOffset.FromUnixTimeSeconds(unlockTime).LocalDateTime.Date != filterDate)
+                    {
+                        continue;
+                    }
+                }
+
                 Stats.AchievementInfo info = new()
                 {
                     Id = def.Id,
@@ -908,6 +922,29 @@ namespace SAM.Game
             }
 
             this.GetAchievements();
+        }
+
+        private void OnLockVisible(object sender, EventArgs e)
+        {
+            foreach (ListViewItem item in this._AchievementListView.Items)
+            {
+                item.Checked = false;
+            }
+        }
+
+        private void OnDateFilterToggle(object sender, EventArgs e)
+        {
+            var innerPicker = (System.Windows.Forms.DateTimePicker)this._DateFilterPicker.Control;
+            innerPicker.Enabled = this._DateFilterCheckBox.Checked;
+            this.GetAchievements();
+        }
+
+        private void OnDateFilterChanged(object sender, EventArgs e)
+        {
+            if (this._DateFilterCheckBox.Checked)
+            {
+                this.GetAchievements();
+            }
         }
 
         private void OnFilterUpdate(object sender, KeyEventArgs e)
