@@ -31,6 +31,7 @@ namespace SAM.Game.Stats
         public string IconLocked;
         public bool IsHidden;
         public int Permission;
+        public float? AchievedPercent;
 
         public override string ToString()
         {

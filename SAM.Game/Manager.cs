@@ -26,6 +26,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
+using System.Collections;
 using System.Linq;
 using System.Net;
 using System.Windows.Forms;
@@ -36,6 +37,68 @@ namespace SAM.Game
 {
     internal partial class Manager : Form
     {
+        private sealed class AchievementListViewComparer : IComparer
+        {
+            public int Column { get; set; }
+            public SortOrder Order { get; set; } = SortOrder.Ascending;
+
+            public int Compare(object x, object y)
+            {
+                var leftItem = x as ListViewItem;
+                var rightItem = y as ListViewItem;
+                if (leftItem == null || rightItem == null)
+                {
+                    return 0;
+                }
+
+                var left = leftItem.Tag as Stats.AchievementInfo;
+                var right = rightItem.Tag as Stats.AchievementInfo;
+                if (left == null || right == null)
+                {
+                    return 0;
+                }
+
+                int result = this.Column switch
+                {
+                    0 => string.Compare(left.Name, right.Name, StringComparison.CurrentCultureIgnoreCase),
+                    1 => string.Compare(left.Description, right.Description, StringComparison.CurrentCultureIgnoreCase),
+                    2 => CompareNullable(left.UnlockTime, right.UnlockTime),
+                    3 => CompareNullable(left.AchievedPercent, right.AchievedPercent),
+                    _ => string.Compare(left.Id, right.Id, StringComparison.CurrentCultureIgnoreCase),
+                };
+
+                if (result == 0)
+                {
+                    result = string.Compare(left.Id, right.Id, StringComparison.CurrentCultureIgnoreCase);
+                }
+
+                return this.Order == SortOrder.Descending
+                    ? -result
+                    : result;
+            }
+
+            private static int CompareNullable<T>(T? left, T? right)
+                where T : struct, IComparable<T>
+            {
+                if (left.HasValue == true && right.HasValue == true)
+                {
+                    return left.Value.CompareTo(right.Value);
+                }
+
+                if (left.HasValue == true)
+                {
+                    return 1;
+                }
+
+                if (right.HasValue == true)
+                {
+                    return -1;
+                }
+
+                return 0;
+            }
+        }
+
         private readonly long _GameId;
         private readonly API.Client _SteamClient;
 
@@ -49,6 +112,12 @@ namespace SAM.Game
         private readonly BindingList<Stats.StatInfo> _Statistics = new();
 
         private readonly API.Callbacks.UserStatsReceived _UserStatsReceivedCallback;
+        private API.CallHandle _GlobalAchievementPercentagesHandle = API.CallHandle.Invalid;
+        private readonly AchievementListViewComparer _AchievementComparer = new()
+        {
+            Column = 0,
+            Order = SortOrder.Ascending,
+        };
 
         //private API.Callback<APITypes.UserStatsStored> UserStatsStoredCallback;
 
@@ -60,6 +129,7 @@ namespace SAM.Game
             //this.statisticsList.Enabled = this.checkBox1.Checked;
 
             this._AchievementImageList.Images.Add("Blank", new Bitmap(64, 64));
+            this._AchievementListView.ListViewItemSorter = this._AchievementComparer;
 
             this._StatisticsDataGridView.AutoGenerateColumns = false;
 
@@ -366,6 +436,8 @@ namespace SAM.Game
 
         private void OnUserStatsReceived(APITypes.UserStatsReceived param)
         {
+            this._GlobalAchievementPercentagesHandle = API.CallHandle.Invalid;
+
             if (param.Result != 1)
             {
                 this._GameStatusLabel.Text = $"Error while retrieving stats: {TranslateError(param.Result)}";
@@ -413,6 +485,7 @@ namespace SAM.Game
             }
 
             this._GameStatusLabel.Text = $"Retrieved {this._AchievementListView.Items.Count} achievements and {this._StatisticsDataGridView.Rows.Count} statistics.";
+            this.RequestAchievementPercentages();
             this.EnableInput();
         }
 
@@ -499,6 +572,7 @@ namespace SAM.Game
                     Permission = def.Permission,
                     Name = def.Name,
                     Description = def.Description,
+                    AchievedPercent = def.AchievedPercent,
                 };
 
                 ListViewItem item = new()
@@ -524,6 +598,9 @@ namespace SAM.Game
                 item.SubItems.Add(info.UnlockTime.HasValue == true
                     ? info.UnlockTime.Value.ToString()
                     : "");
+                item.SubItems.Add(info.AchievedPercent.HasValue == true
+                    ? info.AchievedPercent.Value.ToString("0.00", CultureInfo.InvariantCulture) + "%"
+                    : "");
 
                 info.ImageIndex = 0;
 
@@ -533,8 +610,92 @@ namespace SAM.Game
 
             this._AchievementListView.EndUpdate();
             this._IsUpdatingAchievementList = false;
+            this._AchievementListView.Sort();
 
             this.DownloadNextIcon();
+        }
+
+        private void RequestAchievementPercentages()
+        {
+            this._GlobalAchievementPercentagesHandle = API.CallHandle.Invalid;
+
+            if (this._AchievementListView.Items.Count == 0)
+            {
+                return;
+            }
+
+            var callHandle = this._SteamClient.SteamUserStats.RequestGlobalAchievementPercentages();
+            if (callHandle == API.CallHandle.Invalid)
+            {
+                return;
+            }
+
+            this._GlobalAchievementPercentagesHandle = callHandle;
+            this._GameStatusLabel.Text =
+                $"Retrieved {this._AchievementListView.Items.Count} achievements and {this._StatisticsDataGridView.Rows.Count} statistics. Loading global achievement percentages...";
+        }
+
+        private void UpdateAchievementPercentages()
+        {
+            foreach (ListViewItem item in this._AchievementListView.Items)
+            {
+                if (item.Tag is not Stats.AchievementInfo achievementInfo)
+                {
+                    continue;
+                }
+
+                if (this._SteamClient.SteamUserStats.GetAchievementAchievedPercent(
+                    achievementInfo.Id,
+                    out float percent) == false)
+                {
+                    item.SubItems[3].Text = "";
+                    continue;
+                }
+
+                achievementInfo.AchievedPercent = percent;
+                var definition = this._AchievementDefinitions.FirstOrDefault(def => def.Id == achievementInfo.Id);
+                if (definition != null)
+                {
+                    definition.AchievedPercent = percent;
+                }
+                item.SubItems[3].Text = percent.ToString("0.00", CultureInfo.InvariantCulture) + "%";
+            }
+
+            this._GameStatusLabel.Text =
+                $"Retrieved {this._AchievementListView.Items.Count} achievements, {this._StatisticsDataGridView.Rows.Count} statistics, and global achievement percentages.";
+            this._AchievementListView.Sort();
+        }
+
+        private void PollAchievementPercentages()
+        {
+            if (this._GlobalAchievementPercentagesHandle == API.CallHandle.Invalid)
+            {
+                return;
+            }
+
+            if (this._SteamClient.SteamUtils.IsAPICallCompleted(
+                this._GlobalAchievementPercentagesHandle,
+                out bool callFailed) == false)
+            {
+                return;
+            }
+
+            if (callFailed == true ||
+                this._SteamClient.SteamUtils.GetGlobalAchievementPercentagesReadyResult(
+                    this._GlobalAchievementPercentagesHandle,
+                    out var result,
+                    out bool resultFailed) == false ||
+                resultFailed == true ||
+                result.Result != 1)
+            {
+                this._GlobalAchievementPercentagesHandle = API.CallHandle.Invalid;
+                this._GameStatusLabel.Text =
+                    $"Retrieved {this._AchievementListView.Items.Count} achievements and {this._StatisticsDataGridView.Rows.Count} statistics. Global achievement percentages are unavailable.";
+                return;
+            }
+
+            this._GlobalAchievementPercentagesHandle = API.CallHandle.Invalid;
+            this.UpdateAchievementPercentages();
         }
 
         private void GetStatistics()
@@ -714,6 +875,7 @@ namespace SAM.Game
         {
             this._CallbackTimer.Enabled = false;
             this._SteamClient.RunCallbacks(false);
+            this.PollAchievementPercentages();
             this._CallbackTimer.Enabled = true;
         }
 
@@ -913,6 +1075,23 @@ namespace SAM.Game
         private void OnFilterUpdate(object sender, KeyEventArgs e)
         {
             this.GetAchievements();
+        }
+
+        private void OnAchievementColumnClick(object sender, ColumnClickEventArgs e)
+        {
+            if (e.Column == this._AchievementComparer.Column)
+            {
+                this._AchievementComparer.Order = this._AchievementComparer.Order == SortOrder.Ascending
+                    ? SortOrder.Descending
+                    : SortOrder.Ascending;
+            }
+            else
+            {
+                this._AchievementComparer.Column = e.Column;
+                this._AchievementComparer.Order = SortOrder.Ascending;
+            }
+
+            this._AchievementListView.Sort();
         }
     }
 }

@@ -23,6 +23,7 @@
 using System;
 using System.Runtime.InteropServices;
 using SAM.API.Interfaces;
+using APITypes = SAM.API.Types;
 
 namespace SAM.API.Wrappers
 {
@@ -84,6 +85,58 @@ namespace SAM.API.Wrappers
         public uint GetAppId()
         {
             return this.Call<uint, NativeGetAppId>(this.Functions.GetAppID, this.ObjectAddress);
+        }
+        #endregion
+
+        #region IsAPICallCompleted
+        [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
+        [return: MarshalAs(UnmanagedType.I1)]
+        private delegate bool NativeIsAPICallCompleted(
+            IntPtr self,
+            CallHandle call,
+            [MarshalAs(UnmanagedType.I1)] out bool failed);
+
+        public bool IsAPICallCompleted(CallHandle call, out bool failed)
+        {
+            var native = this.GetFunction<NativeIsAPICallCompleted>(this.Functions.IsAPICallCompleted);
+            return native(this.ObjectAddress, call, out failed);
+        }
+        #endregion
+
+        #region GetGlobalAchievementPercentagesReadyResult
+        [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
+        [return: MarshalAs(UnmanagedType.I1)]
+        private delegate bool NativeGetAPICallResult(
+            IntPtr self,
+            CallHandle call,
+            IntPtr callback,
+            int callbackSize,
+            int callbackExpected,
+            [MarshalAs(UnmanagedType.I1)] out bool failed);
+
+        public bool GetGlobalAchievementPercentagesReadyResult(
+            CallHandle call,
+            out APITypes.GlobalAchievementPercentagesReady result,
+            out bool failed)
+        {
+            const int callbackId = 1110;
+            int size = Marshal.SizeOf(typeof(APITypes.GlobalAchievementPercentagesReady));
+            IntPtr memory = Marshal.AllocHGlobal(size);
+            try
+            {
+                var native = this.GetFunction<NativeGetAPICallResult>(this.Functions.GetAPICallResult);
+                bool success = native(this.ObjectAddress, call, memory, size, callbackId, out failed);
+                result = success == true
+                    ? (APITypes.GlobalAchievementPercentagesReady)Marshal.PtrToStructure(
+                        memory,
+                        typeof(APITypes.GlobalAchievementPercentagesReady))
+                    : default;
+                return success;
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(memory);
+            }
         }
         #endregion
     }

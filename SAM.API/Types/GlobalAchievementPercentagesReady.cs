@@ -1,4 +1,4 @@
-﻿/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
+/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
  *
  * This software is provided 'as-is', without any express or implied
  * warranty. In no event will the authors be held liable for any damages
@@ -20,30 +20,14 @@
  *    distribution.
  */
 
-using System;
-using System.Windows.Forms;
+using System.Runtime.InteropServices;
 
-namespace SAM.Game.Stats
+namespace SAM.API.Types
 {
-    internal class AchievementInfo
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public struct GlobalAchievementPercentagesReady
     {
-        public string Id;
-        public bool IsAchieved;
-        public DateTime? UnlockTime;
-        public int Permission;
-        public string IconNormal;
-        public string IconLocked;
-        public string Name;
-        public string Description;
-        public float? AchievedPercent;
-        public ListViewItem Item;
-
-        #region public int ImageIndex;
-        public int ImageIndex
-        {
-            get => this.Item.ImageIndex;
-            set => this.Item.ImageIndex = value;
-        }
-        #endregion
+        public ulong GameId;
+        public int Result;
     }
 }
