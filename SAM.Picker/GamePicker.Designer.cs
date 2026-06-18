@@ -31,6 +31,7 @@
             this.components = new System.ComponentModel.Container();
             System.Windows.Forms.ToolStripSeparator _ToolStripSeparator1;
             System.Windows.Forms.ToolStripSeparator _ToolStripSeparator2;
+            System.Windows.Forms.ToolStripSeparator _ToolStripSeparator3;
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(GamePicker));
             this._LogoImageList = new System.Windows.Forms.ImageList(this.components);
             this._CallbackTimer = new System.Windows.Forms.Timer(this.components);
@@ -45,6 +46,7 @@
             this._FilterDemosMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this._FilterModsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this._FilterJunkMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this._FilterFavoritesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this._GameListView = new SAM.Picker.MyListView();
             this._PickerStatusStrip = new System.Windows.Forms.StatusStrip();
             this._PickerStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
@@ -53,6 +55,7 @@
             this._ListWorker = new System.ComponentModel.BackgroundWorker();
             _ToolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             _ToolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+            _ToolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             this._PickerToolStrip.SuspendLayout();
             this._PickerStatusStrip.SuspendLayout();
             this.SuspendLayout();
@@ -66,6 +69,11 @@
             //
             _ToolStripSeparator2.Name = "_ToolStripSeparator2";
             _ToolStripSeparator2.Size = new System.Drawing.Size(6, 25);
+            //
+            // _ToolStripSeparator3
+            //
+            _ToolStripSeparator3.Name = "_ToolStripSeparator3";
+            _ToolStripSeparator3.Size = new System.Drawing.Size(177, 6);
             //
             // _LogoImageList
             //
@@ -139,7 +147,9 @@
             this._FilterGamesMenuItem,
             this._FilterDemosMenuItem,
             this._FilterModsMenuItem,
-            this._FilterJunkMenuItem});
+            this._FilterJunkMenuItem,
+            _ToolStripSeparator3,
+            this._FilterFavoritesMenuItem});
             this._FilterDropDownButton.Image = global::SAM.Picker.Resources.Filter;
             this._FilterDropDownButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this._FilterDropDownButton.Name = "_FilterDropDownButton";
@@ -179,6 +189,14 @@
             this._FilterJunkMenuItem.Size = new System.Drawing.Size(180, 22);
             this._FilterJunkMenuItem.Text = "Show &junk";
             this._FilterJunkMenuItem.CheckedChanged += new System.EventHandler(this.OnFilterUpdate);
+            //
+            // _FilterFavoritesMenuItem
+            //
+            this._FilterFavoritesMenuItem.CheckOnClick = true;
+            this._FilterFavoritesMenuItem.Name = "_FilterFavoritesMenuItem";
+            this._FilterFavoritesMenuItem.Size = new System.Drawing.Size(180, 22);
+            this._FilterFavoritesMenuItem.Text = "Show only &favourites";
+            this._FilterFavoritesMenuItem.CheckedChanged += new System.EventHandler(this.OnFilterUpdate);
             //
             // _GameListView
             //
@@ -272,6 +290,7 @@
         private System.Windows.Forms.ToolStripMenuItem _FilterJunkMenuItem;
         private System.Windows.Forms.ToolStripMenuItem _FilterDemosMenuItem;
         private System.Windows.Forms.ToolStripMenuItem _FilterModsMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem _FilterFavoritesMenuItem;
         private System.Windows.Forms.StatusStrip _PickerStatusStrip;
         private System.Windows.Forms.ToolStripStatusLabel _DownloadStatusLabel;
         private System.Windows.Forms.ToolStripStatusLabel _PickerStatusLabel;

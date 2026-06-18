@@ -43,6 +43,7 @@ namespace SAM.Picker
 
         private readonly Dictionary<uint, GameInfo> _Games;
         private readonly List<GameInfo> _FilteredGames;
+        private HashSet<uint> _FavoriteGameIds;
 
         private readonly object _LogoLock;
         private readonly HashSet<string> _LogosAttempting;
@@ -55,6 +56,7 @@ namespace SAM.Picker
         {
             this._Games = new();
             this._FilteredGames = new();
+            this._FavoriteGameIds = new();
             this._LogoLock = new();
             this._LogosAttempting = new();
             this._LogosAttempted = new();
@@ -153,6 +155,12 @@ namespace SAM.Picker
             var wantDemos = this._FilterDemosMenuItem.Checked == true;
             var wantMods = this._FilterModsMenuItem.Checked == true;
             var wantJunk = this._FilterJunkMenuItem.Checked == true;
+            var wantFavoritesOnly = this._FilterFavoritesMenuItem.Checked == true;
+
+            foreach (var info in this._Games.Values)
+            {
+                info.Item = null;
+            }
 
             this._FilteredGames.Clear();
             foreach (var info in this._Games.Values.OrderBy(gi => gi.Name))
@@ -172,6 +180,12 @@ namespace SAM.Picker
                     _ => true,
                 };
                 if (wanted == false)
+                {
+                    continue;
+                }
+
+                if (wantFavoritesOnly == true &&
+                    this._FavoriteGameIds.Contains(info.Id) == false)
                 {
                     continue;
                 }
@@ -315,10 +329,14 @@ namespace SAM.Picker
 
                     if (info.Item == null)
                     {
+                        this._LogosAttempting.Remove(info.ImageUrl);
                         continue;
                     }
 
-                    if (this._FilteredGames.Contains(info) == false ||
+                    int itemIndex = info.Item.Index;
+                    if (itemIndex < 0 ||
+                        itemIndex >= this._FilteredGames.Count ||
+                        ReferenceEquals(this._FilteredGames[itemIndex], info) == false ||
                         info.Item.Bounds.IntersectsWith(this._GameListView.ClientRectangle) == false)
                     {
                         this._LogosAttempting.Remove(info.ImageUrl);
@@ -418,6 +436,7 @@ namespace SAM.Picker
 
         private void AddGames()
         {
+            this._FavoriteGameIds = SteamLibraryFavorites.Load();
             this._Games.Clear();
             this._RefreshGamesButton.Enabled = false;
             this._ListWorker.RunWorkerAsync();
@@ -502,12 +521,19 @@ namespace SAM.Picker
             this._Games.Clear();
             this.AddGame(id, "normal");
             this._FilterGamesMenuItem.Checked = true;
+            this._FilterFavoritesMenuItem.Checked = false;
             this.RefreshGames();
             this.DownloadNextLogo();
         }
 
         private void OnFilterUpdate(object sender, EventArgs e)
         {
+            if (ReferenceEquals(sender, this._FilterFavoritesMenuItem) == true &&
+                this._FilterFavoritesMenuItem.Checked == true)
+            {
+                this._FavoriteGameIds = SteamLibraryFavorites.Load();
+            }
+
             this.RefreshGames();
 
             // Compatibility with _GameListView SearchForVirtualItemEventHandler (otherwise _SearchGameTextBox loose focus on KeyUp)
