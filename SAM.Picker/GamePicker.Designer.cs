@@ -188,7 +188,7 @@
             this._GameListView.HideSelection = false;
             this._GameListView.LargeImageList = this._LogoImageList;
             this._GameListView.Location = new System.Drawing.Point(0, 25);
-            this._GameListView.MultiSelect = false;
+            this._GameListView.MultiSelect = true;
             this._GameListView.Name = "_GameListView";
             this._GameListView.OwnerDraw = true;
             this._GameListView.Size = new System.Drawing.Size(742, 245);
@@ -201,7 +201,6 @@
             this._GameListView.DrawItem += new System.Windows.Forms.DrawListViewItemEventHandler(this.OnGameListViewDrawItem);
             this._GameListView.ItemActivate += new System.EventHandler(this.OnActivateGame);
             this._GameListView.RetrieveVirtualItem += new System.Windows.Forms.RetrieveVirtualItemEventHandler(this.OnGameListViewRetrieveVirtualItem);
-            this._GameListView.SearchForVirtualItem += new System.Windows.Forms.SearchForVirtualItemEventHandler(this.OnGameListViewSearchForVirtualItem);
             //
             // _PickerStatusStrip
             //
