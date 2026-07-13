@@ -130,6 +130,7 @@ namespace SAM.Picker
                 Padding = new Padding(8, 0, 0, 0),
             };
             this._PickerStatusStrip.Items.Add(this._IdleStatusLabel);
+            this.FormClosing += this.OnFormClosing;
             this.UpdateIdleSessionControls();
         }
 
@@ -291,6 +292,13 @@ namespace SAM.Picker
 
         private void OnStopAllIdleGames(object sender, EventArgs e)
         {
+            this.StopIdleSessions(this._IdleSessions.Keys.ToList());
+        }
+
+        private void OnFormClosing(object sender, FormClosingEventArgs e)
+        {
+            // The picker owns its background sessions. Closing its control
+            // window must not leave unseen SAM.Game processes behind.
             this.StopIdleSessions(this._IdleSessions.Keys.ToList());
         }
 
