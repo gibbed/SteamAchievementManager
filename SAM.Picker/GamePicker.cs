@@ -55,7 +55,9 @@ namespace SAM.Picker
         private readonly Dictionary<uint, IdleSession> _IdleSessions;
 
         private ToolStripStatusLabel _IdleStatusLabel;
+        private ToolStripButton _RunningSessionsButton;
         private ToolStripButton _StopIdleSessionsButton;
+        private RunningSessionsForm _RunningSessionsForm;
 
         private readonly API.Callbacks.AppDataChanged _AppDataChangedCallback;
 
@@ -116,6 +118,13 @@ namespace SAM.Picker
             this._PickerToolStrip.Items.Insert(this._PickerToolStrip.Items.Count - 1, new ToolStripSeparator());
             this._PickerToolStrip.Items.Insert(this._PickerToolStrip.Items.Count - 1, batchButton);
 
+            this._RunningSessionsButton = new ToolStripButton("Running sessions")
+            {
+                ToolTipText = "Show the games currently running in the background and their elapsed time.",
+            };
+            this._RunningSessionsButton.Click += this.OnShowRunningSessions;
+            this._PickerToolStrip.Items.Insert(this._PickerToolStrip.Items.Count - 1, this._RunningSessionsButton);
+
             this._StopIdleSessionsButton = new ToolStripButton("Stop idle sessions")
             {
                 Enabled = false,
@@ -136,11 +145,17 @@ namespace SAM.Picker
 
         private sealed class IdleSession : IDisposable
         {
+            public readonly uint GameId;
+            public readonly string GameName;
+            public readonly DateTimeOffset StartedAt;
             public readonly Process Process;
             public readonly EventWaitHandle StopEvent;
 
-            public IdleSession(Process process, EventWaitHandle stopEvent)
+            public IdleSession(uint gameId, string gameName, DateTimeOffset startedAt, Process process, EventWaitHandle stopEvent)
             {
+                this.GameId = gameId;
+                this.GameName = gameName;
+                this.StartedAt = startedAt;
                 this.Process = process;
                 this.StopEvent = stopEvent;
             }
@@ -171,10 +186,39 @@ namespace SAM.Picker
                 ? $"● {running} game{(running == 1 ? "" : "s")} running"
                 : "● No idle games running";
             this._IdleStatusLabel.ForeColor = running > 0 ? Color.ForestGreen : Color.Firebrick;
+            this._RunningSessionsButton.Text = running > 0
+                ? $"Running sessions ({running})"
+                : "Running sessions";
             this._StopIdleSessionsButton.Text = running > 0
                 ? $"Stop {running} idle game{(running == 1 ? "" : "s")}"
                 : "Stop idle sessions";
             this._StopIdleSessionsButton.Enabled = running > 0;
+        }
+
+        private IReadOnlyList<RunningSessionInfo> GetRunningSessions()
+        {
+            return this._IdleSessions.Values
+                .Where(IsRunning)
+                .OrderBy(session => session.StartedAt)
+                .Select(session => new RunningSessionInfo(
+                    session.GameId,
+                    session.GameName,
+                    session.StartedAt))
+                .ToList();
+        }
+
+        private void OnShowRunningSessions(object sender, EventArgs e)
+        {
+            if (this._RunningSessionsForm == null || this._RunningSessionsForm.IsDisposed == true)
+            {
+                this._RunningSessionsForm = new RunningSessionsForm(this.GetRunningSessions);
+                this._RunningSessionsForm.FormClosed += (formSender, formEventArgs) => this._RunningSessionsForm = null;
+                this._RunningSessionsForm.Show(this);
+                return;
+            }
+
+            this._RunningSessionsForm.BringToFront();
+            this._RunningSessionsForm.Activate();
         }
 
         private List<GameInfo> GetSelectedGames()
@@ -243,7 +287,12 @@ namespace SAM.Picker
 
                     process.EnableRaisingEvents = true;
                     process.Exited += this.OnIdleSessionExited;
-                    this._IdleSessions[game.Id] = new IdleSession(process, stopEvent);
+                    this._IdleSessions[game.Id] = new IdleSession(
+                        game.Id,
+                        game.Name ?? game.Id.ToString(CultureInfo.InvariantCulture),
+                        DateTimeOffset.UtcNow,
+                        process,
+                        stopEvent);
                     started++;
                 }
                 catch (Exception ex)
