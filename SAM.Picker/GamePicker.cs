@@ -346,6 +346,25 @@ namespace SAM.Picker
 
         private void OnFormClosing(object sender, FormClosingEventArgs e)
         {
+            var running = this._IdleSessions.Values.Count(IsRunning);
+            if (running > 0 && e.CloseReason == CloseReason.UserClosing)
+            {
+                var result = MessageBox.Show(
+                    this,
+                    $"There {(running == 1 ? "is" : "are")} {running} idle game " +
+                    $"session{(running == 1 ? "" : "s")} still running.\n\n" +
+                    "Closing Steam Achievement Manager will stop all of them. Do you want to close?",
+                    "Running idle sessions",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning,
+                    MessageBoxDefaultButton.Button2);
+                if (result != DialogResult.Yes)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+            }
+
             // The picker owns its background sessions. Closing its control
             // window must not leave unseen SAM.Game processes behind.
             this.StopIdleSessions(this._IdleSessions.Keys.ToList());
