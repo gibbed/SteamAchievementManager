@@ -32,6 +32,7 @@ namespace SAM.Game
         public static void Main(string[] args)
         {
             long appId;
+            bool idleMode = args.Length >= 2 && string.Equals(args[0], "--idle", StringComparison.OrdinalIgnoreCase);
 
             if (args.Length == 0)
             {
@@ -39,7 +40,8 @@ namespace SAM.Game
                 return;
             }
 
-            if (long.TryParse(args[0], out appId) == false)
+            var appIdArgument = idleMode == true ? args[1] : args[0];
+            if (long.TryParse(appIdArgument, out appId) == false)
             {
                 MessageBox.Show(
                     "Could not parse application ID from command line argument.",
@@ -109,7 +111,15 @@ namespace SAM.Game
 
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
-                Application.Run(new Manager(appId, client));
+                if (idleMode == true)
+                {
+                    var stopEventName = args.Length >= 3 ? args[2] : null;
+                    Application.Run(new IdleSessionContext(client, stopEventName));
+                }
+                else
+                {
+                    Application.Run(new Manager(appId, client));
+                }
             }
         }
     }

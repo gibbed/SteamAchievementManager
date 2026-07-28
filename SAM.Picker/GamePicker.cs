@@ -30,6 +30,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Windows.Forms;
 using System.Xml.XPath;
 using static SAM.Picker.InvariantShorthand;
@@ -49,6 +50,18 @@ namespace SAM.Picker
         private readonly HashSet<string> _LogosAttempted;
         private readonly ConcurrentQueue<GameInfo> _LogoQueue;
 
+        // The picker owns the sessions it starts and coordinates their
+        // lifecycle through the window and system tray controls.
+        private readonly Dictionary<uint, IdleSession> _IdleSessions;
+
+        private ToolStripStatusLabel _IdleStatusLabel;
+        private ToolStripButton _RunningSessionsButton;
+        private ToolStripButton _StopIdleSessionsButton;
+        private RunningSessionsForm _RunningSessionsForm;
+        private NotifyIcon _TrayIcon;
+        private ToolStripMenuItem _TrayStopSessionsItem;
+        private bool _ExitRequested;
+
         private readonly API.Callbacks.AppDataChanged _AppDataChangedCallback;
 
         public GamePicker(API.Client client)
@@ -59,8 +72,10 @@ namespace SAM.Picker
             this._LogosAttempting = new();
             this._LogosAttempted = new();
             this._LogoQueue = new();
+            this._IdleSessions = new();
 
             this.InitializeComponent();
+            this.InitializeBatchControls();
 
             Bitmap blank = new(this._LogoImageList.ImageSize.Width, this._LogoImageList.ImageSize.Height);
             using (var g = Graphics.FromImage(blank))
@@ -76,6 +91,427 @@ namespace SAM.Picker
             this._AppDataChangedCallback.OnRun += this.OnAppDataChanged;
 
             this.AddGames();
+        }
+
+        private void InitializeBatchControls()
+        {
+            var batchButton = new ToolStripSplitButton("Start selected (idle)")
+            {
+                ToolTipText = "Start the selected games without opening a SAM window for each one.",
+            };
+            batchButton.ButtonClick += this.OnStartSelectedIdleGames;
+
+            var startIdleItem = new ToolStripMenuItem("Start selected (idle)");
+            startIdleItem.Click += this.OnStartSelectedIdleGames;
+            var startWindowsItem = new ToolStripMenuItem("Open selected managers");
+            startWindowsItem.Click += this.OnOpenSelectedManagers;
+            var stopSelectedItem = new ToolStripMenuItem("Stop selected idle sessions");
+            stopSelectedItem.Click += this.OnStopSelectedIdleGames;
+            var stopAllItem = new ToolStripMenuItem("Stop all idle sessions started here");
+            stopAllItem.Click += this.OnStopAllIdleGames;
+            batchButton.DropDownItems.AddRange(new ToolStripItem[]
+            {
+                startIdleItem,
+                startWindowsItem,
+                new ToolStripSeparator(),
+                stopSelectedItem,
+                stopAllItem,
+            });
+
+            this._PickerToolStrip.Items.Insert(this._PickerToolStrip.Items.Count - 1, new ToolStripSeparator());
+            this._PickerToolStrip.Items.Insert(this._PickerToolStrip.Items.Count - 1, batchButton);
+
+            this._RunningSessionsButton = new ToolStripButton("Running sessions")
+            {
+                ToolTipText = "Show the games currently running in the background and their elapsed time.",
+            };
+            this._RunningSessionsButton.Click += this.OnShowRunningSessions;
+            this._PickerToolStrip.Items.Insert(this._PickerToolStrip.Items.Count - 1, this._RunningSessionsButton);
+
+            this._StopIdleSessionsButton = new ToolStripButton("Stop idle sessions")
+            {
+                Enabled = false,
+                ToolTipText = "Gracefully stop every background game session started by this picker.",
+            };
+            this._StopIdleSessionsButton.Click += this.OnStopAllIdleGames;
+            this._PickerToolStrip.Items.Insert(this._PickerToolStrip.Items.Count - 1, this._StopIdleSessionsButton);
+
+            this._IdleStatusLabel = new ToolStripStatusLabel
+            {
+                BorderSides = ToolStripStatusLabelBorderSides.Left,
+                Padding = new Padding(8, 0, 0, 0),
+            };
+            this._PickerStatusStrip.Items.Add(this._IdleStatusLabel);
+            this.InitializeTrayControls();
+            this.FormClosing += this.OnFormClosing;
+            this.FormClosed += this.OnFormClosed;
+            this.Resize += this.OnPickerResize;
+            this.UpdateIdleSessionControls();
+        }
+
+        private void InitializeTrayControls()
+        {
+            var trayMenu = new ContextMenuStrip();
+            var restoreItem = new ToolStripMenuItem("Open Steam Achievement Manager");
+            restoreItem.Click += this.OnRestoreFromTray;
+            this._TrayStopSessionsItem = new ToolStripMenuItem("Stop all idle sessions");
+            this._TrayStopSessionsItem.Click += this.OnStopAllIdleGames;
+            var exitItem = new ToolStripMenuItem("Stop sessions and exit");
+            exitItem.Click += this.OnExitFromTray;
+            trayMenu.Items.AddRange(new ToolStripItem[]
+            {
+                restoreItem,
+                this._TrayStopSessionsItem,
+                new ToolStripSeparator(),
+                exitItem,
+            });
+
+            this._TrayIcon = new NotifyIcon
+            {
+                ContextMenuStrip = trayMenu,
+                Icon = this.Icon,
+                Text = "Steam Achievement Manager",
+                Visible = false,
+            };
+            this._TrayIcon.DoubleClick += this.OnRestoreFromTray;
+        }
+
+        private sealed class IdleSession : IDisposable
+        {
+            public readonly uint GameId;
+            public readonly string GameName;
+            public readonly DateTimeOffset StartedAt;
+            public readonly Process Process;
+            public readonly EventWaitHandle StopEvent;
+
+            public IdleSession(uint gameId, string gameName, DateTimeOffset startedAt, Process process, EventWaitHandle stopEvent)
+            {
+                this.GameId = gameId;
+                this.GameName = gameName;
+                this.StartedAt = startedAt;
+                this.Process = process;
+                this.StopEvent = stopEvent;
+            }
+
+            public void Dispose()
+            {
+                this.StopEvent.Dispose();
+                this.Process.Dispose();
+            }
+        }
+
+        private static bool IsRunning(IdleSession session)
+        {
+            try
+            {
+                return session.Process.HasExited == false;
+            }
+            catch (InvalidOperationException)
+            {
+                return false;
+            }
+        }
+
+        private void UpdateIdleSessionControls()
+        {
+            var running = this._IdleSessions.Values.Count(IsRunning);
+            this._IdleStatusLabel.Text = running > 0
+                ? $"● {running} game{(running == 1 ? "" : "s")} running"
+                : "● No idle games running";
+            this._IdleStatusLabel.ForeColor = running > 0 ? Color.ForestGreen : Color.Firebrick;
+            this._RunningSessionsButton.Text = running > 0
+                ? $"Running sessions ({running})"
+                : "Running sessions";
+            this._StopIdleSessionsButton.Text = running > 0
+                ? $"Stop {running} idle game{(running == 1 ? "" : "s")}"
+                : "Stop idle sessions";
+            this._StopIdleSessionsButton.Enabled = running > 0;
+            this._TrayStopSessionsItem.Enabled = running > 0;
+        }
+
+        private IReadOnlyList<RunningSessionInfo> GetRunningSessions()
+        {
+            return this._IdleSessions.Values
+                .Where(IsRunning)
+                .OrderBy(session => session.StartedAt)
+                .Select(session => new RunningSessionInfo(
+                    session.GameId,
+                    session.GameName,
+                    session.StartedAt))
+                .ToList();
+        }
+
+        private void OnShowRunningSessions(object sender, EventArgs e)
+        {
+            if (this._RunningSessionsForm == null || this._RunningSessionsForm.IsDisposed == true)
+            {
+                this._RunningSessionsForm = new RunningSessionsForm(this.GetRunningSessions);
+                this._RunningSessionsForm.FormClosed += (formSender, formEventArgs) => this._RunningSessionsForm = null;
+                this._RunningSessionsForm.Show(this);
+                return;
+            }
+
+            this._RunningSessionsForm.BringToFront();
+            this._RunningSessionsForm.Activate();
+        }
+
+        private List<GameInfo> GetSelectedGames()
+        {
+            List<GameInfo> games = new();
+            foreach (int index in this._GameListView.SelectedIndices)
+            {
+                if (index >= 0 && index < this._FilteredGames.Count)
+                {
+                    games.Add(this._FilteredGames[index]);
+                }
+            }
+
+            return games;
+        }
+
+        private void OnStartSelectedIdleGames(object sender, EventArgs e)
+        {
+            this.StartIdleGames(this.GetSelectedGames(), "Select at least one game first.");
+        }
+
+        private void StartIdleGames(IEnumerable<GameInfo> candidates, string noGamesMessage)
+        {
+            var games = candidates.ToList();
+            if (games.Count == 0)
+            {
+                MessageBox.Show(this, noGamesMessage, "No games selected", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var started = 0;
+            var alreadyRunning = 0;
+            foreach (var game in games)
+            {
+                if (this._IdleSessions.TryGetValue(game.Id, out var existing) && IsRunning(existing) == true)
+                {
+                    alreadyRunning++;
+                    continue;
+                }
+                else if (existing != null)
+                {
+                    existing.Dispose();
+                    this._IdleSessions.Remove(game.Id);
+                }
+
+                EventWaitHandle stopEvent = null;
+                try
+                {
+                    var stopEventName = @"Local\SAM.Idle.Stop." + Guid.NewGuid().ToString("N");
+                    stopEvent = new EventWaitHandle(false, EventResetMode.ManualReset, stopEventName);
+                    var process = Process.Start(new ProcessStartInfo
+                    {
+                        FileName = Path.Combine(Application.StartupPath, "SAM.Game.exe"),
+                        Arguments = $"--idle {game.Id.ToString(CultureInfo.InvariantCulture)} {stopEventName}",
+                        WorkingDirectory = Application.StartupPath,
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                        WindowStyle = ProcessWindowStyle.Hidden,
+                    });
+
+                    if (process == null)
+                    {
+                        stopEvent.Dispose();
+                        continue;
+                    }
+
+                    process.EnableRaisingEvents = true;
+                    process.Exited += this.OnIdleSessionExited;
+                    this._IdleSessions[game.Id] = new IdleSession(
+                        game.Id,
+                        game.Name ?? game.Id.ToString(CultureInfo.InvariantCulture),
+                        DateTimeOffset.UtcNow,
+                        process,
+                        stopEvent);
+                    started++;
+                }
+                catch (Exception ex)
+                {
+                    stopEvent?.Dispose();
+                    MessageBox.Show(
+                        this,
+                        $"Failed to start SAM.Game.exe for {game.Name}.\n\n{ex.Message}",
+                        "Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                }
+            }
+
+            this._PickerStatusLabel.Text = $"Started {started} idle game session(s). Already running: {alreadyRunning}.";
+            this.UpdateIdleSessionControls();
+        }
+
+        private void OnOpenSelectedManagers(object sender, EventArgs e)
+        {
+            var games = this.GetSelectedGames();
+            if (games.Count == 0)
+            {
+                MessageBox.Show(this, "Select at least one game first.", "No games selected", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            foreach (var game in games)
+            {
+                try
+                {
+                    Process.Start(Path.Combine(Application.StartupPath, "SAM.Game.exe"), game.Id.ToString(CultureInfo.InvariantCulture));
+                }
+                catch (Win32Exception)
+                {
+                    MessageBox.Show(this, "Failed to start SAM.Game.exe.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+            }
+        }
+
+        private void OnStopSelectedIdleGames(object sender, EventArgs e)
+        {
+            this.StopIdleSessions(this.GetSelectedGames().Select(game => game.Id));
+        }
+
+        private void OnStopAllIdleGames(object sender, EventArgs e)
+        {
+            this.StopIdleSessions(this._IdleSessions.Keys.ToList());
+        }
+
+        private void OnFormClosing(object sender, FormClosingEventArgs e)
+        {
+            var running = this._IdleSessions.Values.Count(IsRunning);
+            if (running > 0 &&
+                e.CloseReason == CloseReason.UserClosing &&
+                this._ExitRequested == false)
+            {
+                var action = ActiveSessionsCloseDialog.Show(this, running);
+                if (action == PickerCloseAction.MinimizeToTray)
+                {
+                    e.Cancel = true;
+                    this.MinimizeToTray();
+                    return;
+                }
+
+                if (action != PickerCloseAction.StopAndExit)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+            }
+
+            // The picker owns its background sessions. Closing its control
+            // window must not leave unseen SAM.Game processes behind.
+            this.StopIdleSessions(this._IdleSessions.Keys.ToList());
+        }
+
+        private void OnFormClosed(object sender, FormClosedEventArgs e)
+        {
+            this._TrayIcon.Visible = false;
+            this._TrayIcon.Dispose();
+        }
+
+        private void OnPickerResize(object sender, EventArgs e)
+        {
+            if (this.WindowState == FormWindowState.Minimized)
+            {
+                this.BeginInvoke((Action)this.MinimizeToTray);
+            }
+        }
+
+        private void MinimizeToTray()
+        {
+            var running = this._IdleSessions.Values.Count(IsRunning);
+            this.ShowInTaskbar = false;
+            this.Hide();
+            this._TrayIcon.Visible = true;
+            this._TrayIcon.ShowBalloonTip(
+                2000,
+                "Steam Achievement Manager is still running",
+                running > 0
+                    ? $"{running} idle game session{(running == 1 ? "" : "s")} still running."
+                    : "Double-click the tray icon to restore the window.",
+                ToolTipIcon.Info);
+        }
+
+        private void OnRestoreFromTray(object sender, EventArgs e)
+        {
+            this._TrayIcon.Visible = false;
+            this.ShowInTaskbar = true;
+            this.Show();
+            this.WindowState = FormWindowState.Normal;
+            this.Activate();
+        }
+
+        private void OnExitFromTray(object sender, EventArgs e)
+        {
+            this._ExitRequested = true;
+            this.Close();
+        }
+
+        private void StopIdleSessions(IEnumerable<uint> gameIds)
+        {
+            var sessions = gameIds
+                .Where(this._IdleSessions.ContainsKey)
+                .Select(gameId => this._IdleSessions[gameId])
+                .Where(IsRunning)
+                .Distinct()
+                .ToList();
+
+            foreach (var session in sessions)
+            {
+                try
+                {
+                    session.StopEvent.Set();
+                }
+                catch (ObjectDisposedException)
+                {
+                    // The process exited and its cleanup already ran.
+                }
+            }
+
+            var stopped = 0;
+            foreach (var session in sessions)
+            {
+                try
+                {
+                    if (session.Process.WaitForExit(3000) == false)
+                    {
+                        session.Process.Kill();
+                        session.Process.WaitForExit(3000);
+                    }
+
+                    stopped++;
+                }
+                catch (InvalidOperationException)
+                {
+                    // The process exited between signalling and waiting.
+                }
+            }
+
+            this._PickerStatusLabel.Text = $"Stopped {stopped} idle game session(s).";
+            this.UpdateIdleSessionControls();
+        }
+
+        private void OnIdleSessionExited(object sender, EventArgs e)
+        {
+            if (sender is not Process exitedProcess || this.IsDisposed == true)
+            {
+                return;
+            }
+
+            this.BeginInvoke((Action)(() =>
+            {
+                var session = this._IdleSessions.FirstOrDefault(pair => ReferenceEquals(pair.Value.Process, exitedProcess)).Value;
+                if (session != null)
+                {
+                    var gameId = this._IdleSessions.First(pair => ReferenceEquals(pair.Value, session)).Key;
+                    this._IdleSessions.Remove(gameId);
+                    session.Dispose();
+                }
+
+                this.UpdateIdleSessionControls();
+            }));
         }
 
         private void OnAppDataChanged(APITypes.AppDataChanged param)
@@ -128,6 +564,7 @@ namespace SAM.Picker
             {
                 this.AddGame(kv.Key, kv.Value);
             }
+
         }
 
         private void OnDownloadList(object sender, RunWorkerCompletedEventArgs e)
@@ -154,7 +591,7 @@ namespace SAM.Picker
             var wantMods = this._FilterModsMenuItem.Checked == true;
             var wantJunk = this._FilterJunkMenuItem.Checked == true;
 
-            this._FilteredGames.Clear();
+            List<GameInfo> filteredGames = new();
             foreach (var info in this._Games.Values.OrderBy(gi => gi.Name))
             {
                 if (nameSearch != null &&
@@ -176,77 +613,46 @@ namespace SAM.Picker
                     continue;
                 }
 
-                this._FilteredGames.Add(info);
+                filteredGames.Add(info);
             }
 
-            this._GameListView.VirtualListSize = this._FilteredGames.Count;
-            this._PickerStatusLabel.Text =
-                $"Displaying {this._GameListView.Items.Count} games. Total {this._Games.Count} games.";
-
-            if (this._GameListView.Items.Count > 0)
+            // A virtual ListView can request an item while its data source is
+            // being replaced. First detach the old range, then replace the
+            // list, and only then expose the new range.
+            this._GameListView.BeginUpdate();
+            try
             {
-                this._GameListView.Items[0].Selected = true;
-                this._GameListView.Select();
+                this._GameListView.VirtualListSize = 0;
+                this._FilteredGames.Clear();
+                this._FilteredGames.AddRange(filteredGames);
+                this._GameListView.VirtualListSize = this._FilteredGames.Count;
             }
+            finally
+            {
+                this._GameListView.EndUpdate();
+            }
+
+            this._PickerStatusLabel.Text =
+                $"Displaying {this._FilteredGames.Count} games. Total {this._Games.Count} games.";
         }
 
         private void OnGameListViewRetrieveVirtualItem(object sender, RetrieveVirtualItemEventArgs e)
         {
+            // WinForms can request an item from the old virtual range while a
+            // filter is replacing the list. Returning an empty item prevents
+            // a stale request from bringing down the picker.
+            if (e.ItemIndex < 0 || e.ItemIndex >= this._FilteredGames.Count)
+            {
+                e.Item = new ListViewItem();
+                return;
+            }
+
             var info = this._FilteredGames[e.ItemIndex];
             e.Item = info.Item = new()
             {
                 Text = info.Name,
                 ImageIndex = info.ImageIndex,
             };
-        }
-
-        private void OnGameListViewSearchForVirtualItem(object sender, SearchForVirtualItemEventArgs e)
-        {
-            if (e.Direction != SearchDirectionHint.Down || e.IsTextSearch == false)
-            {
-                return;
-            }
-
-            var count = this._FilteredGames.Count;
-            if (count < 2)
-            {
-                return;
-            }
-
-            var text = e.Text;
-            int startIndex = e.StartIndex;
-
-            Predicate<GameInfo> predicate;
-            /*if (e.IsPrefixSearch == true)*/
-            {
-                predicate = gi => gi.Name != null && gi.Name.StartsWith(text, StringComparison.CurrentCultureIgnoreCase);
-            }
-            /*else
-            {
-                predicate = gi => gi.Name != null && string.Compare(gi.Name, text, StringComparison.CurrentCultureIgnoreCase) == 0;
-            }*/
-
-            int index;
-            if (e.StartIndex >= count)
-            {
-                // starting from the last item in the list
-                index = this._FilteredGames.FindIndex(0, startIndex - 1, predicate);
-            }
-            else if (startIndex <= 0)
-            {
-                // starting from the first item in the list
-                index = this._FilteredGames.FindIndex(0, count, predicate);
-            }
-            else
-            {
-                index = this._FilteredGames.FindIndex(startIndex, count - startIndex, predicate);
-                if (index < 0)
-                {
-                    index = this._FilteredGames.FindIndex(0, startIndex - 1, predicate);
-                }
-            }
-
-            e.Index = index < 0 ? -1 : index;
         }
 
         private void DoDownloadLogo(object sender, DoWorkEventArgs e)
@@ -510,13 +916,20 @@ namespace SAM.Picker
         {
             this.RefreshGames();
 
-            // Compatibility with _GameListView SearchForVirtualItemEventHandler (otherwise _SearchGameTextBox loose focus on KeyUp)
+            // Keep the text box focused so consecutive keystrokes keep filtering.
             this._SearchGameTextBox.Focus();
         }
 
         private void OnGameListViewDrawItem(object sender, DrawListViewItemEventArgs e)
         {
             e.DrawDefault = true;
+
+            // The paint message may have been queued before RefreshGames
+            // changed VirtualListSize.
+            if (e.ItemIndex < 0 || e.ItemIndex >= this._FilteredGames.Count)
+            {
+                return;
+            }
 
             if (e.Item.Bounds.IntersectsWith(this._GameListView.ClientRectangle) == false)
             {
