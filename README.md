@@ -6,7 +6,7 @@ Steam Achievement Manager (SAM) is a lightweight, portable application used to m
 
 The game picker supports selecting multiple games. Its **Start selected (idle)** button starts every selected app without opening a SAM manager window for each one. Use the drop-down beside the button to open normal manager windows or stop only selected idle sessions. A persistent green/red status indicator shows the number of idle sessions currently running, beside an explicit button to stop them all. The **Running sessions** button opens a live list of each background game, its app ID, start time, and elapsed time.
 
-An idle session is still one `SAM.Game.exe` process per Steam app ID, because Steam assigns the app ID at process startup. It has no window or taskbar entry, leaving the picker as the only visible control window. Stopping sessions signals them to release their Steam connection and exit cleanly, with a forced shutdown only as a fallback. Closing the picker while sessions are active displays a warning and asks for confirmation before stopping them.
+An idle session is still one `SAM.Game.exe` process per Steam app ID, because Steam assigns the app ID at process startup. It has no window or taskbar entry, leaving the picker as the only visible control window. Stopping sessions signals them to release their Steam connection and exit cleanly, with a forced shutdown only as a fallback. Minimizing the picker sends it to the Windows system tray. Closing it while sessions are active offers to minimize to the tray, stop the sessions and exit, or cancel.
 
 For a release build, run `dotnet build SAM.sln --configuration Release -p:Platform=x86`; the executables are written to `upload/`.
 

@@ -58,6 +58,9 @@ namespace SAM.Picker
         private ToolStripButton _RunningSessionsButton;
         private ToolStripButton _StopIdleSessionsButton;
         private RunningSessionsForm _RunningSessionsForm;
+        private NotifyIcon _TrayIcon;
+        private ToolStripMenuItem _TrayStopSessionsItem;
+        private bool _ExitRequested;
 
         private readonly API.Callbacks.AppDataChanged _AppDataChangedCallback;
 
@@ -139,8 +142,38 @@ namespace SAM.Picker
                 Padding = new Padding(8, 0, 0, 0),
             };
             this._PickerStatusStrip.Items.Add(this._IdleStatusLabel);
+            this.InitializeTrayControls();
             this.FormClosing += this.OnFormClosing;
+            this.FormClosed += this.OnFormClosed;
+            this.Resize += this.OnPickerResize;
             this.UpdateIdleSessionControls();
+        }
+
+        private void InitializeTrayControls()
+        {
+            var trayMenu = new ContextMenuStrip();
+            var restoreItem = new ToolStripMenuItem("Open Steam Achievement Manager");
+            restoreItem.Click += this.OnRestoreFromTray;
+            this._TrayStopSessionsItem = new ToolStripMenuItem("Stop all idle sessions");
+            this._TrayStopSessionsItem.Click += this.OnStopAllIdleGames;
+            var exitItem = new ToolStripMenuItem("Stop sessions and exit");
+            exitItem.Click += this.OnExitFromTray;
+            trayMenu.Items.AddRange(new ToolStripItem[]
+            {
+                restoreItem,
+                this._TrayStopSessionsItem,
+                new ToolStripSeparator(),
+                exitItem,
+            });
+
+            this._TrayIcon = new NotifyIcon
+            {
+                ContextMenuStrip = trayMenu,
+                Icon = this.Icon,
+                Text = "Steam Achievement Manager",
+                Visible = false,
+            };
+            this._TrayIcon.DoubleClick += this.OnRestoreFromTray;
         }
 
         private sealed class IdleSession : IDisposable
@@ -193,6 +226,7 @@ namespace SAM.Picker
                 ? $"Stop {running} idle game{(running == 1 ? "" : "s")}"
                 : "Stop idle sessions";
             this._StopIdleSessionsButton.Enabled = running > 0;
+            this._TrayStopSessionsItem.Enabled = running > 0;
         }
 
         private IReadOnlyList<RunningSessionInfo> GetRunningSessions()
@@ -347,18 +381,19 @@ namespace SAM.Picker
         private void OnFormClosing(object sender, FormClosingEventArgs e)
         {
             var running = this._IdleSessions.Values.Count(IsRunning);
-            if (running > 0 && e.CloseReason == CloseReason.UserClosing)
+            if (running > 0 &&
+                e.CloseReason == CloseReason.UserClosing &&
+                this._ExitRequested == false)
             {
-                var result = MessageBox.Show(
-                    this,
-                    $"There {(running == 1 ? "is" : "are")} {running} idle game " +
-                    $"session{(running == 1 ? "" : "s")} still running.\n\n" +
-                    "Closing Steam Achievement Manager will stop all of them. Do you want to close?",
-                    "Running idle sessions",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Warning,
-                    MessageBoxDefaultButton.Button2);
-                if (result != DialogResult.Yes)
+                var action = ActiveSessionsCloseDialog.Show(this, running);
+                if (action == PickerCloseAction.MinimizeToTray)
+                {
+                    e.Cancel = true;
+                    this.MinimizeToTray();
+                    return;
+                }
+
+                if (action != PickerCloseAction.StopAndExit)
                 {
                     e.Cancel = true;
                     return;
@@ -368,6 +403,50 @@ namespace SAM.Picker
             // The picker owns its background sessions. Closing its control
             // window must not leave unseen SAM.Game processes behind.
             this.StopIdleSessions(this._IdleSessions.Keys.ToList());
+        }
+
+        private void OnFormClosed(object sender, FormClosedEventArgs e)
+        {
+            this._TrayIcon.Visible = false;
+            this._TrayIcon.Dispose();
+        }
+
+        private void OnPickerResize(object sender, EventArgs e)
+        {
+            if (this.WindowState == FormWindowState.Minimized)
+            {
+                this.BeginInvoke((Action)this.MinimizeToTray);
+            }
+        }
+
+        private void MinimizeToTray()
+        {
+            var running = this._IdleSessions.Values.Count(IsRunning);
+            this.ShowInTaskbar = false;
+            this.Hide();
+            this._TrayIcon.Visible = true;
+            this._TrayIcon.ShowBalloonTip(
+                2000,
+                "Steam Achievement Manager is still running",
+                running > 0
+                    ? $"{running} idle game session{(running == 1 ? "" : "s")} still running."
+                    : "Double-click the tray icon to restore the window.",
+                ToolTipIcon.Info);
+        }
+
+        private void OnRestoreFromTray(object sender, EventArgs e)
+        {
+            this._TrayIcon.Visible = false;
+            this.ShowInTaskbar = true;
+            this.Show();
+            this.WindowState = FormWindowState.Normal;
+            this.Activate();
+        }
+
+        private void OnExitFromTray(object sender, EventArgs e)
+        {
+            this._ExitRequested = true;
+            this.Close();
         }
 
         private void StopIdleSessions(IEnumerable<uint> gameIds)
@@ -485,6 +564,7 @@ namespace SAM.Picker
             {
                 this.AddGame(kv.Key, kv.Value);
             }
+
         }
 
         private void OnDownloadList(object sender, RunWorkerCompletedEventArgs e)
