@@ -50,8 +50,8 @@ namespace SAM.Picker
         private readonly HashSet<string> _LogosAttempted;
         private readonly ConcurrentQueue<GameInfo> _LogoQueue;
 
-        // The picker owns only sessions it started. They intentionally stay
-        // alive if the picker is closed, just like the normal SAM.Game window.
+        // The picker owns the sessions it starts and coordinates their
+        // lifecycle through the window and system tray controls.
         private readonly Dictionary<uint, IdleSession> _IdleSessions;
 
         private ToolStripStatusLabel _IdleStatusLabel;
