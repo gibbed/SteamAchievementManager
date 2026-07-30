@@ -22,12 +22,27 @@
 
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Windows.Forms;
 
 namespace SAM.Game
 {
     internal static class Program
     {
+        private static bool IsRunningFromSteamDirectory()
+        {
+            string installPath = API.Steam.GetInstallPath();
+            if (string.IsNullOrEmpty(installPath) == true)
+            {
+                return false;
+            }
+
+            return string.Equals(
+                Path.TrimEndingDirectorySeparator(installPath),
+                Path.TrimEndingDirectorySeparator(Application.StartupPath),
+                StringComparison.OrdinalIgnoreCase);
+        }
+
         [STAThread]
         public static void Main(string[] args)
         {
@@ -49,7 +64,7 @@ namespace SAM.Game
                 return;
             }
 
-            if (API.Steam.GetInstallPath() == Application.StartupPath)
+            if (IsRunningFromSteamDirectory() == true)
             {
                 MessageBox.Show(
                     "This tool declines to being run from the Steam directory.",
