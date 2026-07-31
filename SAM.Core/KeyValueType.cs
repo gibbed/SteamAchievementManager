@@ -20,31 +20,18 @@
  *    distribution.
  */
 
-using System;
-using System.Runtime.Serialization;
-
-namespace SAM.Game.Stats
+namespace SAM.Core
 {
-    [Serializable]
-    internal class StatIsProtectedException : Exception
+    public enum KeyValueType : byte
     {
-        public StatIsProtectedException()
-        {
-        }
-
-        public StatIsProtectedException(string message)
-            : base(message)
-        {
-        }
-
-        public StatIsProtectedException(string message, Exception innerException)
-            : base(message, innerException)
-        {
-        }
-
-        protected StatIsProtectedException(SerializationInfo info, StreamingContext context)
-            : base(info, context)
-        {
-        }
+        None = 0,
+        String = 1,
+        Int32 = 2,
+        Float32 = 3,
+        Pointer = 4,
+        WideString = 5,
+        Color = 6,
+        UInt64 = 7,
+        End = 8,
     }
 }

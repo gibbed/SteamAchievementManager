@@ -26,9 +26,9 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 
-namespace SAM.Game
+namespace SAM.Core
 {
-    internal static class StreamHelpers
+    public static class StreamHelpers
     {
         public static byte ReadValueU8(this Stream stream)
         {

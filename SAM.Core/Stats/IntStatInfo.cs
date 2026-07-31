@@ -20,29 +20,28 @@
  *    distribution.
  */
 
-using System;
-using System.Windows.Forms;
-
-namespace SAM.Game.Stats
+namespace SAM.Core.Stats
 {
-    internal class AchievementInfo
+    public class IntStatInfo : StatInfo
     {
-        public string Id;
-        public bool IsAchieved;
-        public DateTime? UnlockTime;
-        public int Permission;
-        public string IconNormal;
-        public string IconLocked;
-        public string Name;
-        public string Description;
-        public ListViewItem Item;
+        public int OriginalValue;
+        public int IntValue;
 
-        #region public int ImageIndex;
-        public int ImageIndex
+        public override object Value
         {
-            get => this.Item.ImageIndex;
-            set => this.Item.ImageIndex = value;
+            get => this.IntValue;
+            set
+            {
+                var i = int.Parse((string)value, System.Globalization.CultureInfo.CurrentCulture);
+                if ((this.Permission & 2) != 0 &&
+                    this.IntValue != i)
+                {
+                    throw new StatIsProtectedException();
+                }
+                this.IntValue = i;
+            }
         }
-        #endregion
+
+        public override bool IsModified => this.IntValue != this.OriginalValue;
     }
 }

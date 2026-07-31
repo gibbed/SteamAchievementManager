@@ -25,9 +25,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace SAM.Game
+namespace SAM.Core
 {
-    internal class KeyValue
+    public class KeyValue
     {
         private static readonly KeyValue _Invalid = new();
         public string Name = "<root>";

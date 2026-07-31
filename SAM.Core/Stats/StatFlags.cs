@@ -20,28 +20,16 @@
  *    distribution.
  */
 
-namespace SAM.Game.Stats
+using System;
+
+namespace SAM.Core.Stats
 {
-    internal class FloatStatInfo : StatInfo
+    [Flags]
+    public enum StatFlags
     {
-        public float OriginalValue;
-        public float FloatValue;
-
-        public override object Value
-        {
-            get => this.FloatValue;
-            set
-            {
-                var f = float.Parse((string)value, System.Globalization.CultureInfo.CurrentCulture);
-                if ((this.Permission & 2) != 0 &&
-                    this.FloatValue.Equals(f) == false)
-                {
-                    throw new StatIsProtectedException();
-                }
-                this.FloatValue = f;
-            }
-        }
-
-        public override bool IsModified => this.FloatValue.Equals(this.OriginalValue) == false;
+        None = 0,
+        IncrementOnly = 1 << 0,
+        Protected = 1 << 1,
+        UnknownPermission = 1 << 2,
     }
 }

@@ -20,18 +20,15 @@
  *    distribution.
  */
 
-namespace SAM.Game
+using System;
+
+namespace SAM.Core
 {
-    internal enum KeyValueType : byte
+    public static class InvariantShorthand
     {
-        None = 0,
-        String = 1,
-        Int32 = 2,
-        Float32 = 3,
-        Pointer = 4,
-        WideString = 5,
-        Color = 6,
-        UInt64 = 7,
-        End = 8,
+        public static string _(FormattableString formattable)
+        {
+            return FormattableString.Invariant(formattable);
+        }
     }
 }

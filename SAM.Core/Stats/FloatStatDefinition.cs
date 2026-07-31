@@ -20,15 +20,14 @@
  *    distribution.
  */
 
-namespace SAM.Game.Stats
+namespace SAM.Core.Stats
 {
-    internal class IntegerStatDefinition : StatDefinition
+    public class FloatStatDefinition : StatDefinition
     {
-        public int MinValue;
-        public int MaxValue;
-        public int MaxChange;
+        public float MinValue;
+        public float MaxValue;
+        public float MaxChange;
         public bool IncrementOnly;
-        public bool SetByTrustedGameServer;
-        public int DefaultValue;
+        public float DefaultValue;
     }
 }

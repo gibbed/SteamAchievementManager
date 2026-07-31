@@ -20,15 +20,28 @@
  *    distribution.
  */
 
-using System;
-
-namespace SAM.Picker
+namespace SAM.Core.Stats
 {
-    internal static class InvariantShorthand
+    public class FloatStatInfo : StatInfo
     {
-        public static string _(FormattableString formattable)
+        public float OriginalValue;
+        public float FloatValue;
+
+        public override object Value
         {
-            return FormattableString.Invariant(formattable);
+            get => this.FloatValue;
+            set
+            {
+                var f = float.Parse((string)value, System.Globalization.CultureInfo.CurrentCulture);
+                if ((this.Permission & 2) != 0 &&
+                    this.FloatValue.Equals(f) == false)
+                {
+                    throw new StatIsProtectedException();
+                }
+                this.FloatValue = f;
+            }
         }
+
+        public override bool IsModified => this.FloatValue.Equals(this.OriginalValue) == false;
     }
 }

@@ -20,21 +20,12 @@
  *    distribution.
  */
 
-namespace SAM.Game.Stats
+namespace SAM.Core.Stats
 {
-    internal class AchievementDefinition
+    public abstract class StatDefinition
     {
         public string Id;
-        public string Name;
-        public string Description;
-        public string IconNormal;
-        public string IconLocked;
-        public bool IsHidden;
+        public string DisplayName;
         public int Permission;
-
-        public override string ToString()
-        {
-            return $"{this.Name ?? this.Id ?? base.ToString()}: {this.Permission}";
-        }
     }
 }

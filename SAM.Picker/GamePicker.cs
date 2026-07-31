@@ -32,7 +32,7 @@ using System.Linq;
 using System.Net;
 using System.Windows.Forms;
 using System.Xml.XPath;
-using static SAM.Picker.InvariantShorthand;
+using static SAM.Core.InvariantShorthand;
 using APITypes = SAM.API.Types;
 
 namespace SAM.Picker

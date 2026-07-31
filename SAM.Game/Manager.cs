@@ -29,8 +29,10 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Windows.Forms;
-using static SAM.Game.InvariantShorthand;
+using SAM.Core;
+using static SAM.Core.InvariantShorthand;
 using APITypes = SAM.API.Types;
+using Stats = SAM.Core.Stats;
 
 namespace SAM.Game
 {
@@ -43,6 +45,8 @@ namespace SAM.Game
 
         private readonly List<Stats.AchievementInfo> _IconQueue = new();
         private readonly List<Stats.StatDefinition> _StatDefinitions = new();
+
+        private readonly Dictionary<Stats.AchievementInfo, ListViewItem> _AchievementItems = new();
 
         private readonly List<Stats.AchievementDefinition> _AchievementDefinitions = new();
 
@@ -106,6 +110,18 @@ namespace SAM.Game
             this.RefreshStats();
         }
 
+        /// <summary>
+        /// Pushes an achievement's image index onto the list item showing it. The model
+        /// used to hold the item and forward the property itself, which tied it to WinForms.
+        /// </summary>
+        private void SyncAchievementImageIndex(Stats.AchievementInfo info)
+        {
+            if (this._AchievementItems.TryGetValue(info, out ListViewItem item) == true)
+            {
+                item.ImageIndex = info.ImageIndex;
+            }
+        }
+
         private void AddAchievementIcon(Stats.AchievementInfo info, Image icon)
         {
             if (icon == null)
@@ -117,6 +133,8 @@ namespace SAM.Game
                 info.ImageIndex = this._AchievementImageList.Images.Count;
                 this._AchievementImageList.Images.Add(info.IsAchieved == true ? info.IconNormal : info.IconLocked, icon);
             }
+
+            this.SyncAchievementImageIndex(info);
         }
 
         private void OnIconDownload(object sender, DownloadDataCompletedEventArgs e)
@@ -447,6 +465,7 @@ namespace SAM.Game
             this._IsUpdatingAchievementList = true;
 
             this._AchievementListView.Items.Clear();
+            this._AchievementItems.Clear();
             this._AchievementListView.BeginUpdate();
             //this.Achievements.Clear();
 
@@ -509,7 +528,7 @@ namespace SAM.Game
                     BackColor = (def.Permission & 3) == 0 ? Color.Black : Color.FromArgb(64, 0, 0),
                 };
 
-                info.Item = item;
+                this._AchievementItems[info] = item;
 
                 if (item.Text.StartsWith("#", StringComparison.InvariantCulture) == true)
                 {
@@ -526,6 +545,7 @@ namespace SAM.Game
                     : "");
 
                 info.ImageIndex = 0;
+                item.ImageIndex = 0;
 
                 this.AddAchievementToIconQueue(info, false);
                 this._AchievementListView.Items.Add(item);
@@ -590,6 +610,7 @@ namespace SAM.Game
             if (imageIndex >= 0)
             {
                 info.ImageIndex = imageIndex;
+                this.SyncAchievementImageIndex(info);
             }
             else
             {

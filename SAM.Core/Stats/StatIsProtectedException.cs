@@ -22,13 +22,23 @@
 
 using System;
 
-namespace SAM.Game
+namespace SAM.Core.Stats
 {
-    public static class InvariantShorthand
+    [Serializable]
+    public class StatIsProtectedException : Exception
     {
-        public static string _(FormattableString formattable)
+        public StatIsProtectedException()
         {
-            return FormattableString.Invariant(formattable);
+        }
+
+        public StatIsProtectedException(string message)
+            : base(message)
+        {
+        }
+
+        public StatIsProtectedException(string message, Exception innerException)
+            : base(message, innerException)
+        {
         }
     }
 }

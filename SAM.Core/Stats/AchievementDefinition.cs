@@ -20,14 +20,21 @@
  *    distribution.
  */
 
-namespace SAM.Game.Stats
+namespace SAM.Core.Stats
 {
-    internal class FloatStatDefinition : StatDefinition
+    public class AchievementDefinition
     {
-        public float MinValue;
-        public float MaxValue;
-        public float MaxChange;
-        public bool IncrementOnly;
-        public float DefaultValue;
+        public string Id;
+        public string Name;
+        public string Description;
+        public string IconNormal;
+        public string IconLocked;
+        public bool IsHidden;
+        public int Permission;
+
+        public override string ToString()
+        {
+            return $"{this.Name ?? this.Id ?? base.ToString()}: {this.Permission}";
+        }
     }
 }

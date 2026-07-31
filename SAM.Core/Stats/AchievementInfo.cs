@@ -22,14 +22,18 @@
 
 using System;
 
-namespace SAM.Game.Stats
+namespace SAM.Core.Stats
 {
-    [Flags]
-    internal enum StatFlags
+    public class AchievementInfo
     {
-        None = 0,
-        IncrementOnly = 1 << 0,
-        Protected = 1 << 1,
-        UnknownPermission = 1 << 2,
+        public string Id;
+        public bool IsAchieved;
+        public DateTime? UnlockTime;
+        public int Permission;
+        public string IconNormal;
+        public string IconLocked;
+        public string Name;
+        public string Description;
+        public int ImageIndex;
     }
 }
