@@ -1,4 +1,4 @@
-﻿/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
+/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
  *
  * This software is provided 'as-is', without any express or implied
  * warranty. In no event will the authors be held liable for any damages
@@ -112,16 +112,33 @@ namespace SAM.API
                 return true;
             }
 
-            string path = GetInstallPath();
-            if (path == null)
+            // 1. Try Local Folder First (Nuclear Strategy)
+            string localPath = AppDomain.CurrentDomain.BaseDirectory;
+            string dllPath = Path.Combine(localPath, "steamclient.dll");
+            
+            IntPtr module = IntPtr.Zero;
+            if (File.Exists(dllPath))
             {
-                return false;
+                // Load dependencies first
+                Native.LoadLibraryEx(Path.Combine(localPath, "tier0_s.dll"), IntPtr.Zero, Native.LoadWithAlteredSearchPath);
+                Native.LoadLibraryEx(Path.Combine(localPath, "vstdlib_s.dll"), IntPtr.Zero, Native.LoadWithAlteredSearchPath);
+                module = Native.LoadLibraryEx(dllPath, IntPtr.Zero, Native.LoadWithAlteredSearchPath);
             }
 
-            Native.SetDllDirectory(path + ";" + Path.Combine(path, "bin"));
+            // 2. Fallback to Registry if local fails
+            if (module == IntPtr.Zero)
+            {
+                string path = GetInstallPath();
+                if (path != null)
+                {
+                    Native.SetDllDirectory(path);
+                    Native.LoadLibraryEx(Path.Combine(path, "tier0_s.dll"), IntPtr.Zero, Native.LoadWithAlteredSearchPath);
+                    Native.LoadLibraryEx(Path.Combine(path, "vstdlib_s.dll"), IntPtr.Zero, Native.LoadWithAlteredSearchPath);
+                    dllPath = Path.Combine(path, "steamclient.dll");
+                    module = Native.LoadLibraryEx(dllPath, IntPtr.Zero, Native.LoadWithAlteredSearchPath);
+                }
+            }
 
-            path = Path.Combine(path, "steamclient.dll");
-            IntPtr module = Native.LoadLibraryEx(path, IntPtr.Zero, Native.LoadWithAlteredSearchPath);
             if (module == IntPtr.Zero)
             {
                 return false;

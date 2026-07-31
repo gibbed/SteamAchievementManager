@@ -1,86 +1,57 @@
-﻿/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
- *
- * This software is provided 'as-is', without any express or implied
- * warranty. In no event will the authors be held liable for any damages
- * arising from the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would
- *    be appreciated but is not required.
- *
- * 2. Altered source versions must be plainly marked as such, and must not
- *    be misrepresented as being the original software.
- *
- * 3. This notice may not be removed or altered from any source
- *    distribution.
- */
-
 using System;
-using System.Windows.Forms;
+using System.IO;
+using System.Windows;
 
 namespace SAM.Picker
 {
-    internal static class Program
+    public static class Program
     {
         [STAThread]
-        private static void Main()
+        public static void Main(string[] args)
         {
-            if (API.Steam.GetInstallPath() == Application.StartupPath)
+            Log("=== STARTUP LOG ===");
+            Log("Runtime: .NET 8.0 Windows x86");
+            
+            try
             {
-                MessageBox.Show(
-                    "This tool declines to being run from the Steam directory.",
-                    "Error",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
-                return;
+                Log("Initializing WPF Application...");
+                var app = new App();
+                
+                Log("Loading MainWindow...");
+                var mainWindow = new MainWindow();
+                
+                Log("Starting UI Loop...");
+                app.Run(mainWindow);
+                
+                Log("Clean exit.");
             }
-
-            using (API.Client client = new())
+            catch (Exception ex)
             {
-                try
+                string error = $"CRITICAL STARTUP ERROR:\n{ex.Message}\n\nStack Trace:\n{ex.StackTrace}";
+                if (ex.InnerException != null)
                 {
-                    client.Initialize(0);
+                    error += $"\n\nInner Exception:\n{ex.InnerException.Message}";
                 }
-                catch (API.ClientInitializeException e)
-                {
-                    if (string.IsNullOrEmpty(e.Message) == false)
-                    {
-                        MessageBox.Show(
-                            "Steam is not running. Please start Steam then run this tool again.\n\n" +
-                            "(" + e.Message + ")",
-                            "Error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
-                    }
-                    else
-                    {
-                        MessageBox.Show(
-                            "Steam is not running. Please start Steam then run this tool again.",
-                            "Error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
-                    }
-                    return;
+                
+                Log(error);
+                
+                // Try to show a message box even if UI failed
+                try {
+                    System.Windows.MessageBox.Show(error, "SAM Diagnostic Shield", MessageBoxButton.OK, MessageBoxImage.Error);
+                } catch {
+                    // Fail silently if even MessageBox fails
                 }
-                catch (DllNotFoundException)
-                {
-                    MessageBox.Show(
-                        "You've caused an exceptional error!",
-                        "Error",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Error);
-                    return;
-                }
-
-                Application.EnableVisualStyles();
-                Application.SetCompatibleTextRenderingDefault(false);
-                Application.Run(new GamePicker(client));
             }
+        }
+
+        private static void Log(string message)
+        {
+            try
+            {
+                string logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "crash_report.txt");
+                File.AppendAllText(logPath, $"[{DateTime.Now:HH:mm:ss}] {message}\n");
+            }
+            catch { }
         }
     }
 }

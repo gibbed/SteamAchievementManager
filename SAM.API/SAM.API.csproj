@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Company>Gibbed</Company>
     <Authors>Gibbed</Authors>
@@ -18,14 +18,15 @@
     <RepositoryType>Git</RepositoryType>
   </PropertyGroup>
   <PropertyGroup>
-    <TargetFramework>net48</TargetFramework>
-    <LangVersion>9.0</LangVersion>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <LangVersion>latest</LangVersion>
     <Platforms>x86</Platforms>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
+    <PlatformTarget>x86</PlatformTarget>
+    <UseWindowsForms>true</UseWindowsForms>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
+  </ItemGroup>
+
 </Project>

@@ -1,59 +1,33 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <AssemblyTitle>Steam Achievement Manager Picker</AssemblyTitle>
-    <Company>Gibbed</Company>
-    <Authors>Gibbed</Authors>
-    <Description>A game picker for the Steam Achievement Manager.</Description>
-    <Copyright>Copyright © Gibbed 2019</Copyright>
-  </PropertyGroup>
-  <PropertyGroup>
-    <Version>7.0.0</Version>
-    <AssemblyVersion>7.0.0.0</AssemblyVersion>
-    <FileVersion>7.0.0.0</FileVersion>
-  </PropertyGroup>
-  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <Platforms>x86</Platforms>
+    <PlatformTarget>x86</PlatformTarget>
     <ApplicationIcon>SAM.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Version>7.0.42</Version>
+    <AssemblyName>SAM.Picker</AssemblyName>
+
+    <StartupObject>SAM.Picker.Program</StartupObject>
   </PropertyGroup>
-  <PropertyGroup>
-    <RepositoryUrl>https://github.com/gibbed/SteamAchievementManager/</RepositoryUrl>
-    <RepositoryType>Git</RepositoryType>
-  </PropertyGroup>
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net48</TargetFramework>
-    <LangVersion>9.0</LangVersion>
-    <Platforms>x86</Platforms>
-    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
-    <OutputPath>..\bin\</OutputPath>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
-    <OutputPath>..\upload\</OutputPath>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
-  </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="System.Windows.Forms" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Update="MyListView.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Update="GamePicker.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <EmbeddedResource Update="Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-    <Compile Update="Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.resx</DependentUpon>
-      <DesignTime>True</DesignTime>
-    </Compile>
-  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\SAM.API\SAM.API.csproj" />
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <PropertyGroup>
+      <SteamPath>$([MSBuild]::GetRegistryValue('HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Valve\Steam', 'InstallPath'))</SteamPath>
+    </PropertyGroup>
+    <ItemGroup Condition="'$(SteamPath)' != ''">
+      <SteamFiles Include="$(SteamPath)\steamclient.dll;$(SteamPath)\tier0_s.dll;$(SteamPath)\vstdlib_s.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(SteamFiles)" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" ContinueOnError="true" Condition="'$(SteamPath)' != ''" />
+  </Target>
+
 </Project>
