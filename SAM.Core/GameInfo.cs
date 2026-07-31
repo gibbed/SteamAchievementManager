@@ -21,11 +21,10 @@
  */
 
 using System.Globalization;
-using System.Windows.Forms;
 
-namespace SAM.Picker
+namespace SAM.Core
 {
-    internal class GameInfo
+    public class GameInfo
     {
         private string _Name;
 
@@ -40,8 +39,6 @@ namespace SAM.Picker
         }
 
         public string ImageUrl;
-
-        public ListViewItem Item;
 
         public GameInfo(uint id, string type)
         {
