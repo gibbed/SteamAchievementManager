@@ -211,13 +211,15 @@ namespace SAM.API
             return instance;
         }
 
+        // The call handle is written through a pointer, so widening the slot cannot change
+        // the ABI. It can only stop a 64 bit write from spilling into the neighbouring one.
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         [return: MarshalAs(UnmanagedType.I1)]
-        private delegate bool NativeSteamGetCallback(int pipe, out Types.CallbackMessage message, out int call);
+        private delegate bool NativeSteamGetCallback(int pipe, out Types.CallbackMessage message, out CallHandle call);
 
         private static NativeSteamGetCallback _CallSteamBGetCallback;
 
-        public static bool GetCallback(int pipe, out Types.CallbackMessage message, out int call)
+        public static bool GetCallback(int pipe, out Types.CallbackMessage message, out CallHandle call)
         {
             return _CallSteamBGetCallback(pipe, out message, out call);
         }

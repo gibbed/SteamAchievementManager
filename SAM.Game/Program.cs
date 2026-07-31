@@ -50,7 +50,7 @@ namespace SAM.Game
 
             if (args.Length == 0)
             {
-                Process.Start("SAM.Picker.exe");
+                API.AppHost.Start("SAM.Picker");
                 return;
             }
 

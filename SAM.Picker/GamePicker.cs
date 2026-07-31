@@ -452,13 +452,13 @@ namespace SAM.Picker
 
             try
             {
-                Process.Start("SAM.Game.exe", info.Id.ToString(CultureInfo.InvariantCulture));
+                API.AppHost.Start("SAM.Game", info.Id.ToString(CultureInfo.InvariantCulture));
             }
             catch (Win32Exception)
             {
                 MessageBox.Show(
                     this,
-                    "Failed to start SAM.Game.exe.",
+                    "Failed to start SAM.Game.",
                     "Error",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);

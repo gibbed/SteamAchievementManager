@@ -24,10 +24,14 @@ using System.Runtime.InteropServices;
 
 namespace SAM.API.Types
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
     public struct AppDataChanged
     {
         public uint Id;
+
+        // A C++ bool is one byte, where a marshalled C# bool defaults to a four byte
+        // Win32 BOOL. Without this the three padding bytes get read as part of the value.
+        [MarshalAs(UnmanagedType.I1)]
         public bool Result;
     }
 }
