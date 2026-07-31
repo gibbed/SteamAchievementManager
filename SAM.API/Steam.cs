@@ -1,4 +1,4 @@
-﻿/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
+/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
  *
  * This software is provided 'as-is', without any express or implied
  * warranty. In no event will the authors be held liable for any damages
@@ -21,6 +21,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
@@ -31,34 +32,89 @@ namespace SAM.API
     {
         private struct Native
         {
-            [DllImport("kernel32.dll", SetLastError = true, BestFitMapping = false, ThrowOnUnmappableChar = true)]
-            internal static extern IntPtr GetProcAddress(IntPtr module, string name);
-
-            [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-            internal static extern IntPtr LoadLibraryEx(string path, IntPtr file, uint flags);
-
             [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
             [return: MarshalAs(UnmanagedType.Bool)]
             internal static extern bool SetDllDirectory(string path);
-
-            internal const uint LoadWithAlteredSearchPath = 8;
-        }
-
-        private static Delegate GetExportDelegate<TDelegate>(IntPtr module, string name)
-        {
-            IntPtr address = Native.GetProcAddress(module, name);
-            return address == IntPtr.Zero ? null : Marshal.GetDelegateForFunctionPointer(address, typeof(TDelegate));
-        }
-
-        private static TDelegate GetExportFunction<TDelegate>(IntPtr module, string name)
-            where TDelegate : class
-        {
-            return (TDelegate)((object)GetExportDelegate<TDelegate>(module, name));
         }
 
         private static IntPtr _Handle = IntPtr.Zero;
 
+        #region Install path
+        /// <summary>
+        /// Points SAM at a Steam installation that the probes below do not know about.
+        /// </summary>
+        private const string InstallPathVariable = "SAM_STEAM_PATH";
+
         public static string GetInstallPath()
+        {
+            foreach (string candidate in EnumerateInstallPaths())
+            {
+                if (string.IsNullOrEmpty(candidate) == true)
+                {
+                    continue;
+                }
+
+                if (Directory.Exists(candidate) == false)
+                {
+                    continue;
+                }
+
+                // The Linux probes go through symlinks that Steam maintains, so resolve
+                // them here. Callers compare this against their own location to refuse
+                // running from inside the Steam directory, which needs a canonical path.
+                // Trim before resolving: a trailing separator makes ResolveLinkTarget
+                // report no link, which would hand back two different answers for the
+                // same directory depending on how the candidate was spelled.
+                string path = Path.TrimEndingDirectorySeparator(Path.GetFullPath(candidate));
+                FileSystemInfo target = Directory.ResolveLinkTarget(path, true);
+                if (target != null)
+                {
+                    path = Path.TrimEndingDirectorySeparator(target.FullName);
+                }
+
+                return path;
+            }
+
+            return null;
+        }
+
+        private static IEnumerable<string> EnumerateInstallPaths()
+        {
+            yield return Environment.GetEnvironmentVariable(InstallPathVariable);
+
+            if (OperatingSystem.IsWindows() == true)
+            {
+                yield return GetWindowsInstallPath();
+                yield break;
+            }
+
+            string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            if (string.IsNullOrEmpty(home) == true)
+            {
+                yield break;
+            }
+
+            if (OperatingSystem.IsMacOS() == true)
+            {
+                yield return Path.Combine(home, "Library", "Application Support", "Steam");
+                yield break;
+            }
+
+            string dataHome = Environment.GetEnvironmentVariable("XDG_DATA_HOME");
+            if (string.IsNullOrEmpty(dataHome) == false)
+            {
+                yield return Path.Combine(dataHome, "Steam");
+            }
+
+            // Steam keeps these two as symlinks to wherever it actually lives, so they
+            // also cover installations that have been moved off the default location.
+            yield return Path.Combine(home, ".steam", "root");
+            yield return Path.Combine(home, ".steam", "steam");
+            yield return Path.Combine(home, ".local", "share", "Steam");
+            yield return Path.Combine(home, ".var", "app", "com.valvesoftware.Steam", ".local", "share", "Steam");
+        }
+
+        private static string GetWindowsInstallPath()
         {
             if (OperatingSystem.IsWindows())
             {
@@ -67,6 +123,73 @@ namespace SAM.API
 
             return null;
         }
+        #endregion
+
+        #region Client module
+        private static IEnumerable<string> EnumerateClientModules(string installPath)
+        {
+            bool is64Bit = IntPtr.Size == 8;
+
+            if (OperatingSystem.IsWindows() == true)
+            {
+                yield return Path.Combine(installPath, is64Bit == true ? "steamclient64.dll" : "steamclient.dll");
+                yield break;
+            }
+
+            if (OperatingSystem.IsMacOS() == true)
+            {
+                yield return Path.Combine(
+                    installPath,
+                    "Steam.AppBundle",
+                    "Steam",
+                    "Contents",
+                    "MacOS",
+                    "steamclient.dylib");
+                yield return Path.Combine(installPath, "steamclient.dylib");
+                yield break;
+            }
+
+            yield return Path.Combine(installPath, is64Bit == true ? "linux64" : "linux32", "steamclient.so");
+            yield return Path.Combine(installPath, is64Bit == true ? "ubuntu12_64" : "ubuntu12_32", "steamclient.so");
+        }
+
+        private static IntPtr LoadClientModule(string installPath)
+        {
+            // steamclient resolves its sibling libraries through the process search path
+            // instead of its own directory, so Windows needs that directory added first.
+            // Unix hosts get the same effect from the RPATH the libraries were built with.
+            if (OperatingSystem.IsWindows() == true)
+            {
+                Native.SetDllDirectory(installPath);
+            }
+
+            foreach (string candidate in EnumerateClientModules(installPath))
+            {
+                if (File.Exists(candidate) == false)
+                {
+                    continue;
+                }
+
+                if (NativeLibrary.TryLoad(candidate, out IntPtr module) == true)
+                {
+                    return module;
+                }
+            }
+
+            return IntPtr.Zero;
+        }
+
+        private static TDelegate GetExportFunction<TDelegate>(IntPtr module, string name)
+            where TDelegate : Delegate
+        {
+            if (NativeLibrary.TryGetExport(module, name, out IntPtr address) == false)
+            {
+                return null;
+            }
+
+            return Marshal.GetDelegateForFunctionPointer<TDelegate>(address);
+        }
+        #endregion
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         private delegate IntPtr NativeCreateInterface(string version, IntPtr returnCode);
@@ -117,16 +240,13 @@ namespace SAM.API
                 return true;
             }
 
-            string path = GetInstallPath();
-            if (path == null)
+            string installPath = GetInstallPath();
+            if (installPath == null)
             {
                 return false;
             }
 
-            Native.SetDllDirectory(path + ";" + Path.Combine(path, "bin"));
-
-            path = Path.Combine(path, "steamclient.dll");
-            IntPtr module = Native.LoadLibraryEx(path, IntPtr.Zero, Native.LoadWithAlteredSearchPath);
+            IntPtr module = LoadClientModule(installPath);
             if (module == IntPtr.Zero)
             {
                 return false;
