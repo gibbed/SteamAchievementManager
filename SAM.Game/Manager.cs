@@ -1,4 +1,4 @@
-﻿/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
+/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
  *
  * This software is provided 'as-is', without any express or implied
  * warranty. In no event will the authors be held liable for any damages
@@ -132,6 +132,17 @@ namespace SAM.Game
                     {
                         stream.Write(e.Result, 0, e.Result.Length);
                         bitmap = new(stream);
+                    }
+
+                    string iconName = info.IsAchieved == true ? info.IconNormal : info.IconLocked;
+                    if (!string.IsNullOrEmpty(iconName))
+                    {
+                        string cachedPath = GetCacheFilePath(iconName);
+                        try
+                        {
+                            File.WriteAllBytes(cachedPath, e.Result);
+                        }
+                        catch { }
                     }
                 }
                 catch (Exception)
@@ -582,10 +593,31 @@ namespace SAM.Game
             }
         }
 
+        private string GetCacheFilePath(string iconName)
+        {
+            string cacheDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cache", "achievements", this._GameId.ToString());
+            if (!Directory.Exists(cacheDir))
+            {
+                try
+                {
+                    Directory.CreateDirectory(cacheDir);
+                }
+                catch { }
+            }
+            return Path.Combine(cacheDir, iconName);
+        }
+
         private void AddAchievementToIconQueue(Stats.AchievementInfo info, bool startDownload)
         {
-            int imageIndex = this._AchievementImageList.Images.IndexOfKey(
-                info.IsAchieved == true ? info.IconNormal : info.IconLocked);
+            string iconName = info.IsAchieved == true ? info.IconNormal : info.IconLocked;
+            
+            if (string.IsNullOrEmpty(iconName))
+            {
+                info.ImageIndex = 0;
+                return;
+            }
+
+            int imageIndex = this._AchievementImageList.Images.IndexOfKey(iconName);
 
             if (imageIndex >= 0)
             {
@@ -593,6 +625,25 @@ namespace SAM.Game
             }
             else
             {
+                // Check disk cache first
+                string cachedPath = GetCacheFilePath(iconName);
+                if (File.Exists(cachedPath))
+                {
+                    try
+                    {
+                        using (var stream = new FileStream(cachedPath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                        {
+                            var bitmap = new Bitmap(stream);
+                            this.AddAchievementIcon(info, bitmap);
+                        }
+                        return; // Successfully loaded from cache
+                    }
+                    catch
+                    {
+                        try { File.Delete(cachedPath); } catch { }
+                    }
+                }
+
                 this._IconQueue.Add(info);
 
                 if (startDownload == true)

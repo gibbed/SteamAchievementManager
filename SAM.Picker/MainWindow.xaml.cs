@@ -124,20 +124,50 @@ namespace SAM.Picker
             return $"https://cdn.steamstatic.com/steam/apps/{id}/capsule_184x69.jpg";
         }
 
+        private string GetCacheFilePath(uint id)
+        {
+            string cacheDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cache", "games");
+            if (!Directory.Exists(cacheDir))
+            {
+                try
+                {
+                    Directory.CreateDirectory(cacheDir);
+                }
+                catch { }
+            }
+            return Path.Combine(cacheDir, $"{id}.jpg");
+        }
+
         private async Task LoadCapsule(GameInfoViewModel viewModel)
         {
             if (viewModel.Image != null) return;
             try
             {
-                string url = GetGameImageCandidate(viewModel.Id);
-                using var http = new System.Net.Http.HttpClient();
-                var data = await http.GetByteArrayAsync(url);
+                string localPath = GetCacheFilePath(viewModel.Id);
+                byte[] data;
+
+                if (File.Exists(localPath))
+                {
+                    data = await File.ReadAllBytesAsync(localPath);
+                }
+                else
+                {
+                    string url = GetGameImageCandidate(viewModel.Id);
+                    using var http = new System.Net.Http.HttpClient();
+                    data = await http.GetByteArrayAsync(url);
+                    try
+                    {
+                        await File.WriteAllBytesAsync(localPath, data);
+                    }
+                    catch { }
+                }
                 
                 await Dispatcher.InvokeAsync(() =>
                 {
                     var bitmap = new BitmapImage();
                     bitmap.BeginInit();
                     bitmap.StreamSource = new System.IO.MemoryStream(data);
+                    bitmap.DecodePixelWidth = 184; // Optimize memory usage
                     bitmap.CacheOption = BitmapCacheOption.OnLoad;
                     bitmap.EndInit();
                     bitmap.Freeze();
@@ -160,6 +190,16 @@ namespace SAM.Picker
                             g.Id.ToString().Contains(query))
                 .Take(1000) 
                 .ToList();
+
+            // Unload images of games that are not in the current visible list to save memory
+            var matchIds = new HashSet<uint>(matches.Select(m => m.Id));
+            foreach (var game in _AllGames)
+            {
+                if (!matchIds.Contains(game.Id))
+                {
+                    game.Image = null;
+                }
+            }
 
             foreach (var match in matches) {
                 _FilteredGames.Add(match);
