@@ -1,4 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\SAM.API\SAM.API.csproj" />
+  </ItemGroup>
   <PropertyGroup>
     <Company>Gibbed</Company>
     <Authors>Gibbed</Authors>

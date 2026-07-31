@@ -40,6 +40,7 @@ namespace SAM.Game
     {
         private readonly long _GameId;
         private readonly API.Client _SteamClient;
+        private readonly UserStats _UserStats;
 
         private readonly WebClient _IconDownloader = new();
 
@@ -89,6 +90,7 @@ namespace SAM.Game
 
             this._GameId = gameId;
             this._SteamClient = client;
+            this._UserStats = new UserStats(client);
 
             this._IconDownloader.DownloadDataCompleted += this.OnIconDownload;
 
@@ -189,195 +191,21 @@ namespace SAM.Game
                 info);
         }
 
-        private static string TranslateError(int id) => id switch
-        {
-            2 => "generic error -- this usually means you don't own the game",
-            _ => _($"{id}"),
-        };
-
-        private static string GetLocalizedString(KeyValue kv, string language, string defaultValue)
-        {
-            var name = kv[language].AsString("");
-            if (string.IsNullOrEmpty(name) == false)
-            {
-                return name;
-            }
-
-            if (language != "english")
-            {
-                name = kv["english"].AsString("");
-                if (string.IsNullOrEmpty(name) == false)
-                {
-                    return name;
-                }
-            }
-
-            name = kv.AsString("");
-            if (string.IsNullOrEmpty(name) == false)
-            {
-                return name;
-            }
-
-            return defaultValue;
-        }
-
         private bool LoadUserGameStatsSchema()
         {
-            string path;
-            try
-            {
-                string fileName = _($"UserGameStatsSchema_{this._GameId}.bin");
-                path = API.Steam.GetInstallPath();
-                path = Path.Combine(path, "appcache", "stats", fileName);
-                if (File.Exists(path) == false)
-                {
-                    return false;
-                }
-            }
-            catch (Exception e)
+            UserGameStatsSchema schema = UserGameStatsSchema.Load(
+                this._GameId,
+                this._UserStats.GetCurrentGameLanguage());
+            if (schema == null)
             {
                 return false;
             }
-
-            var kv = KeyValue.LoadAsBinary(path);
-            if (kv == null)
-            {
-                return false;
-            }
-
-            var currentLanguage = this._SteamClient.SteamApps008.GetCurrentGameLanguage();
 
             this._AchievementDefinitions.Clear();
+            this._AchievementDefinitions.AddRange(schema.Achievements);
+
             this._StatDefinitions.Clear();
-
-            var stats = kv[this._GameId.ToString(CultureInfo.InvariantCulture)]["stats"];
-            if (stats.Valid == false || stats.Children == null)
-            {
-                return false;
-            }
-
-            foreach (var stat in stats.Children)
-            {
-                if (stat.Valid == false)
-                {
-                    continue;
-                }
-
-                APITypes.UserStatType type;
-
-                // schema in the new format?
-                var typeNode = stat["type"];
-                if (typeNode.Valid == true && typeNode.Type == KeyValueType.String)
-                {
-                    if (Enum.TryParse((string)typeNode.Value, true, out type) == false)
-                    {
-                        type = APITypes.UserStatType.Invalid;
-                    }
-                }
-                else
-                {
-                    type = APITypes.UserStatType.Invalid;
-                }
-
-                // schema in the old format?
-                if (type == APITypes.UserStatType.Invalid)
-                {
-                    var typeIntNode = stat["type_int"];
-                    var rawType = typeIntNode.Valid == true
-                        ? typeIntNode.AsInteger(0)
-                        : typeNode.AsInteger(0);
-                    type = (APITypes.UserStatType)rawType;
-                }
-
-                switch (type)
-                {
-                    case APITypes.UserStatType.Invalid:
-                    {
-                        break;
-                    }
-
-                    case APITypes.UserStatType.Integer:
-                    {
-                        var id = stat["name"].AsString("");
-                        string name = GetLocalizedString(stat["display"]["name"], currentLanguage, id);
-
-                        this._StatDefinitions.Add(new Stats.IntegerStatDefinition()
-                        {
-                            Id = stat["name"].AsString(""),
-                            DisplayName = name,
-                            MinValue = stat["min"].AsInteger(int.MinValue),
-                            MaxValue = stat["max"].AsInteger(int.MaxValue),
-                            MaxChange = stat["maxchange"].AsInteger(0),
-                            IncrementOnly = stat["incrementonly"].AsBoolean(false),
-                            SetByTrustedGameServer = stat["bSetByTrustedGS"].AsBoolean(false),
-                            DefaultValue = stat["default"].AsInteger(0),
-                            Permission = stat["permission"].AsInteger(0),
-                        });
-                        break;
-                    }
-
-                    case APITypes.UserStatType.Float:
-                    case APITypes.UserStatType.AverageRate:
-                    {
-                        var id = stat["name"].AsString("");
-                        string name = GetLocalizedString(stat["display"]["name"], currentLanguage, id);
-
-                        this._StatDefinitions.Add(new Stats.FloatStatDefinition()
-                        {
-                            Id = stat["name"].AsString(""),
-                            DisplayName = name,
-                            MinValue = stat["min"].AsFloat(float.MinValue),
-                            MaxValue = stat["max"].AsFloat(float.MaxValue),
-                            MaxChange = stat["maxchange"].AsFloat(0.0f),
-                            IncrementOnly = stat["incrementonly"].AsBoolean(false),
-                            DefaultValue = stat["default"].AsFloat(0.0f),
-                            Permission = stat["permission"].AsInteger(0),
-                        });
-                        break;
-                    }
-
-                    case APITypes.UserStatType.Achievements:
-                    case APITypes.UserStatType.GroupAchievements:
-                    {
-                        if (stat.Children != null)
-                        {
-                            foreach (var bits in stat.Children.Where(
-                                b => string.Compare(b.Name, "bits", StringComparison.InvariantCultureIgnoreCase) == 0))
-                            {
-                                if (bits.Valid == false || bits.Children == null)
-                                {
-                                    continue;
-                                }
-
-                                foreach (var bit in bits.Children)
-                                {
-                                    string id = bit["name"].AsString("");
-                                    string name = GetLocalizedString(bit["display"]["name"], currentLanguage, id);
-                                    string desc = GetLocalizedString(bit["display"]["desc"], currentLanguage, "");
-
-                                    this._AchievementDefinitions.Add(new()
-                                    {
-                                        Id = id,
-                                        Name = name,
-                                        Description = desc,
-                                        IconNormal = bit["display"]["icon"].AsString(""),
-                                        IconLocked = bit["display"]["icon_gray"].AsString(""),
-                                        IsHidden = bit["display"]["hidden"].AsBoolean(false),
-                                        Permission = bit["permission"].AsInteger(0),
-                                    });
-                                }
-                            }
-                        }
-
-                        break;
-                    }
-
-                    default:
-                    {
-                        throw new InvalidOperationException("invalid stat type");
-                    }
-                }
-            }
+            this._StatDefinitions.AddRange(schema.Stats);
 
             return true;
         }
@@ -386,7 +214,7 @@ namespace SAM.Game
         {
             if (param.Result != 1)
             {
-                this._GameStatusLabel.Text = $"Error while retrieving stats: {TranslateError(param.Result)}";
+                this._GameStatusLabel.Text = $"Error while retrieving stats: {UserStats.TranslateError(param.Result)}";
                 this.EnableInput();
                 return;
             }
@@ -439,11 +267,9 @@ namespace SAM.Game
             this._AchievementListView.Items.Clear();
             this._StatisticsDataGridView.Rows.Clear();
 
-            var steamId = this._SteamClient.SteamUser.GetSteamId();
-
             // This still triggers the UserStatsReceived callback, in addition to the callresult.
             // No need to implement callresults for the time being.
-            var callHandle = this._SteamClient.SteamUserStats.RequestUserStats(steamId);
+            var callHandle = this._UserStats.Request();
             if (callHandle == API.CallHandle.Invalid)
             {
                 MessageBox.Show(this, "Failed.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -479,7 +305,7 @@ namespace SAM.Game
                     continue;
                 }
 
-                if (this._SteamClient.SteamUserStats.GetAchievementAndUnlockTime(
+                if (this._UserStats.TryReadAchievement(
                     def.Id,
                     out bool isAchieved,
                     out var unlockTime) == false)
@@ -560,45 +386,9 @@ namespace SAM.Game
         private void GetStatistics()
         {
             this._Statistics.Clear();
-            foreach (var stat in this._StatDefinitions)
+            foreach (Stats.StatInfo stat in this._UserStats.ReadStatistics(this._StatDefinitions))
             {
-                if (string.IsNullOrEmpty(stat.Id) == true)
-                {
-                    continue;
-                }
-
-                if (stat is Stats.IntegerStatDefinition intStat)
-                {
-                    if (this._SteamClient.SteamUserStats.GetStatValue(intStat.Id, out int value) == false)
-                    {
-                        continue;
-                    }
-                    this._Statistics.Add(new Stats.IntStatInfo()
-                    {
-                        Id = intStat.Id,
-                        DisplayName = intStat.DisplayName,
-                        IntValue = value,
-                        OriginalValue = value,
-                        IsIncrementOnly = intStat.IncrementOnly,
-                        Permission = intStat.Permission,
-                    });
-                }
-                else if (stat is Stats.FloatStatDefinition floatStat)
-                {
-                    if (this._SteamClient.SteamUserStats.GetStatValue(floatStat.Id, out float value) == false)
-                    {
-                        continue;
-                    }
-                    this._Statistics.Add(new Stats.FloatStatInfo()
-                    {
-                        Id = floatStat.Id,
-                        DisplayName = floatStat.DisplayName,
-                        FloatValue = value,
-                        OriginalValue = value,
-                        IsIncrementOnly = floatStat.IncrementOnly,
-                        Permission = floatStat.Permission,
-                    });
-                }
+                this._Statistics.Add(stat);
             }
         }
 
@@ -648,18 +438,16 @@ namespace SAM.Game
                 return 0;
             }
 
-            foreach (var info in achievements)
+            string failedId = this._UserStats.StoreAchievements(achievements);
+            if (failedId != null)
             {
-                if (this._SteamClient.SteamUserStats.SetAchievement(info.Id, info.IsAchieved) == false)
-                {
-                    MessageBox.Show(
-                        this,
-                        $"An error occurred while setting the state for {info.Id}, aborting store.",
-                        "Error",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Error);
-                    return -1;
-                }
+                MessageBox.Show(
+                    this,
+                    $"An error occurred while setting the state for {failedId}, aborting store.",
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return -1;
             }
 
             return achievements.Count;
@@ -678,42 +466,16 @@ namespace SAM.Game
                 return 0;
             }
 
-            foreach (var stat in statistics)
+            string failedId = this._UserStats.StoreStatistics(statistics);
+            if (failedId != null)
             {
-                if (stat is Stats.IntStatInfo intStat)
-                {
-                    if (this._SteamClient.SteamUserStats.SetStatValue(
-                        intStat.Id,
-                        intStat.IntValue) == false)
-                    {
-                        MessageBox.Show(
-                            this,
-                            $"An error occurred while setting the value for {stat.Id}, aborting store.",
-                            "Error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
-                        return -1;
-                    }
-                }
-                else if (stat is Stats.FloatStatInfo floatStat)
-                {
-                    if (this._SteamClient.SteamUserStats.SetStatValue(
-                        floatStat.Id,
-                        floatStat.FloatValue) == false)
-                    {
-                        MessageBox.Show(
-                            this,
-                            $"An error occurred while setting the value for {stat.Id}, aborting store.",
-                            "Error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
-                        return -1;
-                    }
-                }
-                else
-                {
-                    throw new InvalidOperationException("unsupported stat type");
-                }
+                MessageBox.Show(
+                    this,
+                    $"An error occurred while setting the value for {failedId}, aborting store.",
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return -1;
             }
 
             return statistics.Count;
@@ -769,7 +531,7 @@ namespace SAM.Game
 
         private bool Store()
         {
-            if (this._SteamClient.SteamUserStats.StoreStats() == false)
+            if (this._UserStats.Commit() == false)
             {
                 MessageBox.Show(
                     this,
@@ -873,7 +635,7 @@ namespace SAM.Game
                 return;
             }
 
-            if (this._SteamClient.SteamUserStats.ResetAllStats(achievementsToo) == false)
+            if (this._UserStats.ResetAll(achievementsToo) == false)
             {
                 MessageBox.Show(this, "Failed.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
