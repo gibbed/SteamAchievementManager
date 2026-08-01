@@ -201,7 +201,8 @@ namespace SAM.API.Wrappers
         #endregion
 
         #region GetISteamApps
-        private delegate IntPtr NativeGetISteamApps(int user, int pipe, IntPtr version);
+        [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
+        private delegate IntPtr NativeGetISteamApps(IntPtr self, int user, int pipe, IntPtr version);
 
         private TClass GetISteamApps<TClass>(int user, int pipe, string version)
             where TClass : INativeWrapper, new()
@@ -210,6 +211,7 @@ namespace SAM.API.Wrappers
             {
                 IntPtr address = this.Call<IntPtr, NativeGetISteamApps>(
                     this.Functions.GetISteamApps,
+                    this.ObjectAddress,
                     user,
                     pipe,
                     nativeVersion.Handle);
