@@ -20,25 +20,45 @@
  *    distribution.
  */
 
-using System;
-using Avalonia;
+using Avalonia.Media.Imaging;
+using CommunityToolkit.Mvvm.ComponentModel;
+using SAM.Core;
 
-namespace SAM.Picker
+namespace SAM.Picker.ViewModels
 {
-    internal static class Program
+    public sealed partial class GameViewModel : ObservableObject
     {
-        [STAThread]
-        public static int Main(string[] args)
+        private readonly GameInfo _Info;
+
+        public GameViewModel(GameInfo info)
         {
-            return BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+            this._Info = info;
         }
 
-        // Also used by the Avalonia previewer, which requires this exact signature.
-        public static AppBuilder BuildAvaloniaApp()
+        public GameInfo Info => this._Info;
+
+        public uint Id => this._Info.Id;
+
+        public string Type => this._Info.Type;
+
+        public string Name => this._Info.Name;
+
+        public string ImageUrl
         {
-            return AppBuilder.Configure<App>()
-                .UsePlatformDetect()
-                .LogToTrace();
+            get => this._Info.ImageUrl;
+            set => this._Info.ImageUrl = value;
+        }
+
+        [ObservableProperty]
+        private Bitmap _Logo;
+
+        /// <summary>
+        /// Steam reports names asynchronously through the AppDataChanged callback, so the
+        /// name can arrive after the game is already on screen.
+        /// </summary>
+        public void NotifyNameChanged()
+        {
+            this.OnPropertyChanged(nameof(this.Name));
         }
     }
 }

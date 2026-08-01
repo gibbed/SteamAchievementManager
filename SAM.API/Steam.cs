@@ -45,7 +45,30 @@ namespace SAM.API
         /// </summary>
         private const string InstallPathVariable = "SAM_STEAM_PATH";
 
+        /// <summary>
+        /// Prefers a candidate that actually holds a client module. Stale directories are
+        /// common: a leftover ~/.steam/root will sit ahead of the live install in the probe
+        /// order and existence alone is not enough to tell them apart. Falls back to the
+        /// first directory that exists so callers only wanting a path still get one.
+        /// </summary>
         public static string GetInstallPath()
+        {
+            string firstExisting = null;
+
+            foreach (string path in EnumerateExistingInstallPaths())
+            {
+                firstExisting ??= path;
+
+                if (FindClientModule(path) != null)
+                {
+                    return path;
+                }
+            }
+
+            return firstExisting;
+        }
+
+        private static IEnumerable<string> EnumerateExistingInstallPaths()
         {
             foreach (string candidate in EnumerateInstallPaths())
             {
@@ -72,10 +95,8 @@ namespace SAM.API
                     path = Path.TrimEndingDirectorySeparator(target.FullName);
                 }
 
-                return path;
+                yield return path;
             }
-
-            return null;
         }
 
         private static IEnumerable<string> EnumerateInstallPaths()
@@ -150,24 +171,39 @@ namespace SAM.API
             }
 
             yield return Path.Combine(installPath, is64Bit == true ? "linux64" : "linux32", "steamclient.so");
+            yield return Path.Combine(installPath, is64Bit == true ? "steamrt64" : "steamrt32", "steamclient.so");
             yield return Path.Combine(installPath, is64Bit == true ? "ubuntu12_64" : "ubuntu12_32", "steamclient.so");
         }
 
-        private static IntPtr LoadClientModule(string installPath)
+        private static string FindClientModule(string installPath)
         {
-            // steamclient resolves its sibling libraries through the process search path
-            // instead of its own directory, so Windows needs that directory added first.
-            // Unix hosts get the same effect from the RPATH the libraries were built with.
-            if (OperatingSystem.IsWindows() == true)
-            {
-                Native.SetDllDirectory(installPath);
-            }
-
             foreach (string candidate in EnumerateClientModules(installPath))
             {
-                if (File.Exists(candidate) == false)
+                if (File.Exists(candidate) == true)
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
+        }
+
+        private static IntPtr LoadClientModule()
+        {
+            foreach (string installPath in EnumerateExistingInstallPaths())
+            {
+                string candidate = FindClientModule(installPath);
+                if (candidate == null)
                 {
                     continue;
+                }
+
+                // steamclient resolves its sibling libraries through the process search
+                // path instead of its own directory, so Windows needs that directory added
+                // first. Unix hosts get the same from the RPATH the libraries were built with.
+                if (OperatingSystem.IsWindows() == true)
+                {
+                    Native.SetDllDirectory(installPath);
                 }
 
                 if (NativeLibrary.TryLoad(candidate, out IntPtr module) == true)
@@ -242,13 +278,7 @@ namespace SAM.API
                 return true;
             }
 
-            string installPath = GetInstallPath();
-            if (installPath == null)
-            {
-                return false;
-            }
-
-            IntPtr module = LoadClientModule(installPath);
+            IntPtr module = LoadClientModule();
             if (module == IntPtr.Zero)
             {
                 return false;

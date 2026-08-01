@@ -1,0 +1,104 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:SAM.Picker.ViewModels"
+        x:Class="SAM.Picker.Views.GamePickerWindow"
+        x:DataType="vm:GamePickerViewModel"
+        Title="Steam Achievement Manager 7.0 | Pick a game... Any game..."
+        Width="742" Height="292"
+        MinWidth="420" MinHeight="200"
+        Icon="/SAM.ico">
+
+  <DockPanel>
+
+    <!-- Toolbar -->
+    <Border DockPanel.Dock="Top" Padding="4" BorderThickness="0,0,0,1"
+            BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+      <StackPanel Orientation="Horizontal" Spacing="4">
+
+        <Button Command="{Binding RefreshCommand}" IsEnabled="{Binding !IsBusy}"
+                ToolTip.Tip="Re-download the game list and re-check ownership">
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <Image Source="/Resources/arrow-circle-double.png" Width="16" Height="16" />
+            <TextBlock Text="Refresh Games" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+
+        <Separator Width="1" Margin="4,2" Background="{DynamicResource SystemControlForegroundBaseLowBrush}" />
+
+        <TextBox Text="{Binding AddGameId}" Width="100" VerticalAlignment="Center"
+                 PlaceholderText="App ID" ToolTip.Tip="A Steam application ID" />
+
+        <Button Command="{Binding AddGameByIdCommand}">
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <Image Source="/Resources/magnifier.png" Width="16" Height="16" />
+            <TextBlock Text="Add Game" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+
+        <Separator Width="1" Margin="4,2" Background="{DynamicResource SystemControlForegroundBaseLowBrush}" />
+
+        <TextBlock Text="Filter" VerticalAlignment="Center" />
+        <TextBox Text="{Binding SearchText}" Width="140" VerticalAlignment="Center"
+                 PlaceholderText="Search by name" />
+
+        <Button ToolTip.Tip="Game filtering">
+          <Button.Content>
+            <Image Source="/Resources/television-test.png" Width="16" Height="16" />
+          </Button.Content>
+          <Button.Flyout>
+            <MenuFlyout>
+              <MenuItem Header="Show _games" ToggleType="CheckBox" IsChecked="{Binding ShowGames}" />
+              <MenuItem Header="Show _demos" ToggleType="CheckBox" IsChecked="{Binding ShowDemos}" />
+              <MenuItem Header="Show _mods"  ToggleType="CheckBox" IsChecked="{Binding ShowMods}" />
+              <MenuItem Header="Show _junk"  ToggleType="CheckBox" IsChecked="{Binding ShowJunk}" />
+            </MenuFlyout>
+          </Button.Flyout>
+        </Button>
+
+      </StackPanel>
+    </Border>
+
+    <!-- Status bar -->
+    <Border DockPanel.Dock="Bottom" Padding="6,3" BorderThickness="0,1,0,0"
+            BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock Grid.Column="0" Text="{Binding Status}" VerticalAlignment="Center"
+                   TextTrimming="CharacterEllipsis" />
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4"
+                    IsVisible="{Binding DownloadStatus, Converter={x:Static ObjectConverters.IsNotNull}}">
+          <Image Source="/Resources/download-cloud.png" Width="16" Height="16" />
+          <TextBlock Text="{Binding DownloadStatus}" VerticalAlignment="Center" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- Game tiles -->
+    <ListBox Name="GameList"
+             ItemsSource="{Binding Games}"
+             SelectedItem="{Binding SelectedGame}"
+             DoubleTapped="OnGameActivated"
+             KeyDown="OnGameListKeyDown"
+             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+      <ListBox.ItemsPanel>
+        <ItemsPanelTemplate>
+          <WrapPanel Orientation="Horizontal" />
+        </ItemsPanelTemplate>
+      </ListBox.ItemsPanel>
+      <ListBox.ItemTemplate>
+        <DataTemplate x:DataType="vm:GameViewModel">
+          <Grid Width="184" Height="69" ToolTip.Tip="{Binding Name}">
+            <!-- Placeholder stands in until the capsule arrives, matching the old grey tile -->
+            <Border Background="DimGray" />
+            <Image Source="{Binding Logo}" Stretch="UniformToFill" />
+            <Border VerticalAlignment="Bottom" Background="#A0000000" Padding="4,2"
+                    IsVisible="{Binding Logo, Converter={x:Static ObjectConverters.IsNull}}">
+              <TextBlock Text="{Binding Name}" Foreground="White" FontSize="11"
+                         TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" />
+            </Border>
+          </Grid>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+
+  </DockPanel>
+</Window>

@@ -108,6 +108,13 @@ namespace SAM.API.Wrappers
                     user,
                     pipe,
                     nativeVersion.Handle);
+                if (address == IntPtr.Zero)
+                {
+                    // Steam declines interface versions it no longer serves. Returning
+                    // null lets the caller report that instead of dereferencing zero.
+                    return default;
+                }
+
                 TClass result = new();
                 result.SetupFunctions(address);
                 return result;
@@ -137,6 +144,13 @@ namespace SAM.API.Wrappers
                     user,
                     pipe,
                     nativeVersion.Handle);
+                if (address == IntPtr.Zero)
+                {
+                    // Steam declines interface versions it no longer serves. Returning
+                    // null lets the caller report that instead of dereferencing zero.
+                    return default;
+                }
+
                 TClass result = new();
                 result.SetupFunctions(address);
                 return result;
@@ -165,6 +179,13 @@ namespace SAM.API.Wrappers
                     this.ObjectAddress,
                     pipe,
                     nativeVersion.Handle);
+                if (address == IntPtr.Zero)
+                {
+                    // Steam declines interface versions it no longer serves. Returning
+                    // null lets the caller report that instead of dereferencing zero.
+                    return default;
+                }
+
                 TClass result = new();
                 result.SetupFunctions(address);
                 return result;
@@ -192,6 +213,13 @@ namespace SAM.API.Wrappers
                     user,
                     pipe,
                     nativeVersion.Handle);
+                if (address == IntPtr.Zero)
+                {
+                    // Steam declines interface versions it no longer serves. Returning
+                    // null lets the caller report that instead of dereferencing zero.
+                    return default;
+                }
+
                 TClass result = new();
                 result.SetupFunctions(address);
                 return result;
