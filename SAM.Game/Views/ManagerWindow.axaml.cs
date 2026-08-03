@@ -1,4 +1,4 @@
-﻿/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
+/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
  *
  * This software is provided 'as-is', without any express or implied
  * warranty. In no event will the authors be held liable for any damages
@@ -20,59 +20,45 @@
  *    distribution.
  */
 
+using System.Threading.Tasks;
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Interactivity;
-using SAM.Picker.ViewModels;
+using SAM.Game.ViewModels;
 using SAM.Ui;
 
-namespace SAM.Picker.Views
+namespace SAM.Game.Views
 {
-    public partial class GamePickerWindow : Window
+    public partial class ManagerWindow : Window
     {
-        public GamePickerWindow()
+        public ManagerWindow()
         {
             this.InitializeComponent();
         }
 
-        public GamePickerWindow(GamePickerViewModel model)
+        public ManagerWindow(ManagerViewModel model)
             : this()
         {
             this.DataContext = model;
             model.ErrorRaised += this.OnErrorRaised;
+            model.ConfirmRequested += this.OnConfirmRequested;
         }
 
-        private GamePickerViewModel Model => this.DataContext as GamePickerViewModel;
+        private ManagerViewModel Model => this.DataContext as ManagerViewModel;
 
-        protected override async void OnLoaded(RoutedEventArgs e)
+        protected override void OnLoaded(RoutedEventArgs e)
         {
             base.OnLoaded(e);
-
-            if (this.Model != null)
-            {
-                await this.Model.RefreshAsync();
-            }
+            this.Model?.Refresh();
         }
 
         private void OnErrorRaised(string message)
         {
-            _ = MessageWindow.ShowAsync(this, "Error", message);
+            _ = MessageWindow.ShowAsync(this, "Steam Achievement Manager", message);
         }
 
-        private void OnGameActivated(object sender, TappedEventArgs e)
+        private Task<bool> OnConfirmRequested(string question)
         {
-            this.Model?.LaunchSelected();
-        }
-
-        private void OnGameListKeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key != Key.Enter && e.Key != Key.Space)
-            {
-                return;
-            }
-
-            this.Model?.LaunchSelected();
-            e.Handled = true;
+            return MessageWindow.ConfirmAsync(this, "Steam Achievement Manager", question);
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
+/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
  *
  * This software is provided 'as-is', without any express or implied
  * warranty. In no event will the authors be held liable for any damages
@@ -21,20 +21,22 @@
  */
 
 using System;
+using System.Globalization;
 using System.IO;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using SAM.Picker.ViewModels;
-using SAM.Picker.Views;
+using SAM.Game.ViewModels;
+using SAM.Game.Views;
 using SAM.Ui;
 
-namespace SAM.Picker
+namespace SAM.Game
 {
     public partial class App : Application
     {
         private API.Client _Client;
-        private GamePickerViewModel _Model;
+        private ManagerViewModel _Model;
 
         public override void Initialize()
         {
@@ -45,7 +47,14 @@ namespace SAM.Picker
         {
             if (this.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                desktop.MainWindow = this.CreateMainWindow();
+                Window window = this.CreateMainWindow(desktop.Args ?? Array.Empty<string>());
+                if (window == null)
+                {
+                    desktop.Shutdown();
+                    return;
+                }
+
+                desktop.MainWindow = window;
                 desktop.ShutdownRequested += this.OnShutdownRequested;
             }
 
@@ -53,11 +62,31 @@ namespace SAM.Picker
         }
 
         /// <summary>
-        /// Steam has to be reachable before the picker is worth showing, so a failure
-        /// here becomes the only window rather than an empty list.
+        /// Returns null when there is nothing to show, which happens when this was run
+        /// with no application id and the picker was launched in its place.
         /// </summary>
-        private Avalonia.Controls.Window CreateMainWindow()
+        private Window CreateMainWindow(string[] args)
         {
+            if (args.Length == 0)
+            {
+                try
+                {
+                    API.AppHost.Start("SAM.Picker");
+                    return null;
+                }
+                catch (Exception e)
+                {
+                    return new MessageWindow("Error", $"Failed to start SAM.Picker.\n\n{e.Message}");
+                }
+            }
+
+            if (long.TryParse(args[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out long appId) == false)
+            {
+                return new MessageWindow(
+                    "Error",
+                    "Could not parse application ID from command line argument.");
+            }
+
             if (IsRunningFromSteamDirectory() == true)
             {
                 return new MessageWindow(
@@ -68,7 +97,7 @@ namespace SAM.Picker
             API.Client client = new();
             try
             {
-                client.Initialize(0);
+                client.Initialize(appId);
             }
             catch (API.ClientInitializeException e)
             {
@@ -85,8 +114,8 @@ namespace SAM.Picker
             }
 
             this._Client = client;
-            this._Model = new GamePickerViewModel(client);
-            return new GamePickerWindow(this._Model);
+            this._Model = new ManagerViewModel(appId, client);
+            return new ManagerWindow(this._Model);
         }
 
         private void OnShutdownRequested(object sender, ShutdownRequestedEventArgs e)

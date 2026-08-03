@@ -1,4 +1,4 @@
-/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
+﻿/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
  *
  * This software is provided 'as-is', without any express or implied
  * warranty. In no event will the authors be held liable for any damages
@@ -24,7 +24,7 @@ using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Layout;
 
-namespace SAM.Picker.Views
+namespace SAM.Ui
 {
     /// <summary>
     /// Avalonia has no built in message box, and the alternative is a package for
@@ -32,7 +32,9 @@ namespace SAM.Picker.Views
     /// </summary>
     public sealed class MessageWindow : Window
     {
-        public MessageWindow(string title, string message)
+        private bool _Result;
+
+        public MessageWindow(string title, string message, bool askYesNo = false)
         {
             this.Title = title;
             this.Width = 420;
@@ -41,14 +43,34 @@ namespace SAM.Picker.Views
             this.WindowStartupLocation = WindowStartupLocation.CenterOwner;
             this.ShowInTaskbar = false;
 
-            Button ok = new()
+            StackPanel buttons = new()
             {
-                Content = "OK",
-                MinWidth = 88,
-                IsDefault = true,
+                Orientation = Orientation.Horizontal,
+                Spacing = 8,
                 HorizontalAlignment = HorizontalAlignment.Right,
             };
-            ok.Click += (_, _) => this.Close();
+
+            if (askYesNo == true)
+            {
+                Button yes = new() { Content = "Yes", MinWidth = 88 };
+                yes.Click += (_, _) =>
+                {
+                    this._Result = true;
+                    this.Close();
+                };
+
+                Button no = new() { Content = "No", MinWidth = 88, IsDefault = true, IsCancel = true };
+                no.Click += (_, _) => this.Close();
+
+                buttons.Children.Add(yes);
+                buttons.Children.Add(no);
+            }
+            else
+            {
+                Button ok = new() { Content = "OK", MinWidth = 88, IsDefault = true, IsCancel = true };
+                ok.Click += (_, _) => this.Close();
+                buttons.Children.Add(ok);
+            }
 
             this.Content = new StackPanel()
             {
@@ -61,7 +83,7 @@ namespace SAM.Picker.Views
                         Text = message,
                         TextWrapping = Avalonia.Media.TextWrapping.Wrap,
                     },
-                    ok,
+                    buttons,
                 },
             };
         }
@@ -71,7 +93,22 @@ namespace SAM.Picker.Views
             MessageWindow window = new(title, message);
             return owner != null
                 ? window.ShowDialog(owner)
-                : Task.Run(() => { });
+                : Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Defaults to no, so dismissing the dialog never confirms a destructive action.
+        /// </summary>
+        public static async Task<bool> ConfirmAsync(Window owner, string title, string question)
+        {
+            if (owner == null)
+            {
+                return false;
+            }
+
+            MessageWindow window = new(title, question, true);
+            await window.ShowDialog(owner);
+            return window._Result;
         }
     }
 }

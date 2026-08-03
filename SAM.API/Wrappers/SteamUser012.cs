@@ -40,15 +40,16 @@ namespace SAM.API.Wrappers
         #endregion
 
         #region GetSteamID
+        // CSteamID is eight bytes, so on 64-bit it comes back in a register like any
+        // other integer. The old shape modelled the hidden return pointer that 32-bit
+        // MSVC uses, which left the value unwritten here and fed garbage to callers.
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
-        private delegate void NativeGetSteamId(IntPtr self, out ulong steamId);
+        private delegate ulong NativeGetSteamId(IntPtr self);
 
         public ulong GetSteamId()
         {
             var call = this.GetFunction<NativeGetSteamId>(this.Functions.GetSteamID);
-            ulong steamId;
-            call(this.ObjectAddress, out steamId);
-            return steamId;
+            return call(this.ObjectAddress);
         }
         #endregion
     }

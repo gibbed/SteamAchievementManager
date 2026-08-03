@@ -51,7 +51,7 @@ namespace SAM.API
 
             if (appId != 0)
             {
-                Environment.SetEnvironmentVariable("SteamAppId", appId.ToString(CultureInfo.InvariantCulture));
+                Steam.SetEnvironmentVariable("SteamAppId", appId.ToString(CultureInfo.InvariantCulture));
             }
 
             if (Steam.Load() == false)

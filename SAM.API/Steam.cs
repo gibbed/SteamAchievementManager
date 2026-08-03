@@ -35,6 +35,26 @@ namespace SAM.API
             [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
             [return: MarshalAs(UnmanagedType.Bool)]
             internal static extern bool SetDllDirectory(string path);
+
+            [DllImport("libc", SetLastError = true, CharSet = CharSet.Ansi)]
+            internal static extern int setenv(string name, string value, int overwrite);
+        }
+
+        /// <summary>
+        /// Publishes an environment variable where native code can see it. On Unix the
+        /// runtime keeps its own copy of the environment, so a managed
+        /// <see cref="Environment.SetEnvironmentVariable(string, string)"/> is invisible
+        /// to libraries loaded into this process. steamclient reads SteamAppId with
+        /// getenv, so it has to be set through libc as well.
+        /// </summary>
+        public static void SetEnvironmentVariable(string name, string value)
+        {
+            Environment.SetEnvironmentVariable(name, value);
+
+            if (OperatingSystem.IsWindows() == false)
+            {
+                Native.setenv(name, value, 1);
+            }
         }
 
         private static IntPtr _Handle = IntPtr.Zero;

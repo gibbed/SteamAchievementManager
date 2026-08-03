@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SAM.Game", "SAM.Game\SAM.Ga
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SAM.Core", "SAM.Core\SAM.Core.csproj", "{90E10E37-D34F-42CA-97DE-1B12D1260E01}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SAM.Ui", "SAM.Ui\SAM.Ui.csproj", "{FA111B84-5956-4EF7-B528-525A478EB42A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -69,6 +71,18 @@ Global
 		{90E10E37-D34F-42CA-97DE-1B12D1260E01}.Release|x64.Build.0 = Release|Any CPU
 		{90E10E37-D34F-42CA-97DE-1B12D1260E01}.Release|x86.ActiveCfg = Release|Any CPU
 		{90E10E37-D34F-42CA-97DE-1B12D1260E01}.Release|x86.Build.0 = Release|Any CPU
+		{FA111B84-5956-4EF7-B528-525A478EB42A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA111B84-5956-4EF7-B528-525A478EB42A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA111B84-5956-4EF7-B528-525A478EB42A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FA111B84-5956-4EF7-B528-525A478EB42A}.Debug|x64.Build.0 = Debug|Any CPU
+		{FA111B84-5956-4EF7-B528-525A478EB42A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{FA111B84-5956-4EF7-B528-525A478EB42A}.Debug|x86.Build.0 = Debug|Any CPU
+		{FA111B84-5956-4EF7-B528-525A478EB42A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA111B84-5956-4EF7-B528-525A478EB42A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FA111B84-5956-4EF7-B528-525A478EB42A}.Release|x64.ActiveCfg = Release|Any CPU
+		{FA111B84-5956-4EF7-B528-525A478EB42A}.Release|x64.Build.0 = Release|Any CPU
+		{FA111B84-5956-4EF7-B528-525A478EB42A}.Release|x86.ActiveCfg = Release|Any CPU
+		{FA111B84-5956-4EF7-B528-525A478EB42A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

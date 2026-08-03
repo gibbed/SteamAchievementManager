@@ -35,5 +35,13 @@ namespace SAM.Core.Stats
         public string Name;
         public string Description;
         public int ImageIndex;
+
+        /// <summary>
+        /// State as Steam reported it, so a store only sends what the user changed.
+        /// Mirrors how <see cref="StatInfo"/> tracks its original value.
+        /// </summary>
+        public bool WasAchieved;
+
+        public bool IsModified => this.IsAchieved != this.WasAchieved;
     }
 }
