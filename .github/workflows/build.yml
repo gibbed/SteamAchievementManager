@@ -1,0 +1,104 @@
+name: build
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - crossplatform-port
+    paths-ignore:
+      - README.md
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    name: ${{ matrix.rid }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            rid: linux-x64
+          - os: windows-latest
+            rid: win-x64
+          # Steam for macOS is x86_64 only and runs under Rosetta, and an x86_64
+          # steamclient.dylib cannot be loaded into an arm64 process, so SAM has to
+          # be x86_64 there as well even though the runner itself is arm64.
+          - os: macos-latest
+            rid: osx-x64
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Set version
+        shell: bash
+        run: echo "SAM_VERSION=7.0.${{ github.run_number }}" >> "$GITHUB_ENV"
+
+      - name: Build solution
+        run: >-
+          dotnet build SAM.sln
+          --configuration Release
+          -p:Version=${{ env.SAM_VERSION }}
+
+      # Both executables publish into one directory on purpose. They share a runtime,
+      # and the picker resolves SAM.Game as a sibling of its own location.
+      - name: Publish picker
+        run: >-
+          dotnet publish SAM.Picker/SAM.Picker.csproj
+          --configuration Release
+          --runtime ${{ matrix.rid }}
+          --self-contained true
+          -p:Version=${{ env.SAM_VERSION }}
+          -p:DebugType=embedded
+          --output publish/${{ matrix.rid }}
+
+      - name: Publish achievement manager
+        run: >-
+          dotnet publish SAM.Game/SAM.Game.csproj
+          --configuration Release
+          --runtime ${{ matrix.rid }}
+          --self-contained true
+          -p:Version=${{ env.SAM_VERSION }}
+          -p:DebugType=embedded
+          --output publish/${{ matrix.rid }}
+
+      # The Windows runtime pack carries native symbols for Skia and HarfBuzz that come
+      # to about 100MB, roughly doubling that artifact. Managed symbols are embedded in
+      # the assemblies already, so nothing useful is lost by dropping these.
+      - name: Drop native debug symbols
+        shell: bash
+        run: find "publish/${{ matrix.rid }}" -name '*.pdb' -delete
+
+      - name: Check both hosts are present
+        shell: bash
+        run: |
+          cd "publish/${{ matrix.rid }}"
+          suffix=""
+          if [ "${{ matrix.rid }}" = "win-x64" ]; then suffix=".exe"; fi
+          for app in SAM.Picker SAM.Game; do
+            if [ ! -f "$app$suffix" ]; then
+              echo "missing $app$suffix"
+              ls -la
+              exit 1
+            fi
+          done
+          echo "both hosts present:"
+          ls -l SAM.Picker$suffix SAM.Game$suffix
+
+      - name: Add licence and history
+        shell: bash
+        run: |
+          cp LICENSE.txt "publish/${{ matrix.rid }}/"
+          TZ=GMT git log . > "publish/${{ matrix.rid }}/git-log.txt"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: SteamAchievementManager-${{ env.SAM_VERSION }}-${{ matrix.rid }}
+          path: publish/${{ matrix.rid }}
+          if-no-files-found: error
