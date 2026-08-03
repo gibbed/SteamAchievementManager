@@ -1,8 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\SAM.API\SAM.API.csproj" />
+  </ItemGroup>
   <PropertyGroup>
     <Company>Gibbed</Company>
     <Authors>Gibbed</Authors>
-    <Description></Description>
+    <Description>Steam Achievement Manager code that does not depend on a user interface toolkit.</Description>
     <Copyright>Copyright © Gibbed 2019</Copyright>
   </PropertyGroup>
   <PropertyGroup>
@@ -11,15 +14,11 @@
     <FileVersion>7.0.0.0</FileVersion>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>Pink.ico</ApplicationIcon>
-  </PropertyGroup>
-  <PropertyGroup>
     <RepositoryUrl>https://github.com/gibbed/SteamAchievementManager/</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
   </PropertyGroup>
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 </Project>

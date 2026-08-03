@@ -20,17 +20,15 @@
  *    distribution.
  */
 
-using System;
-using System.Runtime.InteropServices;
-
-namespace SAM.API.Types
+namespace SAM.Core.Stats
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct CallbackMessage
+    public class IntegerStatDefinition : StatDefinition
     {
-        public int User;
-        public int Id;
-        public IntPtr ParamPointer;
-        public int ParamSize;
+        public int MinValue;
+        public int MaxValue;
+        public int MaxChange;
+        public bool IncrementOnly;
+        public bool SetByTrustedGameServer;
+        public int DefaultValue;
     }
 }

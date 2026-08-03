@@ -51,7 +51,7 @@ namespace SAM.API
 
             if (appId != 0)
             {
-                Environment.SetEnvironmentVariable("SteamAppId", appId.ToString(CultureInfo.InvariantCulture));
+                Steam.SetEnvironmentVariable("SteamAppId", appId.ToString(CultureInfo.InvariantCulture));
             }
 
             if (Steam.Load() == false)
@@ -78,15 +78,38 @@ namespace SAM.API
             }
 
             this.SteamUtils = this.SteamClient.GetSteamUtils004(this._Pipe);
+            Require(this.SteamUtils, "ISteamUtils005");
+
             if (appId > 0 && this.SteamUtils.GetAppId() != (uint)appId)
             {
                 throw new ClientInitializeException(ClientInitializeFailure.AppIdMismatch, "appID mismatch");
             }
 
             this.SteamUser = this.SteamClient.GetSteamUser012(this._User, this._Pipe);
+            Require(this.SteamUser, "ISteamUser012");
+
             this.SteamUserStats = this.SteamClient.GetSteamUserStats013(this._User, this._Pipe);
+            Require(this.SteamUserStats, "ISteamUserStats013");
+
             this.SteamApps001 = this.SteamClient.GetSteamApps001(this._User, this._Pipe);
+            Require(this.SteamApps001, "ISteamApps001");
+
             this.SteamApps008 = this.SteamClient.GetSteamApps008(this._User, this._Pipe);
+            Require(this.SteamApps008, "ISteamApps008");
+        }
+
+        /// <summary>
+        /// Names the interface Steam refused, so a version this build no longer serves
+        /// surfaces as a readable message rather than a null dereference later on.
+        /// </summary>
+        private static void Require(object iface, string name)
+        {
+            if (iface == null)
+            {
+                throw new ClientInitializeException(
+                    ClientInitializeFailure.CreateSteamClient,
+                    $"failed to create {name}");
+            }
         }
 
         ~Client()

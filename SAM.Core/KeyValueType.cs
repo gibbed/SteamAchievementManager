@@ -20,17 +20,18 @@
  *    distribution.
  */
 
-using System;
-using System.Runtime.InteropServices;
-
-namespace SAM.API.Types
+namespace SAM.Core
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct CallbackMessage
+    public enum KeyValueType : byte
     {
-        public int User;
-        public int Id;
-        public IntPtr ParamPointer;
-        public int ParamSize;
+        None = 0,
+        String = 1,
+        Int32 = 2,
+        Float32 = 3,
+        Pointer = 4,
+        WideString = 5,
+        Color = 6,
+        UInt64 = 7,
+        End = 8,
     }
 }

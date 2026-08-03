@@ -20,17 +20,14 @@
  *    distribution.
  */
 
-using System;
-using System.Runtime.InteropServices;
-
-namespace SAM.API.Types
+namespace SAM.Core.Stats
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct CallbackMessage
+    public class FloatStatDefinition : StatDefinition
     {
-        public int User;
-        public int Id;
-        public IntPtr ParamPointer;
-        public int ParamSize;
+        public float MinValue;
+        public float MaxValue;
+        public float MaxChange;
+        public bool IncrementOnly;
+        public float DefaultValue;
     }
 }

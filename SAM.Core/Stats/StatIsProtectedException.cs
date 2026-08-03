@@ -21,16 +21,24 @@
  */
 
 using System;
-using System.Runtime.InteropServices;
 
-namespace SAM.API.Types
+namespace SAM.Core.Stats
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct CallbackMessage
+    [Serializable]
+    public class StatIsProtectedException : Exception
     {
-        public int User;
-        public int Id;
-        public IntPtr ParamPointer;
-        public int ParamSize;
+        public StatIsProtectedException()
+        {
+        }
+
+        public StatIsProtectedException(string message)
+            : base(message)
+        {
+        }
+
+        public StatIsProtectedException(string message, Exception innerException)
+            : base(message, innerException)
+        {
+        }
     }
 }

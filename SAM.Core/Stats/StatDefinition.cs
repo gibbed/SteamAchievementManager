@@ -20,17 +20,12 @@
  *    distribution.
  */
 
-using System;
-using System.Runtime.InteropServices;
-
-namespace SAM.API.Types
+namespace SAM.Core.Stats
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct CallbackMessage
+    public abstract class StatDefinition
     {
-        public int User;
-        public int Id;
-        public IntPtr ParamPointer;
-        public int ParamSize;
+        public string Id;
+        public string DisplayName;
+        public int Permission;
     }
 }

@@ -20,17 +20,33 @@
  *    distribution.
  */
 
-using System;
-using System.Runtime.InteropServices;
+using System.Globalization;
 
-namespace SAM.API.Types
+namespace SAM.Core
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct CallbackMessage
+    public class GameInfo
     {
-        public int User;
-        public int Id;
-        public IntPtr ParamPointer;
-        public int ParamSize;
+        private string _Name;
+
+        public uint Id;
+        public string Type;
+        public int ImageIndex;
+
+        public string Name
+        {
+            get => this._Name;
+            set => this._Name = value ?? "App " + this.Id.ToString(CultureInfo.InvariantCulture);
+        }
+
+        public string ImageUrl;
+
+        public GameInfo(uint id, string type)
+        {
+            this.Id = id;
+            this.Type = type;
+            this.Name = null;
+            this.ImageIndex = 0;
+            this.ImageUrl = null;
+        }
     }
 }

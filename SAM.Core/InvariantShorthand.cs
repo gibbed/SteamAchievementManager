@@ -21,16 +21,14 @@
  */
 
 using System;
-using System.Runtime.InteropServices;
 
-namespace SAM.API.Types
+namespace SAM.Core
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct CallbackMessage
+    public static class InvariantShorthand
     {
-        public int User;
-        public int Id;
-        public IntPtr ParamPointer;
-        public int ParamSize;
+        public static string _(FormattableString formattable)
+        {
+            return FormattableString.Invariant(formattable);
+        }
     }
 }

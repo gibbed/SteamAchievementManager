@@ -21,24 +21,34 @@
  */
 
 using System;
-using Avalonia;
+using System.Diagnostics;
+using System.IO;
 
-namespace SAM.Picker
+namespace SAM.API
 {
-    internal static class Program
+    /// <summary>
+    /// Locates the sibling SAM executables. Only Windows gives the host an .exe
+    /// suffix, and resolving against the current directory finds nothing when SAM
+    /// is launched from somewhere else.
+    /// </summary>
+    public static class AppHost
     {
-        [STAThread]
-        public static int Main(string[] args)
+        public static string GetPath(string name)
         {
-            return BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+            string fileName = OperatingSystem.IsWindows() == true
+                ? name + ".exe"
+                : name;
+            return Path.Combine(AppContext.BaseDirectory, fileName);
         }
 
-        // Also used by the Avalonia previewer, which requires this exact signature.
-        public static AppBuilder BuildAvaloniaApp()
+        public static Process Start(string name, params string[] arguments)
         {
-            return AppBuilder.Configure<App>()
-                .UsePlatformDetect()
-                .LogToTrace();
+            ProcessStartInfo startInfo = new(GetPath(name));
+            foreach (string argument in arguments)
+            {
+                startInfo.ArgumentList.Add(argument);
+            }
+            return Process.Start(startInfo);
         }
     }
 }

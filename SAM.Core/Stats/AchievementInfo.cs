@@ -21,16 +21,27 @@
  */
 
 using System;
-using System.Runtime.InteropServices;
 
-namespace SAM.API.Types
+namespace SAM.Core.Stats
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct CallbackMessage
+    public class AchievementInfo
     {
-        public int User;
-        public int Id;
-        public IntPtr ParamPointer;
-        public int ParamSize;
+        public string Id;
+        public bool IsAchieved;
+        public DateTime? UnlockTime;
+        public int Permission;
+        public string IconNormal;
+        public string IconLocked;
+        public string Name;
+        public string Description;
+        public int ImageIndex;
+
+        /// <summary>
+        /// State as Steam reported it, so a store only sends what the user changed.
+        /// Mirrors how <see cref="StatInfo"/> tracks its original value.
+        /// </summary>
+        public bool WasAchieved;
+
+        public bool IsModified => this.IsAchieved != this.WasAchieved;
     }
 }

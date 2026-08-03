@@ -21,16 +21,15 @@
  */
 
 using System;
-using System.Runtime.InteropServices;
 
-namespace SAM.API.Types
+namespace SAM.Core.Stats
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct CallbackMessage
+    [Flags]
+    public enum StatFlags
     {
-        public int User;
-        public int Id;
-        public IntPtr ParamPointer;
-        public int ParamSize;
+        None = 0,
+        IncrementOnly = 1 << 0,
+        Protected = 1 << 1,
+        UnknownPermission = 1 << 2,
     }
 }

@@ -20,17 +20,21 @@
  *    distribution.
  */
 
-using System;
-using System.Runtime.InteropServices;
-
-namespace SAM.API.Types
+namespace SAM.Core.Stats
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct CallbackMessage
+    public class AchievementDefinition
     {
-        public int User;
-        public int Id;
-        public IntPtr ParamPointer;
-        public int ParamSize;
+        public string Id;
+        public string Name;
+        public string Description;
+        public string IconNormal;
+        public string IconLocked;
+        public bool IsHidden;
+        public int Permission;
+
+        public override string ToString()
+        {
+            return $"{this.Name ?? this.Id ?? base.ToString()}: {this.Permission}";
+        }
     }
 }
