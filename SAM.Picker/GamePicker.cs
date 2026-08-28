@@ -471,6 +471,21 @@ namespace SAM.Picker
             this.AddGames();
         }
 
+        private void OnEmulatorSync(object sender, EventArgs e)
+        {
+            try
+            {
+                using (var form = new EmulatorSyncForm(this._SteamClient))
+                {
+                    form.ShowDialog(this);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         private void OnAddGame(object sender, EventArgs e)
         {
             uint id;
