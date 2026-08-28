@@ -82,6 +82,7 @@
             //
             this._PickerToolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this._RefreshGamesButton,
+            this._EmulatorSyncButton,
             _ToolStripSeparator1,
             this._AddGameTextBox,
             this._AddGameButton,
@@ -103,6 +104,16 @@
             this._RefreshGamesButton.Size = new System.Drawing.Size(105, 22);
             this._RefreshGamesButton.Text = "Refresh Games";
             this._RefreshGamesButton.Click += new System.EventHandler(this.OnRefresh);
+            // 
+            // _EmulatorSyncButton
+            //
+            this._EmulatorSyncButton = new System.Windows.Forms.ToolStripButton();
+            this._EmulatorSyncButton.Image = global::SAM.Picker.Resources.Refresh; // reuse icon
+            this._EmulatorSyncButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this._EmulatorSyncButton.Name = "_EmulatorSyncButton";
+            this._EmulatorSyncButton.Size = new System.Drawing.Size(120, 22);
+            this._EmulatorSyncButton.Text = "Emulator Sync";
+            this._EmulatorSyncButton.Click += new System.EventHandler(this.OnEmulatorSync);
             //
             // _AddGameTextBox
             //
@@ -279,6 +290,7 @@
         private System.ComponentModel.BackgroundWorker _ListWorker;
         private System.Windows.Forms.ToolStripTextBox _SearchGameTextBox;
         private System.Windows.Forms.ToolStripLabel _FindGamesLabel;
+        private System.Windows.Forms.ToolStripButton _EmulatorSyncButton;
 
         #endregion
     }
