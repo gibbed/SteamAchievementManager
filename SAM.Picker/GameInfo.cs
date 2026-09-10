@@ -20,18 +20,41 @@
  *    distribution.
  */
 
+using System.ComponentModel;
 using System.Globalization;
-using System.Windows.Forms;
+using System.Windows;
+using System.Windows.Media;
 
 namespace SAM.Picker
 {
-    internal class GameInfo
+    internal class GameInfo : INotifyPropertyChanged
     {
         private string _Name;
+        private bool _IsSelected;
 
-        public uint Id;
-        public string Type;
-        public int ImageIndex;
+        public uint Id { get; }
+        public string Type { get; }
+        public int ImageIndex { get; set; }
+        public bool IsFavorite { get; set; }
+        public Visibility FavoriteBadgeVisibility => this.IsFavorite ? Visibility.Visible : Visibility.Collapsed;
+
+        public bool IsSelected
+        {
+            get => this._IsSelected;
+            set
+            {
+                if (this._IsSelected != value)
+                {
+                    this._IsSelected = value;
+                    OnPropertyChanged(nameof(IsSelected));
+                    OnPropertyChanged(nameof(CardBorderBrush));
+                }
+            }
+        }
+
+        public SolidColorBrush CardBorderBrush => this.IsSelected
+            ? new SolidColorBrush(Color.FromRgb(102, 192, 244)) // Steam Blue
+            : new SolidColorBrush(Color.FromRgb(42, 56, 78));   // BorderCard
 
         public string Name
         {
@@ -39,17 +62,21 @@ namespace SAM.Picker
             set => this._Name = value ?? "App " + this.Id.ToString(CultureInfo.InvariantCulture);
         }
 
-        public string ImageUrl;
+        public string ImageUrl { get; set; }
 
-        public ListViewItem Item;
+        public System.Windows.Forms.ListViewItem Item { get; set; }
 
         public GameInfo(uint id, string type)
         {
             this.Id = id;
             this.Type = type;
             this.Name = null;
-            this.ImageIndex = 0;
             this.ImageUrl = null;
+            this.IsFavorite = false;
+            this.IsSelected = false;
         }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }

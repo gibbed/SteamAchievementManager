@@ -1,0 +1,513 @@
+<Window x:Class="SAM.Game.ManagerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Steam Achievement Manager 8.0"
+        Height="700" Width="1050" MinWidth="850" MinHeight="550"
+        WindowStartupLocation="CenterScreen"
+        Background="#10141d" Foreground="#dcdedf">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="36" ResizeBorderThickness="8" GlassFrameThickness="0" CornerRadius="0"/>
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <!-- Steam Color Palette -->
+            <SolidColorBrush x:Key="BgDark" Color="#10141d" />
+            <SolidColorBrush x:Key="BgHeader" Color="#171d25" />
+            <SolidColorBrush x:Key="BgCard" Color="#1e2633" />
+            <SolidColorBrush x:Key="BgCardHover" Color="#283548" />
+            <SolidColorBrush x:Key="BorderCard" Color="#2a384e" />
+            <SolidColorBrush x:Key="SteamBlue" Color="#66c0f4" />
+            <SolidColorBrush x:Key="SteamBlueHover" Color="#1a9fff" />
+            <SolidColorBrush x:Key="SteamGreen" Color="#5c7e10" />
+            <SolidColorBrush x:Key="SteamGreenHover" Color="#72a112" />
+            <SolidColorBrush x:Key="SteamRed" Color="#802020" />
+            <SolidColorBrush x:Key="TextLight" Color="#dcdedf" />
+            <SolidColorBrush x:Key="TextMuted" Color="#8f98a0" />
+            <SolidColorBrush x:Key="CloseBtnHover" Color="#e81123" />
+
+            <!-- Custom Button Style -->
+            <Style x:Key="SteamBtn" TargetType="Button">
+                <Setter Property="Background" Value="#212d3d" />
+                <Setter Property="Foreground" Value="{StaticResource TextLight}" />
+                <Setter Property="BorderBrush" Value="#314156" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Padding" Value="12,6" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="border" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="#2a3f5a" />
+                                    <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource SteamBlue}" />
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.5"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Save Green Button Style -->
+            <Style x:Key="SteamGreenBtn" TargetType="Button" BasedOn="{StaticResource SteamBtn}">
+                <Setter Property="Background" Value="{StaticResource SteamGreen}"/>
+                <Setter Property="BorderBrush" Value="#72a112"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="border" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="{StaticResource SteamGreenHover}" />
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.4"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Toggle Filter Button Style -->
+            <Style x:Key="FilterChipBtn" TargetType="RadioButton">
+                <Setter Property="Background" Value="#1a222e" />
+                <Setter Property="Foreground" Value="{StaticResource TextMuted}" />
+                <Setter Property="BorderBrush" Value="#2a384e" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Padding" Value="12,5" />
+                <Setter Property="FontSize" Value="11" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Margin" Value="2,0" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="RadioButton">
+                            <Border x:Name="border" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="12" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="#28445a" />
+                                    <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource SteamBlue}" />
+                                    <Setter Property="Foreground" Value="{StaticResource SteamBlue}" />
+                                    <Setter Property="FontWeight" Value="Bold" />
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource SteamBlue}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Dark Menu & ContextMenu Style -->
+            <Style TargetType="Menu">
+                <Setter Property="Background" Value="Transparent"/>
+            </Style>
+
+            <Style TargetType="ContextMenu">
+                <Setter Property="Background" Value="#171d25"/>
+                <Setter Property="Foreground" Value="{StaticResource TextLight}"/>
+                <Setter Property="BorderBrush" Value="#2a384e"/>
+                <Setter Property="BorderThickness" Value="1"/>
+            </Style>
+
+            <!-- Complete Custom Dark MenuItem Template -->
+            <Style TargetType="MenuItem">
+                <Setter Property="Background" Value="#171d25"/>
+                <Setter Property="Foreground" Value="{StaticResource TextLight}"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Padding" Value="10,6"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="MenuItem">
+                            <Grid x:Name="MainGrid" Background="Transparent" SnapsToDevicePixels="True">
+                                <!-- Top Level Menu Header (on Menu Bar) -->
+                                <Border x:Name="TopBorder"
+                                        Background="#212d3d"
+                                        BorderBrush="#314156"
+                                        BorderThickness="1"
+                                        CornerRadius="4"
+                                        Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter x:Name="TopContent" ContentSource="Header" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                </Border>
+
+                                <!-- Dropdown Popup for Subitems -->
+                                <Popup x:Name="PART_Popup"
+                                       AllowsTransparency="True"
+                                       IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                                       Placement="Bottom"
+                                       Focusable="False"
+                                       PopupAnimation="Fade">
+                                    <Border x:Name="SubMenuBorder"
+                                            Background="#171d25"
+                                            BorderBrush="#2a384e"
+                                            BorderThickness="1"
+                                            CornerRadius="4"
+                                            Padding="4" Margin="0,4,0,0">
+                                        <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+
+                            <ControlTemplate.Triggers>
+                                <!-- TopLevel Header Hover -->
+                                <Trigger Property="IsHighlighted" Value="True">
+                                    <Setter TargetName="TopBorder" Property="Background" Value="#2a3f5a"/>
+                                    <Setter TargetName="TopBorder" Property="BorderBrush" Value="{StaticResource SteamBlue}"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </Trigger>
+                                <!-- Role = SubmenuItem -->
+                                <Trigger Property="Role" Value="SubmenuItem">
+                                    <Setter TargetName="TopBorder" Property="Background" Value="#171d25"/>
+                                    <Setter TargetName="TopBorder" Property="BorderBrush" Value="Transparent"/>
+                                    <Setter TargetName="TopBorder" Property="CornerRadius" Value="2"/>
+                                </Trigger>
+                                <!-- SubmenuItem Hover -->
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="Role" Value="SubmenuItem"/>
+                                        <Condition Property="IsHighlighted" Value="True"/>
+                                    </MultiTrigger.Conditions>
+                                    <Setter TargetName="TopBorder" Property="Background" Value="#2a3f5a"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </MultiTrigger>
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="Role" Value="SubmenuItem"/>
+                                        <Condition Property="IsChecked" Value="True"/>
+                                    </MultiTrigger.Conditions>
+                                    <Setter TargetName="TopBorder" Property="Background" Value="#212d3d"/>
+                                    <Setter TargetName="TopBorder" Property="BorderBrush" Value="{StaticResource SteamBlue}"/>
+                                </MultiTrigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Dark DataGrid Column Header Style -->
+            <Style TargetType="DataGridColumnHeader">
+                <Setter Property="Background" Value="#171d25"/>
+                <Setter Property="Foreground" Value="{StaticResource SteamBlue}"/>
+                <Setter Property="FontWeight" Value="Bold"/>
+                <Setter Property="Padding" Value="10,6"/>
+                <Setter Property="BorderBrush" Value="#2a384e"/>
+                <Setter Property="BorderThickness" Value="0,0,1,1"/>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Background="{StaticResource BgDark}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="36"/>  <!-- Titlebar -->
+            <RowDefinition Height="Auto"/> <!-- Main Header / Toolbar -->
+            <RowDefinition Height="*"/>    <!-- Tabs & Content -->
+            <RowDefinition Height="32"/>  <!-- Statusbar -->
+        </Grid.RowDefinitions>
+
+        <!-- Custom Titlebar -->
+        <Grid Grid.Row="0" Background="{StaticResource BgHeader}" MouseLeftButtonDown="OnTitleBarMouseDown">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="10,0,0,0" VerticalAlignment="Center">
+                <Image x:Name="ImgAppIcon" Width="18" Height="18" Margin="0,0,8,0"/>
+                <TextBlock x:Name="TxtTitle" Text="Steam Achievement Manager 8.0"
+                           Foreground="{StaticResource TextLight}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- Window Action Buttons -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" WindowChrome.IsHitTestVisibleInChrome="True">
+                <Button Click="OnMinimizeClick" Width="40" Height="36" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextMuted}" Cursor="Hand">
+                    <TextBlock Text="─" FontSize="10"/>
+                </Button>
+                <Button Click="OnMaximizeClick" Width="40" Height="36" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextMuted}" Cursor="Hand">
+                    <TextBlock Text="☐" FontSize="11"/>
+                </Button>
+                <Button Click="OnCloseClick" Width="40" Height="36" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextMuted}" Cursor="Hand">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="{StaticResource CloseBtnHover}"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                    <TextBlock Text="✕" FontSize="11"/>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Main Action Toolbar -->
+        <Border Grid.Row="1" Background="#161f2c" Padding="15,10" BorderBrush="#2a384e" BorderThickness="0,1,0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <Button x:Name="BtnSave" Style="{StaticResource SteamGreenBtn}" Click="OnStoreClick" Margin="0,0,10,0" IsEnabled="False">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="💾" Margin="0,0,6,0"/>
+                            <TextBlock x:Name="TxtBtnSave" Text="Сохранить изменения"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button x:Name="BtnRefresh" Style="{StaticResource SteamBtn}" Click="OnRefreshClick" Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🔄" Margin="0,0,6,0"/>
+                            <TextBlock x:Name="TxtBtnRefresh" Text="Обновить"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button x:Name="BtnReset" Style="{StaticResource SteamBtn}" Click="OnResetClick">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="⚠️" Margin="0,0,6,0"/>
+                            <TextBlock x:Name="TxtBtnReset" Text="Сбросить"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <!-- Right Toolbar: Achievement Counter Frame & Language Selector -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
+                    <!-- Achievement Counter Frame -->
+                    <Border Background="#10141d" CornerRadius="6" BorderBrush="#2a384e" BorderThickness="1" Padding="8,4" Margin="0,0,12,0" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <!-- Normal Achievements Count -->
+                            <Border Background="#1a2634" CornerRadius="4" Padding="8,3" Margin="0,0,6,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="🏆 Обычных: " Foreground="{StaticResource TextMuted}" FontSize="11"/>
+                                    <TextBlock x:Name="TxtNormalCount" Text="0" Foreground="{StaticResource SteamBlue}" FontSize="11" FontWeight="Bold"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Hidden Achievements Count -->
+                            <Border Background="#2a1b38" CornerRadius="4" Padding="8,3" BorderBrush="#5e2b6b" BorderThickness="1">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="👁️ Скрытых: " Foreground="#d6a4ff" FontSize="11"/>
+                                    <TextBlock x:Name="TxtHiddenCount" Text="0" Foreground="#e0b0ff" FontSize="11" FontWeight="Bold"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <Menu Background="Transparent">
+                        <MenuItem x:Name="MenuLanguage" Header="🌐 Язык" Foreground="{StaticResource TextLight}" FontSize="12" Padding="10,6"/>
+                    </Menu>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Content Area: Tabs -->
+        <TabControl Grid.Row="2" Background="Transparent" BorderThickness="0" Margin="10">
+            <TabControl.Resources>
+                <Style TargetType="TabItem">
+                    <Setter Property="HeaderTemplate">
+                        <Setter.Value>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" FontSize="13" FontWeight="Bold" Padding="15,6" Foreground="{StaticResource TextLight}"/>
+                            </DataTemplate>
+                        </Setter.Value>
+                    </Setter>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="TabItem">
+                                <Border x:Name="Border" Background="#141a24" CornerRadius="6,6,0,0" Margin="0,0,4,0" Padding="5,2">
+                                    <ContentPresenter x:Name="ContentSite" VerticalAlignment="Center" HorizontalAlignment="Center" ContentSource="Header"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="Border" Property="Background" Value="#212d3d"/>
+                                        <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource SteamBlue}"/>
+                                        <Setter TargetName="Border" Property="BorderThickness" Value="1,1,1,0"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </TabControl.Resources>
+
+            <!-- Achievements Tab -->
+            <TabItem x:Name="TabAchievements" Header="Достижения">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Quick Actions Bar -->
+                    <Grid Grid.Row="0" Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Orientation="Horizontal">
+                            <Button Style="{StaticResource SteamBtn}" Click="OnLockAllClick" Margin="0,0,6,0" Padding="8,4">
+                                <TextBlock x:Name="TxtLockAll" Text="🔒 Заблокировать все" FontSize="11"/>
+                            </Button>
+                            <Button Style="{StaticResource SteamBtn}" Click="OnInvertAllClick" Margin="0,0,6,0" Padding="8,4">
+                                <TextBlock x:Name="TxtInvertAll" Text="🔄 Инвертировать" FontSize="11"/>
+                            </Button>
+                            <Button Style="{StaticResource SteamBtn}" Click="OnUnlockAllClick" Padding="8,4">
+                                <TextBlock x:Name="TxtUnlockAll" Text="🔓 Разблокировать все" FontSize="11"/>
+                            </Button>
+                        </StackPanel>
+
+                        <!-- Display Filters & Search -->
+                        <StackPanel Grid.Column="2" Orientation="Horizontal">
+                            <!-- Filter Menu: Вид достижений -->
+                            <Menu Background="Transparent" Margin="0,0,8,0">
+                                <MenuItem x:Name="MenuFilterAchievements" Header="👁️ Вид достижений" Foreground="{StaticResource TextLight}" FontSize="12" Padding="10,6">
+                                    <MenuItem x:Name="MenuFilterUnlocked" Header="Показывать полученные" IsCheckable="True" IsChecked="True" StaysOpenOnClick="True" Click="OnAchievementFilterMenuClick"/>
+                                    <MenuItem x:Name="MenuFilterLocked" Header="Показывать заблокированные" IsCheckable="True" IsChecked="True" StaysOpenOnClick="True" Click="OnAchievementFilterMenuClick"/>
+                                    <MenuItem x:Name="MenuFilterHidden" Header="Показывать скрытые" IsCheckable="True" IsChecked="True" StaysOpenOnClick="True" Click="OnAchievementFilterMenuClick"/>
+                                    <Separator Background="#2a384e"/>
+                                    <MenuItem x:Name="MenuSortName" Header="Сортировка: По названию" IsCheckable="True" IsChecked="True" StaysOpenOnClick="True" Click="OnSortMenuClick"/>
+                                    <MenuItem x:Name="MenuSortRarityAsc" Header="Сортировка: По редкости (редкие вначале)" IsCheckable="True" IsChecked="False" StaysOpenOnClick="True" Click="OnSortMenuClick"/>
+                                    <MenuItem x:Name="MenuSortRarityDesc" Header="Сортировка: По редкости (частые вначале)" IsCheckable="True" IsChecked="False" StaysOpenOnClick="True" Click="OnSortMenuClick"/>
+                                </MenuItem>
+                            </Menu>
+
+                            <!-- Search Box -->
+                            <Border Background="#10141d" CornerRadius="12" BorderBrush="#2a384e" BorderThickness="1" Padding="8,3" Margin="5,0,0,0" Width="180">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="🔍" Foreground="{StaticResource SteamBlue}" FontSize="11" VerticalAlignment="Center" Margin="0,0,6,0"/>
+
+                                    <Grid Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock x:Name="TxtSearchAchPlaceholder" Text="Поиск..." Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" IsHitTestVisible="False" FontSize="11"/>
+                                        <TextBox x:Name="TxtSearchAchievement" Background="Transparent" Foreground="{StaticResource TextLight}"
+                                                 CaretBrush="{StaticResource SteamBlue}" SelectionBrush="{StaticResource SteamBlueHover}"
+                                                 BorderThickness="0" VerticalAlignment="Center" FontSize="11" TextChanged="OnAchievementSearchChanged"/>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Achievement Cards List -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <ItemsControl x:Name="ItemsAchievements">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource BgCard}" CornerRadius="6" BorderBrush="{StaticResource BorderCard}" BorderThickness="1" Margin="0,0,0,8" Padding="10">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/> <!-- Icon -->
+                                                <ColumnDefinition Width="*"/>    <!-- Text Info -->
+                                                <ColumnDefinition Width="Auto"/> <!-- Unlock CheckBox -->
+                                            </Grid.ColumnDefinitions>
+
+                                            <Image Grid.Column="0" Source="{Binding DisplayIcon}" Width="54" Height="54" Margin="0,0,12,0"/>
+
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding Name}" Foreground="{StaticResource TextLight}" FontSize="13" FontWeight="Bold" Margin="0,0,0,4"/>
+                                                    <!-- Hidden Achievement Badge -->
+                                                    <Border Visibility="{Binding HiddenBadgeVisibility}"
+                                                            Background="#2a1b38" BorderBrush="#9b51e0" BorderThickness="1"
+                                                            CornerRadius="4" Padding="6,2" Margin="8,0,0,4" VerticalAlignment="Center">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="👁️" FontSize="10" Margin="0,0,4,0"/>
+                                                            <TextBlock Text="Скрытое" Foreground="#d6a4ff" FontSize="10" FontWeight="Bold"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding Description}" Foreground="{StaticResource TextMuted}" FontSize="11" TextWrapping="Wrap"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                    <Border Visibility="{Binding RarityBadgeVisibility}" Background="#10141d" BorderBrush="#2a384e" BorderThickness="1" CornerRadius="3" Padding="5,1" Margin="0,0,8,0" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding RarityText}" Foreground="{Binding RarityColor}" FontSize="10" FontWeight="Bold"/>
+                                                    </Border>
+                                                    <TextBlock Text="{Binding UnlockTimeText}" Foreground="{StaticResource SteamBlue}" FontSize="10" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </StackPanel>
+
+                                            <CheckBox Grid.Column="2" IsChecked="{Binding IsAchieved, Mode=TwoWay}"
+                                                      VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10,0"
+                                                      Click="OnAchievementCheckChanged">
+                                                <CheckBox.LayoutTransform>
+                                                    <ScaleTransform ScaleX="1.3" ScaleY="1.3"/>
+                                                </CheckBox.LayoutTransform>
+                                            </CheckBox>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </TabItem>
+
+            <!-- Statistics Tab -->
+            <TabItem x:Name="TabStatistics" Header="Статистика">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Statistics DataGrid -->
+                    <DataGrid x:Name="GridStatistics" Grid.Row="0" AutoGenerateColumns="False" CanUserAddRows="False"
+                              HeadersVisibility="Column" RowHeaderWidth="0"
+                              Background="#10141d" RowBackground="#1b2432" AlternatingRowBackground="#151d28"
+                              Foreground="{StaticResource TextLight}" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#2a384e"
+                              BorderBrush="#2a384e" BorderThickness="1" RowHeight="32">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn x:Name="ColStatName" Header="Название" Binding="{Binding DisplayName}" Width="250" IsReadOnly="True"/>
+                            <DataGridTextColumn x:Name="ColStatValue" Header="Значение" Binding="{Binding ValueText, Mode=TwoWay}" Width="150"/>
+                            <DataGridTextColumn x:Name="ColStatExtra" Header="Дополнительно" Binding="{Binding Extra}" Width="*" IsReadOnly="True"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <CheckBox x:Name="ChkEnableStats" Grid.Row="1" Margin="0,10,0,0" Foreground="{StaticResource TextMuted}" FontSize="11" Click="OnEnableStatsChecked">
+                        <TextBlock x:Name="TxtEnableStats" Text="Я понимаю, что изменение значений статистики может всё испортить, и винить в этом могу только себя." TextWrapping="Wrap"/>
+                    </CheckBox>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <!-- Statusbar -->
+        <Border Grid.Row="3" Background="{StaticResource BgHeader}" Padding="15,0" BorderBrush="#2a384e" BorderThickness="0,1,0,0">
+            <Grid VerticalAlignment="Center">
+                <TextBlock x:Name="TxtStatus" Text="Получение информации..." Foreground="{StaticResource TextMuted}" FontSize="11" HorizontalAlignment="Left"/>
+                <TextBlock x:Name="TxtDownloadStatus" Text="" Foreground="{StaticResource SteamBlue}" FontSize="11" HorizontalAlignment="Right"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

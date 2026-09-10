@@ -12,6 +12,8 @@
 **/Properties/launchSettings.json
 private/
 upload/
+*.zip
+steam_appid.txt
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

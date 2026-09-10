@@ -75,7 +75,63 @@ namespace SAM.Picker
             this._AppDataChangedCallback = client.CreateAndRegisterCallback<API.Callbacks.AppDataChanged>();
             this._AppDataChangedCallback.OnRun += this.OnAppDataChanged;
 
+            this.InitializeLanguageDropdown();
+            this.ApplyLocalization();
+
             this.AddGames();
+        }
+
+        private void InitializeLanguageDropdown()
+        {
+            this._LanguageDropDownButton.DropDownItems.Clear();
+            foreach (var lang in API.LanguageManager.SupportedLanguages)
+            {
+                var item = new ToolStripMenuItem(lang.NativeName)
+                {
+                    Tag = lang.Code,
+                };
+                item.Click += (s, e) =>
+                {
+                    API.LanguageManager.CurrentLanguage = lang.Code;
+                    this.UpdateLanguageDropdownState();
+                    this.ApplyLocalization();
+                    this.RefreshGames();
+                };
+                this._LanguageDropDownButton.DropDownItems.Add(item);
+            }
+            this.UpdateLanguageDropdownState();
+        }
+
+        private void UpdateLanguageDropdownState()
+        {
+            string current = API.LanguageManager.CurrentLanguage;
+            foreach (ToolStripItem item in this._LanguageDropDownButton.DropDownItems)
+            {
+                if (item is ToolStripMenuItem menuContainer)
+                {
+                    menuContainer.Checked = string.Equals((string)menuContainer.Tag, current, StringComparison.OrdinalIgnoreCase);
+                }
+            }
+        }
+
+        private void ApplyLocalization()
+        {
+            this.Text = API.Localization.PickerTitle;
+            this._RefreshGamesButton.Text = API.Localization.RefreshGames;
+            this._AddGameButton.Text = API.Localization.AddGame;
+            this._FindGamesLabel.Text = API.Localization.Filter;
+            this._FilterDropDownButton.Text = API.Localization.GameFiltering;
+            this._FilterGamesMenuItem.Text = API.Localization.ShowGames;
+            this._FilterDemosMenuItem.Text = API.Localization.ShowDemos;
+            this._FilterModsMenuItem.Text = API.Localization.ShowMods;
+            this._FilterJunkMenuItem.Text = API.Localization.ShowJunk;
+            this._DownloadStatusLabel.Text = API.Localization.DownloadStatus;
+            this._LanguageDropDownButton.Text = API.Localization.Language;
+
+            if (this._Games.Count > 0)
+            {
+                this._PickerStatusLabel.Text = API.Localization.DisplayingGames(this._GameListView.Items.Count, this._Games.Count);
+            }
         }
 
         private void OnAppDataChanged(APITypes.AppDataChanged param)
@@ -98,7 +154,7 @@ namespace SAM.Picker
 
         private void DoDownloadList(object sender, DoWorkEventArgs e)
         {
-            this._PickerStatusLabel.Text = "Downloading game list...";
+            this._PickerStatusLabel.Text = API.Localization.DownloadingGameList;
 
             byte[] bytes;
             using (WebClient downloader = new())
@@ -123,7 +179,7 @@ namespace SAM.Picker
                 }
             }
 
-            this._PickerStatusLabel.Text = "Checking game ownership...";
+            this._PickerStatusLabel.Text = API.Localization.CheckingGameOwnership;
             foreach (var kv in pairs)
             {
                 this.AddGame(kv.Key, kv.Value);
@@ -135,7 +191,7 @@ namespace SAM.Picker
             if (e.Error != null || e.Cancelled == true)
             {
                 this.AddDefaultGames();
-                MessageBox.Show(e.Error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(e.Error.ToString(), API.Localization.Error, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
             this.RefreshGames();
@@ -180,8 +236,7 @@ namespace SAM.Picker
             }
 
             this._GameListView.VirtualListSize = this._FilteredGames.Count;
-            this._PickerStatusLabel.Text =
-                $"Displaying {this._GameListView.Items.Count} games. Total {this._Games.Count} games.";
+            this._PickerStatusLabel.Text = API.Localization.DisplayingGames(this._GameListView.Items.Count, this._Games.Count);
 
             if (this._GameListView.Items.Count > 0)
             {
@@ -328,7 +383,7 @@ namespace SAM.Picker
                     break;
                 }
 
-                this._DownloadStatusLabel.Text = $"Downloading {1 + this._LogoQueue.Count} game icons...";
+                this._DownloadStatusLabel.Text = API.Localization.DownloadingGameIcons(1 + this._LogoQueue.Count);
                 this._DownloadStatusLabel.Visible = true;
 
                 this._LogoWorker.RunWorkerAsync(info);
@@ -339,15 +394,15 @@ namespace SAM.Picker
         {
             string candidate;
 
-            var currentLanguage = this._SteamClient.SteamApps008.GetCurrentGameLanguage();
+            var activeLanguage = API.LanguageManager.CurrentLanguage;
 
-            candidate = this._SteamClient.SteamApps001.GetAppData(id, _($"small_capsule/{currentLanguage}"));
+            candidate = this._SteamClient.SteamApps001.GetAppData(id, _($"small_capsule/{activeLanguage}"));
             if (string.IsNullOrEmpty(candidate) == false)
             {
                 return _($"https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/{id}/{candidate}");
             }
 
-            if (currentLanguage != "english")
+            if (activeLanguage != "english")
             {
                 candidate = this._SteamClient.SteamApps001.GetAppData(id, "small_capsule/english");
                 if (string.IsNullOrEmpty(candidate) == false)
@@ -458,8 +513,8 @@ namespace SAM.Picker
             {
                 MessageBox.Show(
                     this,
-                    "Failed to start SAM.Game.exe.",
-                    "Error",
+                    API.Localization.FailedToStartGameExe,
+                    API.Localization.Error,
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
             }
@@ -479,8 +534,8 @@ namespace SAM.Picker
             {
                 MessageBox.Show(
                     this,
-                    "Please enter a valid game ID.",
-                    "Error",
+                    API.Localization.PleaseEnterValidGameId,
+                    API.Localization.Error,
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
                 return;
@@ -488,7 +543,7 @@ namespace SAM.Picker
 
             if (this.OwnsGame(id) == false)
             {
-                MessageBox.Show(this, "You don't own that game.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(this, API.Localization.DontOwnGame, API.Localization.Error, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 

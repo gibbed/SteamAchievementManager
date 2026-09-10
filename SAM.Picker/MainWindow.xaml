@@ -1,0 +1,363 @@
+<Window x:Class="SAM.Picker.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Steam Achievement Manager 8.0"
+        Height="650" Width="1000" MinWidth="800" MinHeight="500"
+        WindowStartupLocation="CenterScreen"
+        Background="#10141d" Foreground="#dcdedf">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="36" ResizeBorderThickness="8" GlassFrameThickness="0" CornerRadius="0"/>
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <!-- Steam Color Palette -->
+            <SolidColorBrush x:Key="BgDark" Color="#10141d" />
+            <SolidColorBrush x:Key="BgHeader" Color="#171d25" />
+            <SolidColorBrush x:Key="BgCard" Color="#1e2633" />
+            <SolidColorBrush x:Key="BgCardHover" Color="#283548" />
+            <SolidColorBrush x:Key="BorderCard" Color="#2a384e" />
+            <SolidColorBrush x:Key="SteamBlue" Color="#66c0f4" />
+            <SolidColorBrush x:Key="SteamBlueHover" Color="#1a9fff" />
+            <SolidColorBrush x:Key="SteamGreen" Color="#5c7e10" />
+            <SolidColorBrush x:Key="SteamGreenHover" Color="#72a112" />
+            <SolidColorBrush x:Key="TextLight" Color="#dcdedf" />
+            <SolidColorBrush x:Key="TextMuted" Color="#8f98a0" />
+            <SolidColorBrush x:Key="CloseBtnHover" Color="#e81123" />
+
+            <!-- Custom ScrollBar Style -->
+            <Style TargetType="ScrollBar">
+                <Setter Property="Background" Value="#10141d"/>
+                <Setter Property="Width" Value="8"/>
+            </Style>
+
+            <!-- Custom Button Style -->
+            <Style x:Key="SteamBtn" TargetType="Button">
+                <Setter Property="Background" Value="#212d3d" />
+                <Setter Property="Foreground" Value="{StaticResource TextLight}" />
+                <Setter Property="BorderBrush" Value="#314156" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Padding" Value="12,6" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="border" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="#2a3f5a" />
+                                    <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource SteamBlue}" />
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="#172435" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Green Button Style -->
+            <Style x:Key="SteamGreenBtn" TargetType="Button" BasedOn="{StaticResource SteamBtn}">
+                <Setter Property="Background" Value="{StaticResource SteamGreen}"/>
+                <Setter Property="BorderBrush" Value="#72a112"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="border" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="{StaticResource SteamGreenHover}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Dark Menu & ContextMenu Style -->
+            <Style TargetType="Menu">
+                <Setter Property="Background" Value="Transparent"/>
+            </Style>
+
+            <Style TargetType="ContextMenu">
+                <Setter Property="Background" Value="#171d25"/>
+                <Setter Property="Foreground" Value="{StaticResource TextLight}"/>
+                <Setter Property="BorderBrush" Value="#2a384e"/>
+                <Setter Property="BorderThickness" Value="1"/>
+            </Style>
+
+            <!-- Complete Custom Dark MenuItem Template -->
+            <Style TargetType="MenuItem">
+                <Setter Property="Background" Value="#171d25"/>
+                <Setter Property="Foreground" Value="{StaticResource TextLight}"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Padding" Value="10,6"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="MenuItem">
+                            <Grid x:Name="MainGrid" Background="Transparent" SnapsToDevicePixels="True">
+                                <!-- Top Level Menu Header (on Menu Bar) -->
+                                <Border x:Name="TopBorder"
+                                        Background="#212d3d"
+                                        BorderBrush="#314156"
+                                        BorderThickness="1"
+                                        CornerRadius="4"
+                                        Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter x:Name="TopContent" ContentSource="Header" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                </Border>
+
+                                <!-- Dropdown Popup for Subitems -->
+                                <Popup x:Name="PART_Popup"
+                                       AllowsTransparency="True"
+                                       IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                                       Placement="Bottom"
+                                       Focusable="False"
+                                       PopupAnimation="Fade">
+                                    <Border x:Name="SubMenuBorder"
+                                            Background="#171d25"
+                                            BorderBrush="#2a384e"
+                                            BorderThickness="1"
+                                            CornerRadius="4"
+                                            Padding="4" Margin="0,4,0,0">
+                                        <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+
+                            <ControlTemplate.Triggers>
+                                <!-- TopLevel Header Hover -->
+                                <Trigger Property="IsHighlighted" Value="True">
+                                    <Setter TargetName="TopBorder" Property="Background" Value="#2a3f5a"/>
+                                    <Setter TargetName="TopBorder" Property="BorderBrush" Value="{StaticResource SteamBlue}"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </Trigger>
+                                <!-- Role = SubmenuItem -->
+                                <Trigger Property="Role" Value="SubmenuItem">
+                                    <Setter TargetName="TopBorder" Property="Background" Value="#171d25"/>
+                                    <Setter TargetName="TopBorder" Property="BorderBrush" Value="Transparent"/>
+                                    <Setter TargetName="TopBorder" Property="CornerRadius" Value="2"/>
+                                </Trigger>
+                                <!-- SubmenuItem Hover -->
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="Role" Value="SubmenuItem"/>
+                                        <Condition Property="IsHighlighted" Value="True"/>
+                                    </MultiTrigger.Conditions>
+                                    <Setter TargetName="TopBorder" Property="Background" Value="#2a3f5a"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </MultiTrigger>
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="Role" Value="SubmenuItem"/>
+                                        <Condition Property="IsChecked" Value="True"/>
+                                    </MultiTrigger.Conditions>
+                                    <Setter TargetName="TopBorder" Property="Background" Value="#212d3d"/>
+                                    <Setter TargetName="TopBorder" Property="BorderBrush" Value="{StaticResource SteamBlue}"/>
+                                </MultiTrigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Background="{StaticResource BgDark}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="36"/>  <!-- Titlebar -->
+            <RowDefinition Height="Auto"/> <!-- Toolbar -->
+            <RowDefinition Height="*"/>    <!-- Game Grid -->
+            <RowDefinition Height="32"/>  <!-- Statusbar -->
+        </Grid.RowDefinitions>
+
+        <!-- Custom Titlebar -->
+        <Grid Grid.Row="0" Background="{StaticResource BgHeader}" MouseLeftButtonDown="OnTitleBarMouseDown">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="10,0,0,0" VerticalAlignment="Center">
+                <Image x:Name="ImgAppIcon" Width="18" Height="18" Margin="0,0,8,0"/>
+                <TextBlock x:Name="TxtTitle" Text="Steam Achievement Manager 8.0"
+                           Foreground="{StaticResource TextLight}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- Window Action Buttons -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" WindowChrome.IsHitTestVisibleInChrome="True">
+                <Button Click="OnMinimizeClick" Width="40" Height="36" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextMuted}" Cursor="Hand">
+                    <TextBlock Text="─" FontSize="10"/>
+                </Button>
+                <Button Click="OnMaximizeClick" Width="40" Height="36" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextMuted}" Cursor="Hand">
+                    <TextBlock Text="☐" FontSize="11"/>
+                </Button>
+                <Button Click="OnCloseClick" Width="40" Height="36" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextMuted}" Cursor="Hand">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="{StaticResource CloseBtnHover}"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                    <TextBlock Text="✕" FontSize="11"/>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Main Toolbar -->
+        <Border Grid.Row="1" Background="#161f2c" Padding="15,8" BorderBrush="#2a384e" BorderThickness="0,1,0,1" WindowChrome.IsHitTestVisibleInChrome="True">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Left: Refresh, Mass Farm & Add Game -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="BtnRefresh" Style="{StaticResource SteamBtn}" Click="OnRefreshClick" Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🔄" Margin="0,0,6,0"/>
+                            <TextBlock x:Name="TxtBtnRefresh" Text="Обновить список"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Mass Idle Button -->
+                    <Button x:Name="BtnFarmSelected" Style="{StaticResource SteamGreenBtn}" Click="OnFarmSelectedClick" Margin="0,0,10,0" Visibility="Collapsed">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🎮 " Margin="0,0,4,0"/>
+                            <TextBlock x:Name="TxtBtnFarmSelected" Text="Фармить выбранные (0)"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Search/Add Game ID -->
+                    <Border Background="#10141d" CornerRadius="4" BorderBrush="#2a384e" BorderThickness="1" Padding="4,2" Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBox x:Name="TxtAddGameId" Width="80" Background="Transparent" Foreground="{StaticResource TextLight}"
+                                     CaretBrush="{StaticResource SteamBlue}" SelectionBrush="{StaticResource SteamBlueHover}"
+                                     BorderThickness="0" VerticalAlignment="Center" Margin="5,0" FontSize="12"
+                                     ToolTip="Введите ID игры..."/>
+                            <Button Style="{StaticResource SteamBtn}" Click="OnAddGameClick" Padding="8,4">
+                                <TextBlock x:Name="TxtBtnAddGame" Text="Добавить по ID" FontSize="11"/>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Center: Search Icon Directly Left & Search Box -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0">
+                    <TextBlock Text="🔍" Foreground="{StaticResource SteamBlue}" FontSize="16" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <Border Background="#10141d" CornerRadius="14" BorderBrush="#2a384e" BorderThickness="1" Padding="10,4" MinWidth="120" MaxWidth="180">
+                        <Grid VerticalAlignment="Center">
+                            <TextBlock x:Name="TxtSearchPlaceholder" Text="Поиск игры..." Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" IsHitTestVisible="False" FontSize="12"/>
+                            <TextBox x:Name="TxtSearchGame" Background="Transparent" Foreground="{StaticResource TextLight}"
+                                     CaretBrush="{StaticResource SteamBlue}" SelectionBrush="{StaticResource SteamBlueHover}"
+                                     BorderThickness="0" VerticalAlignment="Center" FontSize="12" TextChanged="OnSearchFilterChanged"/>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+
+                <!-- Right: Filter Menu & Language Selector -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
+                    <!-- Filters Dropdown Menu -->
+                    <Menu Background="Transparent" Margin="0,0,8,0">
+                        <MenuItem x:Name="MenuFilter" Header="📺 Фильтр игр" Foreground="{StaticResource TextLight}" FontSize="12" Padding="10,6">
+                            <MenuItem x:Name="MenuFilterGames" Header="Показывать игры" IsCheckable="True" IsChecked="True" StaysOpenOnClick="True" Click="OnFilterMenuClick"/>
+                            <MenuItem x:Name="MenuFilterFavorites" Header="⭐ Только избранное" IsCheckable="True" IsChecked="False" StaysOpenOnClick="True" Click="OnFilterMenuClick"/>
+                            <MenuItem x:Name="MenuFilterDemos" Header="Показывать демо" IsCheckable="True" IsChecked="False" StaysOpenOnClick="True" Click="OnFilterMenuClick"/>
+                            <MenuItem x:Name="MenuFilterMods" Header="Показывать моды" IsCheckable="True" IsChecked="False" StaysOpenOnClick="True" Click="OnFilterMenuClick"/>
+                            <MenuItem x:Name="MenuFilterJunk" Header="Показывать мусор" IsCheckable="True" IsChecked="False" StaysOpenOnClick="True" Click="OnFilterMenuClick"/>
+                        </MenuItem>
+                    </Menu>
+
+                    <!-- Language Selector -->
+                    <Menu Background="Transparent">
+                        <MenuItem x:Name="MenuLanguage" Header="🌐 Язык" Foreground="{StaticResource TextLight}" FontSize="12" Padding="10,6"/>
+                    </Menu>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Main Content: Game Cards Grid -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="15">
+            <ItemsControl x:Name="ItemsGameCards">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border x:Name="CardBorder" Width="200" Height="110" Margin="8" Background="{StaticResource BgCard}"
+                                CornerRadius="8" BorderBrush="{Binding CardBorderBrush}" BorderThickness="1"
+                                Cursor="Hand" MouseLeftButtonDown="OnGameCardClick">
+                            <Border.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="▶ Открыть менеджер достижений" Click="OnMenuOpenManagerClick"/>
+                                    <MenuItem Header="🎮 Запустить фарм часов (Idle Mode)" Click="OnMenuStartIdleClick"/>
+                                </ContextMenu>
+                            </Border.ContextMenu>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="75"/>
+                                    <RowDefinition Height="35"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Capsule Image & Selection CheckBox Overlay -->
+                                <Border Grid.Row="0" CornerRadius="8,8,0,0" ClipToBounds="True" Background="#141a24">
+                                    <Grid>
+                                        <Image Source="{Binding ImageUrl}" Stretch="UniformToFill" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                  HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                  Margin="6" Click="OnGameSelectionChanged"
+                                                  ToolTip="Выбрать для массового фарма часов">
+                                            <CheckBox.LayoutTransform>
+                                                <ScaleTransform ScaleX="1.2" ScaleY="1.2"/>
+                                            </CheckBox.LayoutTransform>
+                                        </CheckBox>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Game Title -->
+                                <Border Grid.Row="1" Background="#141a24" CornerRadius="0,0,8,8" Padding="6,4">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock Text="⭐ " Visibility="{Binding FavoriteBadgeVisibility}" Foreground="#f2c94c" FontSize="11" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding Name}" Foreground="{StaticResource TextLight}" FontSize="11"
+                                                   TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"
+                                                   VerticalAlignment="Center" ToolTip="{Binding Name}"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <!-- Statusbar -->
+        <Border Grid.Row="3" Background="{StaticResource BgHeader}" Padding="15,0" BorderBrush="#2a384e" BorderThickness="0,1,0,0">
+            <Grid VerticalAlignment="Center">
+                <TextBlock x:Name="TxtStatus" Text="Отображено игр: 0. Всего игр: 0." Foreground="{StaticResource TextMuted}" FontSize="11" HorizontalAlignment="Left"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

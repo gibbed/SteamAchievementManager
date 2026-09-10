@@ -30,11 +30,17 @@ namespace SAM.Picker
         [STAThread]
         private static void Main()
         {
+            AppDomain.CurrentDomain.UnhandledException += (s, args) =>
+            {
+                var ex = args.ExceptionObject as Exception;
+                System.Windows.MessageBox.Show(ex?.ToString() ?? "Unhandled Exception", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            };
+
             if (API.Steam.GetInstallPath() == Application.StartupPath)
             {
                 MessageBox.Show(
-                    "This tool declines to being run from the Steam directory.",
-                    "Error",
+                    API.Localization.RunFromSteamDeclined,
+                    API.Localization.Error,
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
                 return;
@@ -51,17 +57,17 @@ namespace SAM.Picker
                     if (string.IsNullOrEmpty(e.Message) == false)
                     {
                         MessageBox.Show(
-                            "Steam is not running. Please start Steam then run this tool again.\n\n" +
+                            API.Localization.SteamNotRunning + "\n\n" +
                             "(" + e.Message + ")",
-                            "Error",
+                            API.Localization.Error,
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Error);
                     }
                     else
                     {
                         MessageBox.Show(
-                            "Steam is not running. Please start Steam then run this tool again.",
-                            "Error",
+                            API.Localization.SteamNotRunning,
+                            API.Localization.Error,
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Error);
                     }
@@ -70,16 +76,20 @@ namespace SAM.Picker
                 catch (DllNotFoundException)
                 {
                     MessageBox.Show(
-                        "You've caused an exceptional error!",
-                        "Error",
+                        API.Localization.ExceptionalError,
+                        API.Localization.Error,
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
                     return;
                 }
 
-                Application.EnableVisualStyles();
-                Application.SetCompatibleTextRenderingDefault(false);
-                Application.Run(new GamePicker(client));
+                var app = new System.Windows.Application();
+                app.DispatcherUnhandledException += (s, args) =>
+                {
+                    System.Windows.MessageBox.Show(args.Exception.ToString(), "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    args.Handled = true;
+                };
+                app.Run(new MainWindow(client));
             }
         }
     }
