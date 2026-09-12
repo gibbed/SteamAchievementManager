@@ -22,6 +22,7 @@
 
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Windows.Forms;
 
 namespace SAM.Game
@@ -31,85 +32,129 @@ namespace SAM.Game
         [STAThread]
         public static void Main(string[] args)
         {
-            long appId;
-
-            if (args.Length == 0)
+            try
             {
-                Process.Start("SAM.Picker.exe");
-                return;
-            }
+                long appId;
 
-            if (long.TryParse(args[0], out appId) == false)
-            {
-                MessageBox.Show(
-                    "Could not parse application ID from command line argument.",
-                    "Error",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
-                return;
-            }
-
-            if (API.Steam.GetInstallPath() == Application.StartupPath)
-            {
-                MessageBox.Show(
-                    "This tool declines to being run from the Steam directory.",
-                    "Error",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
-                return;
-            }
-
-            using (API.Client client = new())
-            {
-                try
+                if (args.Length == 0)
                 {
-                    client.Initialize(appId);
-                }
-                catch (API.ClientInitializeException e)
-                {
-                    if (e.Failure == API.ClientInitializeFailure.ConnectToGlobalUser)
-                    {
-                        MessageBox.Show(
-                            "Steam is not running. Please start Steam then run this tool again.\n\n" +
-                            "If you have the game through Family Share, the game may be locked due to\n" +
-                            "the Family Share account actively playing a game.\n\n" +
-                            "(" + e.Message + ")",
-                            "Error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
-                    }
-                    else if (string.IsNullOrEmpty(e.Message) == false)
-                    {
-                        MessageBox.Show(
-                            "Steam is not running. Please start Steam then run this tool again.\n\n" +
-                            "(" + e.Message + ")",
-                            "Error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
-                    }
-                    else
-                    {
-                        MessageBox.Show(
-                            "Steam is not running. Please start Steam then run this tool again.",
-                            "Error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
-                    }
+                    Process.Start("SAM.Picker.exe");
                     return;
                 }
-                catch (DllNotFoundException)
+
+                if (long.TryParse(args[0], out appId) == false)
                 {
                     MessageBox.Show(
-                        "You've caused an exceptional error!",
-                        "Error",
+                        API.Localization.ParseAppIdFailed,
+                        API.Localization.Error,
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
                     return;
                 }
 
-                Application.EnableVisualStyles();
-                Application.SetCompatibleTextRenderingDefault(false);
-                Application.Run(new Manager(appId, client));
+                if (API.Steam.GetInstallPath() == Application.StartupPath)
+                {
+                    MessageBox.Show(
+                        API.Localization.RunFromSteamDeclined,
+                        API.Localization.Error,
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                    return;
+                }
+
+                bool isIdleMode = false;
+                foreach (var arg in args)
+                {
+                    if (string.Equals(arg, "-idle", StringComparison.OrdinalIgnoreCase))
+                    {
+                        isIdleMode = true;
+                    }
+                }
+
+                using (API.Client client = new())
+                {
+                    try
+                    {
+                        client.Initialize(appId);
+                    }
+                    catch (API.ClientInitializeException e)
+                    {
+                        if (e.Failure == API.ClientInitializeFailure.ConnectToGlobalUser)
+                        {
+                            MessageBox.Show(
+                                API.Localization.SteamNotRunning + "\n\n" +
+                                API.Localization.FamilyShareLocked + "\n\n" +
+                                "(" + e.Message + ")",
+                                API.Localization.Error,
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+                        }
+                        else if (string.IsNullOrEmpty(e.Message) == false)
+                        {
+                            MessageBox.Show(
+                                API.Localization.SteamNotRunning + "\n\n" +
+                                "(" + e.Message + ")",
+                                API.Localization.Error,
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+                        }
+                        else
+                        {
+                            MessageBox.Show(
+                                API.Localization.SteamNotRunning,
+                                API.Localization.Error,
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+                        }
+                        return;
+                    }
+                    catch (DllNotFoundException)
+                    {
+                        MessageBox.Show(
+                            API.Localization.ExceptionalError,
+                            API.Localization.Error,
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
+                        return;
+                    }
+
+                    if (isIdleMode)
+                    {
+                        lock (API.Steam.SteamLock)
+                        {
+                            try
+                            {
+                                client.SteamFriends?.SetPersonaState(7); // k_EPersonaStateInvisible
+                            }
+                            catch { }
+                        }
+
+                        var idleTimer = new System.Windows.Forms.Timer { Interval = 1000 };
+                        idleTimer.Tick += (s, ev) =>
+                        {
+                            lock (API.Steam.SteamLock)
+                            {
+                                client.RunCallbacks(false);
+                            }
+                        };
+                        idleTimer.Start();
+                        Application.Run();
+                        return;
+                    }
+
+                    var app = new System.Windows.Application();
+                    app.DispatcherUnhandledException += (s, eArgs) =>
+                    {
+                        File.WriteAllText("game_crash.log", eArgs.Exception.ToString());
+                        System.Windows.MessageBox.Show(eArgs.Exception.ToString(), "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                        eArgs.Handled = true;
+                    };
+                    app.Run(new ManagerWindow(appId, client));
+                }
+            }
+            catch (Exception ex)
+            {
+                File.WriteAllText("game_crash.log", ex.ToString());
             }
         }
     }

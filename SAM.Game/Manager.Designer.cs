@@ -83,10 +83,12 @@
             // 
             // _MainToolStrip
             // 
+            this._LanguageDropDownButton = new System.Windows.Forms.ToolStripDropDownButton();
             this._MainToolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this._StoreButton,
             this._ReloadButton,
-            this._ResetButton});
+            this._ResetButton,
+            this._LanguageDropDownButton});
             this._MainToolStrip.Location = new System.Drawing.Point(0, 0);
             this._MainToolStrip.Name = "_MainToolStrip";
             this._MainToolStrip.Size = new System.Drawing.Size(712, 25);
@@ -100,8 +102,8 @@
             this._StoreButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this._StoreButton.Name = "_StoreButton";
             this._StoreButton.Size = new System.Drawing.Size(120, 22);
-            this._StoreButton.Text = "Commit Changes";
-            this._StoreButton.ToolTipText = "Store achievements and statistics for active game.";
+            this._StoreButton.Text = "Сохранить изменения";
+            this._StoreButton.ToolTipText = "Сохранить достижения и статистику для активной игры.";
             this._StoreButton.Click += new System.EventHandler(this.OnStore);
             // 
             // _ReloadButton
@@ -111,8 +113,8 @@
             this._ReloadButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this._ReloadButton.Name = "_ReloadButton";
             this._ReloadButton.Size = new System.Drawing.Size(66, 22);
-            this._ReloadButton.Text = "Refresh";
-            this._ReloadButton.ToolTipText = "Refresh achievements and statistics for active game.";
+            this._ReloadButton.Text = "Обновить";
+            this._ReloadButton.ToolTipText = "Обновить достижения и статистику для активной игры.";
             this._ReloadButton.Click += new System.EventHandler(this.OnRefresh);
             // 
             // _ResetButton
@@ -121,10 +123,18 @@
             this._ResetButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this._ResetButton.Name = "_ResetButton";
             this._ResetButton.Size = new System.Drawing.Size(55, 22);
-            this._ResetButton.Text = "Reset";
-            this._ResetButton.ToolTipText = "Reset achievements and/or statistics for active game.";
+            this._ResetButton.Text = "Сбросить";
+            this._ResetButton.ToolTipText = "Сбросить достижения и/или статистику для активной игры.";
             this._ResetButton.Click += new System.EventHandler(this.OnResetAllStats);
-            // 
+            //
+            // _LanguageDropDownButton
+            //
+            this._LanguageDropDownButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this._LanguageDropDownButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this._LanguageDropDownButton.Name = "_LanguageDropDownButton";
+            this._LanguageDropDownButton.Size = new System.Drawing.Size(70, 22);
+            this._LanguageDropDownButton.Text = "Language";
+            //
             // _AchievementImageList
             // 
             this._AchievementImageList.ColorDepth = System.Windows.Forms.ColorDepth.Depth24Bit;
@@ -159,7 +169,7 @@
             this._DownloadStatusLabel.Image = global::SAM.Game.Resources.Download;
             this._DownloadStatusLabel.Name = "_DownloadStatusLabel";
             this._DownloadStatusLabel.Size = new System.Drawing.Size(111, 17);
-            this._DownloadStatusLabel.Text = "Download status";
+            this._DownloadStatusLabel.Text = "Статус загрузки";
             this._DownloadStatusLabel.Visible = false;
             // 
             // _CallbackTimer
@@ -189,7 +199,7 @@
             this._AchievementsTabPage.Padding = new System.Windows.Forms.Padding(3);
             this._AchievementsTabPage.Size = new System.Drawing.Size(688, 308);
             this._AchievementsTabPage.TabIndex = 0;
-            this._AchievementsTabPage.Text = "Achievements";
+            this._AchievementsTabPage.Text = "Достижения";
             this._AchievementsTabPage.UseVisualStyleBackColor = true;
             // 
             // _AchievementListView
@@ -220,17 +230,17 @@
             // 
             // _AchievementNameColumnHeader
             // 
-            this._AchievementNameColumnHeader.Text = "Name";
+            this._AchievementNameColumnHeader.Text = "Название";
             this._AchievementNameColumnHeader.Width = 200;
             // 
             // _AchievementDescriptionColumnHeader
             // 
-            this._AchievementDescriptionColumnHeader.Text = "Description";
+            this._AchievementDescriptionColumnHeader.Text = "Описание";
             this._AchievementDescriptionColumnHeader.Width = 300;
             // 
             // _AchievementUnlockTimeColumnHeader
             // 
-            this._AchievementUnlockTimeColumnHeader.Text = "Unlock Time";
+            this._AchievementUnlockTimeColumnHeader.Text = "Время разблокировки";
             this._AchievementUnlockTimeColumnHeader.Width = 160;
             // 
             // _AchievementsToolStrip
@@ -258,8 +268,8 @@
             this._LockAllButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this._LockAllButton.Name = "_LockAllButton";
             this._LockAllButton.Size = new System.Drawing.Size(23, 22);
-            this._LockAllButton.Text = "Lock All";
-            this._LockAllButton.ToolTipText = "Lock all achievements.";
+            this._LockAllButton.Text = "Заблокировать все";
+            this._LockAllButton.ToolTipText = "Заблокировать все достижения.";
             this._LockAllButton.Click += new System.EventHandler(this.OnLockAll);
             // 
             // _InvertAllButton
@@ -269,8 +279,8 @@
             this._InvertAllButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this._InvertAllButton.Name = "_InvertAllButton";
             this._InvertAllButton.Size = new System.Drawing.Size(23, 22);
-            this._InvertAllButton.Text = "Invert All";
-            this._InvertAllButton.ToolTipText = "Invert all achievements.";
+            this._InvertAllButton.Text = "Инвертировать все";
+            this._InvertAllButton.ToolTipText = "Инвертировать все достижения.";
             this._InvertAllButton.Click += new System.EventHandler(this.OnInvertAll);
             // 
             // _UnlockAllButton
@@ -280,8 +290,8 @@
             this._UnlockAllButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this._UnlockAllButton.Name = "_UnlockAllButton";
             this._UnlockAllButton.Size = new System.Drawing.Size(23, 22);
-            this._UnlockAllButton.Text = "Unlock All";
-            this._UnlockAllButton.ToolTipText = "Unlock all achievements.";
+            this._UnlockAllButton.Text = "Разблокировать все";
+            this._UnlockAllButton.ToolTipText = "Разблокировать все достижения.";
             this._UnlockAllButton.Click += new System.EventHandler(this.OnUnlockAll);
             // 
             // _DisplayLabel
@@ -289,7 +299,7 @@
             this._DisplayLabel.Font = new System.Drawing.Font("Segoe UI", 9F);
             this._DisplayLabel.Name = "_DisplayLabel";
             this._DisplayLabel.Size = new System.Drawing.Size(62, 22);
-            this._DisplayLabel.Text = "Show only";
+            this._DisplayLabel.Text = "Показывать:";
             // 
             // _DisplayLockedOnlyButton
             // 
@@ -298,7 +308,7 @@
             this._DisplayLockedOnlyButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this._DisplayLockedOnlyButton.Name = "_DisplayLockedOnlyButton";
             this._DisplayLockedOnlyButton.Size = new System.Drawing.Size(46, 22);
-            this._DisplayLockedOnlyButton.Text = "locked";
+            this._DisplayLockedOnlyButton.Text = "закрытые";
             this._DisplayLockedOnlyButton.Click += new System.EventHandler(this.OnDisplayCheckedOnly);
             // 
             // _DisplayUnlockedOnlyButton
@@ -308,7 +318,7 @@
             this._DisplayUnlockedOnlyButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this._DisplayUnlockedOnlyButton.Name = "_DisplayUnlockedOnlyButton";
             this._DisplayUnlockedOnlyButton.Size = new System.Drawing.Size(60, 22);
-            this._DisplayUnlockedOnlyButton.Text = "unlocked";
+            this._DisplayUnlockedOnlyButton.Text = "полученные";
             this._DisplayUnlockedOnlyButton.Click += new System.EventHandler(this.OnDisplayUncheckedOnly);
             // 
             // _MatchingStringLabel
@@ -316,14 +326,14 @@
             this._MatchingStringLabel.Font = new System.Drawing.Font("Segoe UI", 9F);
             this._MatchingStringLabel.Name = "_MatchingStringLabel";
             this._MatchingStringLabel.Size = new System.Drawing.Size(33, 22);
-            this._MatchingStringLabel.Text = "Filter";
+            this._MatchingStringLabel.Text = "Фильтр";
             // 
             // _MatchingStringTextBox
             // 
             this._MatchingStringTextBox.Font = new System.Drawing.Font("Segoe UI", 9F);
             this._MatchingStringTextBox.Name = "_MatchingStringTextBox";
             this._MatchingStringTextBox.Size = new System.Drawing.Size(100, 25);
-            this._MatchingStringTextBox.ToolTipText = "Type at least 3 characters that must appear in the name or description";
+            this._MatchingStringTextBox.ToolTipText = "Введите минимум 3 символа из названия или описания";
             this._MatchingStringTextBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.OnFilterUpdate);
             // 
             // _StatisticsTabPage
@@ -335,7 +345,7 @@
             this._StatisticsTabPage.Padding = new System.Windows.Forms.Padding(3);
             this._StatisticsTabPage.Size = new System.Drawing.Size(688, 308);
             this._StatisticsTabPage.TabIndex = 1;
-            this._StatisticsTabPage.Text = "Statistics";
+            this._StatisticsTabPage.Text = "Статистика";
             this._StatisticsTabPage.UseVisualStyleBackColor = true;
             // 
             // _EnableStatsEditingCheckBox
@@ -347,8 +357,7 @@
             this._EnableStatsEditingCheckBox.Name = "_EnableStatsEditingCheckBox";
             this._EnableStatsEditingCheckBox.Size = new System.Drawing.Size(512, 17);
             this._EnableStatsEditingCheckBox.TabIndex = 1;
-            this._EnableStatsEditingCheckBox.Text = "I understand by modifying the values of stats, I may screw things up and can\'t bl" +
-    "ame anyone but myself.";
+            this._EnableStatsEditingCheckBox.Text = "Я понимаю, что изменение значений статистики может всё испортить, и винить в этом могу только себя.";
             this._EnableStatsEditingCheckBox.UseVisualStyleBackColor = true;
             this._EnableStatsEditingCheckBox.CheckedChanged += new System.EventHandler(this.OnStatAgreementChecked);
             // 
@@ -426,5 +435,6 @@
         private System.Windows.Forms.ToolStripTextBox _MatchingStringTextBox;
         private System.Windows.Forms.ColumnHeader _AchievementUnlockTimeColumnHeader;
         private System.Windows.Forms.CheckBox _EnableStatsEditingCheckBox;
+        private System.Windows.Forms.ToolStripDropDownButton _LanguageDropDownButton;
     }
 }
