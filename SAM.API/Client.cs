@@ -78,6 +78,11 @@ namespace SAM.API
             }
 
             this.SteamUtils = this.SteamClient.GetSteamUtils004(this._Pipe);
+            if (this.SteamUtils == null)
+            {
+                throw new ClientInitializeException(ClientInitializeFailure.GetInterfaces, "failed to get ISteamUtils005");
+            }
+
             if (appId > 0 && this.SteamUtils.GetAppId() != (uint)appId)
             {
                 throw new ClientInitializeException(ClientInitializeFailure.AppIdMismatch, "appID mismatch");
@@ -87,6 +92,25 @@ namespace SAM.API
             this.SteamUserStats = this.SteamClient.GetSteamUserStats013(this._User, this._Pipe);
             this.SteamApps001 = this.SteamClient.GetSteamApps001(this._User, this._Pipe);
             this.SteamApps008 = this.SteamClient.GetSteamApps008(this._User, this._Pipe);
+
+            // A missing interface used to reach Marshal.PtrToStructure(IntPtr.Zero) and kill
+            // the process without any message ("SAM won't open", #491/#435/#424).
+            if (this.SteamUser == null)
+            {
+                throw new ClientInitializeException(ClientInitializeFailure.GetInterfaces, "failed to get ISteamUser012");
+            }
+            if (this.SteamUserStats == null)
+            {
+                throw new ClientInitializeException(ClientInitializeFailure.GetInterfaces, "failed to get ISteamUserStats013");
+            }
+            if (this.SteamApps001 == null)
+            {
+                throw new ClientInitializeException(ClientInitializeFailure.GetInterfaces, "failed to get ISteamApps001");
+            }
+            if (this.SteamApps008 == null)
+            {
+                throw new ClientInitializeException(ClientInitializeFailure.GetInterfaces, "failed to get ISteamApps008");
+            }
         }
 
         ~Client()
@@ -141,20 +165,33 @@ namespace SAM.API
 
             this._RunningCallbacks = true;
 
-            Types.CallbackMessage message;
-            while (Steam.GetCallback(this._Pipe, out message, out _) == true)
+            try
             {
-                var callbackId = message.Id;
-                foreach (ICallback callback in this._Callbacks.Where(
-                    candidate => candidate.Id == callbackId &&
-                                 candidate.IsServer == server))
+                Types.CallbackMessage message;
+                while (Steam.GetCallback(this._Pipe, out message, out _) == true)
                 {
-                    callback.Run(message.ParamPointer);
+                    try
+                    {
+                        var callbackId = message.Id;
+                        foreach (ICallback callback in this._Callbacks.Where(
+                            candidate => candidate.Id == callbackId &&
+                                         candidate.IsServer == server))
+                        {
+                            callback.Run(message.ParamPointer);
+                        }
+                    }
+                    finally
+                    {
+                        // Always release the native callback buffer, even when a handler throws;
+                        // otherwise every later pump is stuck on a stale message.
+                        Steam.FreeLastCallback(this._Pipe);
+                    }
                 }
-                Steam.FreeLastCallback(this._Pipe);
             }
-
-            this._RunningCallbacks = false;
+            finally
+            {
+                this._RunningCallbacks = false;
+            }
         }
     }
 }

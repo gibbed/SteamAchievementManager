@@ -31,5 +31,6 @@ namespace SAM.Game.Stats
         IncrementOnly = 1 << 0,
         Protected = 1 << 1,
         UnknownPermission = 1 << 2,
+        AverageRate = 1 << 3,
     }
 }

@@ -30,5 +30,6 @@ namespace SAM.API
         CreateSteamPipe,
         ConnectToGlobalUser,
         AppIdMismatch,
+        GetInterfaces,
     }
 }

@@ -1,4 +1,4 @@
-﻿/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
+/* Copyright (c) 2024 Rick (rick 'at' gibbed 'dot' us)
  *
  * This software is provided 'as-is', without any express or implied
  * warranty. In no event will the authors be held liable for any damages
@@ -108,6 +108,10 @@ namespace SAM.API.Wrappers
                     user,
                     pipe,
                     nativeVersion.Handle);
+                if (address == IntPtr.Zero)
+                {
+                    return default(TClass);
+                }
                 TClass result = new();
                 result.SetupFunctions(address);
                 return result;
@@ -137,6 +141,10 @@ namespace SAM.API.Wrappers
                     user,
                     pipe,
                     nativeVersion.Handle);
+                if (address == IntPtr.Zero)
+                {
+                    return default(TClass);
+                }
                 TClass result = new();
                 result.SetupFunctions(address);
                 return result;
@@ -165,6 +173,10 @@ namespace SAM.API.Wrappers
                     this.ObjectAddress,
                     pipe,
                     nativeVersion.Handle);
+                if (address == IntPtr.Zero)
+                {
+                    return default(TClass);
+                }
                 TClass result = new();
                 result.SetupFunctions(address);
                 return result;
@@ -180,7 +192,10 @@ namespace SAM.API.Wrappers
         #endregion
 
         #region GetISteamApps
-        private delegate IntPtr NativeGetISteamApps(int user, int pipe, IntPtr version);
+        // Unlike its siblings this delegate was missing both the ThisCall convention
+        // and the 'self' parameter, so the callee ran with whatever was left in ECX.
+        [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
+        private delegate IntPtr NativeGetISteamApps(IntPtr self, int user, int pipe, IntPtr version);
 
         private TClass GetISteamApps<TClass>(int user, int pipe, string version)
             where TClass : INativeWrapper, new()
@@ -189,9 +204,14 @@ namespace SAM.API.Wrappers
             {
                 IntPtr address = this.Call<IntPtr, NativeGetISteamApps>(
                     this.Functions.GetISteamApps,
+                    this.ObjectAddress,
                     user,
                     pipe,
                     nativeVersion.Handle);
+                if (address == IntPtr.Zero)
+                {
+                    return default(TClass);
+                }
                 TClass result = new();
                 result.SetupFunctions(address);
                 return result;
