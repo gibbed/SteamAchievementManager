@@ -7,9 +7,9 @@
     <Copyright>Copyright © Gibbed 2019</Copyright>
   </PropertyGroup>
   <PropertyGroup>
-    <Version>7.0.0</Version>
-    <AssemblyVersion>7.0.0.0</AssemblyVersion>
-    <FileVersion>7.0.0.0</FileVersion>
+    <Version>7.1.0</Version>
+    <AssemblyVersion>7.1.0.0</AssemblyVersion>
+    <FileVersion>7.1.0.0</FileVersion>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>SAM.ico</ApplicationIcon>
@@ -33,8 +33,22 @@
     <OutputPath>..\upload\</OutputPath>
     <UseVSHostingProcess>false</UseVSHostingProcess>
   </PropertyGroup>
+  <PropertyGroup>
+    <!-- Required to compile .resx files containing images with the .NET SDK (MSB3823). -->
+    <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Resources.Extensions" Version="8.0.0" />
+  </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Windows.Forms" />
+    <!-- Auto-update: JavaScriptSerializer for the GitHub API response, and
+         ZipFile to validate an archive before installing it. -->
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Web.Extensions" />
+    <!-- The unit tests assert on the update logic (release parsing, versions). -->
+    <InternalsVisibleTo Include="SAM.Game.Tests" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="MyListView.cs">

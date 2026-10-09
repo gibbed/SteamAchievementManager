@@ -45,6 +45,7 @@
             this._FilterDemosMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this._FilterModsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this._FilterJunkMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this._CheckUpdatesButton = new System.Windows.Forms.ToolStripButton();
             this._GameListView = new SAM.Picker.MyListView();
             this._PickerStatusStrip = new System.Windows.Forms.StatusStrip();
             this._PickerStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
@@ -88,7 +89,8 @@
             _ToolStripSeparator2,
             this._FindGamesLabel,
             this._SearchGameTextBox,
-            this._FilterDropDownButton});
+            this._FilterDropDownButton,
+            this._CheckUpdatesButton});
             this._PickerToolStrip.Location = new System.Drawing.Point(0, 0);
             this._PickerToolStrip.Name = "_PickerToolStrip";
             this._PickerToolStrip.Size = new System.Drawing.Size(742, 25);
@@ -179,6 +181,16 @@
             this._FilterJunkMenuItem.Size = new System.Drawing.Size(180, 22);
             this._FilterJunkMenuItem.Text = "Show &junk";
             this._FilterJunkMenuItem.CheckedChanged += new System.EventHandler(this.OnFilterUpdate);
+            //
+            // _CheckUpdatesButton
+            //
+            this._CheckUpdatesButton.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
+            this._CheckUpdatesButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this._CheckUpdatesButton.Name = "_CheckUpdatesButton";
+            this._CheckUpdatesButton.Size = new System.Drawing.Size(114, 22);
+            this._CheckUpdatesButton.Text = "Check for updates";
+            this._CheckUpdatesButton.ToolTipText = "Check whether a newer version of Steam Achievement Manager is available.";
+            this._CheckUpdatesButton.Click += new System.EventHandler(this.OnCheckForUpdates);
             //
             // _GameListView
             //
@@ -279,6 +291,7 @@
         private System.ComponentModel.BackgroundWorker _ListWorker;
         private System.Windows.Forms.ToolStripTextBox _SearchGameTextBox;
         private System.Windows.Forms.ToolStripLabel _FindGamesLabel;
+        private System.Windows.Forms.ToolStripButton _CheckUpdatesButton;
 
         #endregion
     }

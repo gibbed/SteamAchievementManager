@@ -21,7 +21,10 @@
  */
 
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace SAM.Game
@@ -33,9 +36,32 @@ namespace SAM.Game
         {
             long appId;
 
+            // Without these, any unexpected exception ends the process silently:
+            // "SAM won't open" (#491/#435/#424).
+            Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+            Application.ThreadException += OnUnhandledException;
+            AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+
             if (args.Length == 0)
             {
-                Process.Start("SAM.Picker.exe");
+                try
+                {
+                    // Resolve the picker next to this executable instead of relying on
+                    // the current working directory.
+                    Process.Start(new ProcessStartInfo()
+                    {
+                        FileName = Path.Combine(AppContext.BaseDirectory, "SAM.Picker.exe"),
+                        UseShellExecute = true,
+                    });
+                }
+                catch (Exception e) when (e is Win32Exception or InvalidOperationException)
+                {
+                    MessageBox.Show(
+                        "Could not start SAM.Picker.exe:\n" + e.Message,
+                        "Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                }
                 return;
             }
 
@@ -97,10 +123,13 @@ namespace SAM.Game
                     }
                     return;
                 }
-                catch (DllNotFoundException)
+                catch (Exception e) when (e is DllNotFoundException
+                                             or BadImageFormatException
+                                             or EntryPointNotFoundException
+                                             or TypeInitializationException)
                 {
                     MessageBox.Show(
-                        "You've caused an exceptional error!",
+                        "Failed to load the Steam API:\n" + e.Message,
                         "Error",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
@@ -111,6 +140,25 @@ namespace SAM.Game
                 Application.SetCompatibleTextRenderingDefault(false);
                 Application.Run(new Manager(appId, client));
             }
+        }
+
+        private static void OnUnhandledException(object sender, ThreadExceptionEventArgs e)
+        {
+            ShowUnhandledException(e.Exception);
+        }
+
+        private static void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            ShowUnhandledException(e.ExceptionObject as Exception);
+        }
+
+        private static void ShowUnhandledException(Exception exception)
+        {
+            MessageBox.Show(
+                "An unexpected error occurred:\n\n" + (exception?.ToString() ?? "unknown error"),
+                "Steam Achievement Manager",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
         }
     }
 }

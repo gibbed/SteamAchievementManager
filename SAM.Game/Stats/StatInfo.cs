@@ -29,7 +29,23 @@ namespace SAM.Game.Stats
         public string DisplayName { get; set; }
         public abstract object Value { get; set; }
         public bool IsIncrementOnly { get; set; }
+
+        /// <summary>
+        /// True for AVERAGE_RATE statistics, which Steam updates from session data
+        /// (UpdateAvgRateStat) rather than from plain SetStat calls.
+        /// </summary>
+        public bool IsAverageRate { get; set; }
+
         public int Permission { get; set; }
+
+        /// <summary>
+        /// Human readable description of the schema constraints of this stat,
+        /// or an empty string when there are none to report.
+        /// </summary>
+        public virtual string DescribeConstraints()
+        {
+            return "";
+        }
 
         public string Extra
         {
@@ -37,6 +53,7 @@ namespace SAM.Game.Stats
             {
                 var flags = StatFlags.None;
                 flags |= this.IsIncrementOnly == false ? 0 : StatFlags.IncrementOnly;
+                flags |= this.IsAverageRate == false ? 0 : StatFlags.AverageRate;
                 flags |= ((this.Permission & 2) != 0) == false ? 0 : StatFlags.Protected;
                 flags |= ((this.Permission & ~2) != 0) == false ? 0 : StatFlags.UnknownPermission;
                 return flags.ToString();

@@ -46,7 +46,9 @@ namespace SAM.Game
                     return _Invalid;
                 }
 
-                var child = this.Children.SingleOrDefault(
+                // FirstOrDefault: real schema files can contain duplicate keys at the same
+                // level, and SingleOrDefault would throw on them.
+                var child = this.Children.FirstOrDefault(
                     c => string.Compare(c.Name, key, StringComparison.InvariantCultureIgnoreCase) == 0);
 
                 if (child == null)

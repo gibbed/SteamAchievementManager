@@ -26,7 +26,9 @@ namespace SAM.Game.Stats
     {
         public int MinValue;
         public int MaxValue;
-        public int MaxChange;
+
+        /// <summary>Maximum delta per store, or null when the schema has no maxchange.</summary>
+        public int? MaxChange;
         public bool IncrementOnly;
         public bool SetByTrustedGameServer;
         public int DefaultValue;

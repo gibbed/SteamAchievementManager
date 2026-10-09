@@ -26,8 +26,13 @@ namespace SAM.Game.Stats
     {
         public float MinValue;
         public float MaxValue;
-        public float MaxChange;
+
+        /// <summary>Maximum delta per store, or null when the schema has no maxchange.</summary>
+        public float? MaxChange;
         public bool IncrementOnly;
+
+        /// <summary>True for AVERAGE_RATE stats (UserStatType.AverageRate).</summary>
+        public bool AverageRate;
         public float DefaultValue;
     }
 }
