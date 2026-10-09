@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyTitle>Steam Achievement Manager tests</AssemblyTitle>
+    <Company>Gibbed</Company>
+    <Authors>Gibbed</Authors>
+    <Description>Unit tests for the game-facing logic of the Steam Achievement Manager.</Description>
+    <IsPackable>false</IsPackable>
+    <LangVersion>9.0</LangVersion>
+    <TargetFramework>net48</TargetFramework>
+    <Platforms>x86</Platforms>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <!-- The tests only exercise pure logic, but they reference x86 assemblies. -->
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SAM.Game\SAM.Game.csproj" AdditionalProperties="Platform=x86" />
+    <!-- Transitive: the test assembly must load SAM.API next to SAM.Game, and it
+         only compiles when built for x86 like the rest of the solution. -->
+    <ProjectReference Include="..\SAM.API\SAM.API.csproj" AdditionalProperties="Platform=x86" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The Manager form derives from System.Windows.Forms.Form. -->
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+</Project>

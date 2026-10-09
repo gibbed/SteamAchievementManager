@@ -89,7 +89,7 @@ namespace SAM.Picker
 
                 case Keys.PageUp:
                 {
-                    type = ScrollEventType.SmallDecrement;
+                    type = ScrollEventType.LargeDecrement;
                     return true;
                 }
 

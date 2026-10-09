@@ -25,6 +25,11 @@ using System.Runtime.InteropServices;
 
 namespace SAM.API.Interfaces
 {
+    // NOTE: the Get/Set Stat field names do not follow the order used by the public
+    // SDK header (which lists the int32 overloads first). Do not "fix" the order:
+    // the mapping was verified live against Steam -- int stats read back exactly as
+    // stored (e.g. 5280) and float stats read back as floats (e.g. 0.0976304), so the
+    // wrappers and these fields are consistent and correct as they are.
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class ISteamUserStats013
     {

@@ -21,6 +21,7 @@
  */
 
 using System;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace SAM.Picker
@@ -30,7 +31,16 @@ namespace SAM.Picker
         [STAThread]
         private static void Main()
         {
-            if (API.Steam.GetInstallPath() == Application.StartupPath)
+            // Without these, any unexpected exception (missing Steam interface, callback
+            // failure, ...) ends the process silently: "SAM won't open" (#491/#435/#424).
+            Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+            Application.ThreadException += OnUnhandledException;
+            AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+
+            if (string.Equals(
+                API.Steam.GetInstallPath(),
+                Application.StartupPath,
+                StringComparison.OrdinalIgnoreCase) == true)
             {
                 MessageBox.Show(
                     "This tool declines to being run from the Steam directory.",
@@ -44,33 +54,30 @@ namespace SAM.Picker
             {
                 try
                 {
-                    client.Initialize(0);
+                    TryInitialize(client);
                 }
                 catch (API.ClientInitializeException e)
                 {
-                    if (string.IsNullOrEmpty(e.Message) == false)
-                    {
-                        MessageBox.Show(
-                            "Steam is not running. Please start Steam then run this tool again.\n\n" +
-                            "(" + e.Message + ")",
-                            "Error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
-                    }
-                    else
-                    {
-                        MessageBox.Show(
-                            "Steam is not running. Please start Steam then run this tool again.",
-                            "Error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
-                    }
+                    MessageBox.Show(
+                        DescribeInitializeFailure(e),
+                        "Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
                     return;
                 }
-                catch (DllNotFoundException)
+                catch (DllNotFoundException e)
                 {
                     MessageBox.Show(
-                        "You've caused an exceptional error!",
+                        "Failed to load the Steam API:\n" + e.Message,
+                        "Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                    return;
+                }
+                catch (BadImageFormatException e)
+                {
+                    MessageBox.Show(
+                        "Failed to load the Steam API:\n" + e.Message,
                         "Error",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
@@ -81,6 +88,72 @@ namespace SAM.Picker
                 Application.SetCompatibleTextRenderingDefault(false);
                 Application.Run(new GamePicker(client));
             }
+        }
+
+        private static void TryInitialize(API.Client client)
+        {
+            try
+            {
+                client.Initialize(0);
+            }
+            catch (API.ClientInitializeException e)
+                when (e.Failure == API.ClientInitializeFailure.CreateSteamPipe)
+            {
+                // Steam may still be starting up; give it one chance before giving up.
+                Thread.Sleep(2000);
+                client.Initialize(0);
+            }
+        }
+
+        private static string DescribeInitializeFailure(API.ClientInitializeException e)
+        {
+            const string startSteam = "Steam could not be reached. Please make sure Steam is running, then start this tool again.";
+
+            switch (e.Failure)
+            {
+                case API.ClientInitializeFailure.GetInstallPath:
+                    return "Could not find the Steam installation.\n\n(" + e.Message + ")";
+
+                case API.ClientInitializeFailure.Load:
+                    return "Could not load the Steam client library.\n\n(" + e.Message + ")";
+
+                case API.ClientInitializeFailure.CreateSteamClient:
+                    return "Could not create the Steam client interface.\n\n(" + e.Message + ")";
+
+                case API.ClientInitializeFailure.GetInterfaces:
+                    return "Steam did not provide the expected interfaces.\n" +
+                           "Your Steam client may be too old or still starting up.\n\n(" + e.Message + ")";
+
+                case API.ClientInitializeFailure.ConnectToGlobalUser:
+                    return startSteam +
+                           "\n\nIf you have a game through Family Share, it may be locked because the\n" +
+                           "Family Share account is actively playing a game.\n\n(" + e.Message + ")";
+
+                case API.ClientInitializeFailure.AppIdMismatch:
+                    return "The requested application does not match the running Steam client.\n\n(" + e.Message + ")";
+
+                default:
+                    return startSteam + "\n\n(" + e.Message + ")";
+            }
+        }
+
+        private static void OnUnhandledException(object sender, ThreadExceptionEventArgs e)
+        {
+            ShowUnhandledException(e.Exception);
+        }
+
+        private static void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            ShowUnhandledException(e.ExceptionObject as Exception);
+        }
+
+        private static void ShowUnhandledException(Exception exception)
+        {
+            MessageBox.Show(
+                "An unexpected error occurred:\n\n" + (exception?.ToString() ?? "unknown error"),
+                "Steam Achievement Manager",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
         }
     }
 }

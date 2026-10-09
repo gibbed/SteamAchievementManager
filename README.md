@@ -15,6 +15,24 @@ There are some changes to the code since the last closed-source release:
 
 [![Build status](https://ci.appveyor.com/api/projects/status/00vic6jliar6j0ol/branch/master?svg=true)](https://ci.appveyor.com/project/gibbed/steamachievementmanager/branch/master)
 
+## Building
+
+```powershell
+dotnet build SAM.sln -c Release
+```
+
+The solution only has `x86` configurations (the game communicates with the
+32-bit Steam client), so there is no `Any CPU` build.
+
+## Tests
+
+Unit tests live in `SAM.Game.Tests` (xunit) and cover the pure logic: schema
+(KeyValue) parsing, statistic constraints, and the Steam error messages.
+
+```powershell
+dotnet test SAM.sln -c Release
+```
+
 ## Attribution
 
 Most (if not all) icons are from the [Fugue Icons](https://p.yusukekamiyamane.com/) set.

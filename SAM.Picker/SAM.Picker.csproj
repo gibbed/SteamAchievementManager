@@ -33,6 +33,13 @@
     <OutputPath>..\upload\</OutputPath>
     <UseVSHostingProcess>false</UseVSHostingProcess>
   </PropertyGroup>
+  <PropertyGroup>
+    <!-- Required to compile .resx files containing images with the .NET SDK (MSB3823). -->
+    <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Resources.Extensions" Version="8.0.0" />
+  </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
