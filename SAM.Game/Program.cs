@@ -49,6 +49,9 @@ namespace SAM.Game
                 return;
             }
 
+            bool headlessUnlockAll = args.Length >= 2 &&
+                string.Equals(args[1], "--unlock-all", StringComparison.OrdinalIgnoreCase);
+
             if (API.Steam.GetInstallPath() == Application.StartupPath)
             {
                 MessageBox.Show(
@@ -67,6 +70,12 @@ namespace SAM.Game
                 }
                 catch (API.ClientInitializeException e)
                 {
+                    if (headlessUnlockAll)
+                    {
+                        Environment.Exit(2);
+                        return;
+                    }
+
                     if (e.Failure == API.ClientInitializeFailure.ConnectToGlobalUser)
                     {
                         MessageBox.Show(
@@ -99,11 +108,24 @@ namespace SAM.Game
                 }
                 catch (DllNotFoundException)
                 {
+                    if (headlessUnlockAll)
+                    {
+                        Environment.Exit(3);
+                        return;
+                    }
+
                     MessageBox.Show(
                         "You've caused an exceptional error!",
                         "Error",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
+                    return;
+                }
+
+                if (headlessUnlockAll)
+                {
+                    bool ok = AutoUnlocker.RunUnlockAll(appId, client);
+                    Environment.Exit(ok ? 0 : 1);
                     return;
                 }
 
