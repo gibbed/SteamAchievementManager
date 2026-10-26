@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Builds the very same sources as SAM.API, for the 64-bit WinUI 3 app (SAM.App).
+    SAM.API.csproj stays net48/x86 for SAM.Picker and SAM.Game, so SAM.sln and the
+    existing build are unaffected.
+  -->
+  <PropertyGroup>
+    <Company>Gibbed</Company>
+    <Authors>Gibbed</Authors>
+    <Copyright>Copyright © Gibbed 2019</Copyright>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Version>7.0.0</Version>
+    <AssemblyVersion>7.0.0.0</AssemblyVersion>
+    <FileVersion>7.0.0.0</FileVersion>
+  </PropertyGroup>
+  <PropertyGroup>
+    <RepositoryUrl>https://github.com/gibbed/SteamAchievementManager/</RepositoryUrl>
+    <RepositoryType>Git</RepositoryType>
+  </PropertyGroup>
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <AssemblyName>SAM.API</AssemblyName>
+    <RootNamespace>SAM.API</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\SAM.API\**\*.cs" Exclude="..\SAM.API\bin\**;..\SAM.API\obj\**" />
+  </ItemGroup>
+</Project>

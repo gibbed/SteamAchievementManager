@@ -1,0 +1,522 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="SAM.App.Views.GameWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:game="using:SAM.App.Game"
+    xmlns:helpers="using:SAM.App.Helpers"
+    xmlns:loc="using:SAM.App.Localization"
+    Title="Steam Achievement Manager">
+    <Window.SystemBackdrop>
+        <MicaBackdrop />
+    </Window.SystemBackdrop>
+
+    <Grid x:Name="Root">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="48" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid.KeyboardAccelerators>
+            <KeyboardAccelerator Key="S" Modifiers="Control" Invoked="OnSaveAccelerator" />
+            <KeyboardAccelerator Key="F5" Invoked="OnRefreshAccelerator" />
+            <KeyboardAccelerator Key="F" Modifiers="Control" Invoked="OnSearchAccelerator" />
+        </Grid.KeyboardAccelerators>
+
+        <!-- Title bar -->
+        <Grid x:Name="AppTitleBar" Height="48" FlowDirection="LeftToRight">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition x:Name="RightInsetColumn" Width="138" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                <Image Source="ms-appx:///Assets/SAM-32.png" Width="16" Height="16" />
+                <TextBlock x:Name="TitleText" Text="Steam Achievement Manager" Style="{StaticResource CaptionTextBlockStyle}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Header with game image -->
+            <Grid x:Name="Hero" Height="208" Margin="24,0,24,0" CornerRadius="8">
+                <Rectangle>
+                    <Rectangle.Fill>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Offset="0" Color="#FF2B4C8C" />
+                            <GradientStop Offset="1" Color="#FF4A2A7A" />
+                        </LinearGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Image x:Name="HeroImage" FlowDirection="LeftToRight" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" Stretch="UniformToFill">
+                    <Image.OpacityTransition>
+                        <ScalarTransition Duration="0:0:0.45" />
+                    </Image.OpacityTransition>
+                </Image>
+                <Rectangle>
+                    <Rectangle.Fill>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Offset="0" Color="#08000000" />
+                            <GradientStop Offset="0.45" Color="#55000000" />
+                            <GradientStop Offset="1" Color="#D8000000" />
+                        </LinearGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle>
+                    <Rectangle.Fill>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Offset="0" Color="#88000000" />
+                            <GradientStop Offset="0.65" Color="#00000000" />
+                        </LinearGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+
+                <Grid Padding="28,20,28,22" VerticalAlignment="Bottom" ColumnSpacing="32">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel VerticalAlignment="Bottom" Spacing="2">
+                        <TextBlock
+                            x:Name="GameTitle"
+                            Foreground="White"
+                            MaxLines="2"
+                            Style="{StaticResource TitleTextBlockStyle}"
+                            TextTrimming="CharacterEllipsis"
+                            TextWrapping="Wrap" />
+                        <TextBlock x:Name="GameSubtitle" Foreground="#D9FFFFFF" Style="{StaticResource BodyTextBlockStyle}" />
+                    </StackPanel>
+
+                    <StackPanel x:Name="ProgressPanel" Grid.Column="1" Width="300" VerticalAlignment="Bottom" Spacing="6" Visibility="Collapsed">
+                        <Grid>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <helpers:MedalView x:Name="ProgressMedal" Width="16" Height="24" VerticalAlignment="Center" Visibility="Collapsed" ToolTipService.ToolTip="{x:Bind loc:Strings.CategoryDoneDesc}" />
+                                <!-- Completed sets like in Steam's header: "1" + blue medal, "2" + purple double medal -->
+                                <StackPanel x:Name="SetBadgesPanel" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center" Visibility="Collapsed">
+                                    <TextBlock x:Name="BaseSetsCount" VerticalAlignment="Center" Foreground="White" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                    <helpers:MedalView x:Name="BaseSetsMedal" Height="22" VerticalAlignment="Center" />
+                                    <TextBlock x:Name="DlcSetsCount" Margin="6,0,0,0" VerticalAlignment="Center" Foreground="White" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                    <helpers:MedalView x:Name="DlcSetsMedal" Width="23" Height="22" VerticalAlignment="Center" Kind="DlcSet" />
+                                </StackPanel>
+                                <TextBlock x:Name="ProgressText" VerticalAlignment="Center" Foreground="White" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            </StackPanel>
+                            <TextBlock x:Name="ProgressPercent" HorizontalAlignment="Right" VerticalAlignment="Bottom" Foreground="White" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        </Grid>
+                        <ProgressBar x:Name="ProgressBarControl" Maximum="1" MinHeight="6" CornerRadius="3" />
+                        <TextBlock x:Name="ProgressDetail" Foreground="#C8FFFFFF" Style="{StaticResource CaptionTextBlockStyle}" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </Grid>
+            </Grid>
+
+            <!-- Toolbar -->
+            <Grid Grid.Row="1" Margin="20,10,24,8" ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <SelectorBar x:Name="TabBar" VerticalAlignment="Center" SelectionChanged="OnTabChanged">
+                    <SelectorBarItem x:Name="AchievementsTab" IsSelected="True" Text="{x:Bind loc:Strings.Achievements}">
+                        <SelectorBarItem.Icon>
+                            <FontIcon Glyph="&#xE735;" />
+                        </SelectorBarItem.Icon>
+                    </SelectorBarItem>
+                    <SelectorBarItem x:Name="StatsTab" Text="{x:Bind loc:Strings.Statistics}">
+                        <SelectorBarItem.Icon>
+                            <FontIcon Glyph="&#xE9D2;" />
+                        </SelectorBarItem.Icon>
+                    </SelectorBarItem>
+                </SelectorBar>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <AutoSuggestBox
+                        x:Name="SearchBox"
+                        Width="230"
+                        VerticalAlignment="Center"
+                        PlaceholderText="{x:Bind loc:Strings.SearchAchievements}"
+                        QueryIcon="Find"
+                        TextChanged="OnSearchTextChanged" />
+
+                    <ComboBox
+                        x:Name="SetFilter"
+                        MinWidth="150"
+                        MaxWidth="190"
+                        VerticalAlignment="Center"
+                        AutomationProperties.Name="{x:Bind loc:Strings.SetFilterTooltip}"
+                        ToolTipService.ToolTip="{x:Bind loc:Strings.SetFilterTooltip}"
+                        Visibility="Collapsed" />
+
+                    <ComboBox x:Name="StateFilter" MinWidth="156" VerticalAlignment="Center" SelectedIndex="0" SelectionChanged="OnStateFilterChanged" ToolTipService.ToolTip="{x:Bind loc:Strings.StateFilterTooltip}">
+                        <ComboBoxItem Content="{x:Bind loc:Strings.StateAll}" />
+                        <ComboBoxItem Content="{x:Bind loc:Strings.StateLocked}" />
+                        <ComboBoxItem Content="{x:Bind loc:Strings.StateUnlocked}" />
+                        <ComboBoxItem Content="{x:Bind loc:Strings.StateModified}" />
+                    </ComboBox>
+
+                    <Button x:Name="MoreButton" Padding="10,8" AutomationProperties.Name="{x:Bind loc:Strings.MoreActions}" ToolTipService.ToolTip="{x:Bind loc:Strings.MoreActions}">
+                        <FontIcon Glyph="&#xE712;" FontSize="16" />
+                        <Button.Flyout>
+                            <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                <MenuFlyoutItem x:Name="UnlockAllItem" Text="{x:Bind loc:Strings.UnlockShown}" Click="OnUnlockAllClick">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE785;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem x:Name="LockAllItem" Text="{x:Bind loc:Strings.LockShown}" Click="OnLockAllClick">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE72E;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem x:Name="InvertAllItem" Text="{x:Bind loc:Strings.InvertShown}" Click="OnInvertAllClick">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE8CB;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutSeparator />
+                                <MenuFlyoutItem x:Name="DiscardItem" Text="{x:Bind loc:Strings.DiscardChanges}" Click="OnDiscardClick">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE7A7;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutSeparator />
+                                <MenuFlyoutItem x:Name="StorePageItem" Text="{x:Bind loc:Strings.OpenStorePage}" Click="OnStorePageClick">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE719;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem x:Name="ResetItem" Foreground="{ThemeResource DangerBrush}" Text="{x:Bind loc:Strings.ResetStatsMenu}" Click="OnResetClick">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Foreground="{ThemeResource DangerBrush}" Glyph="&#xE777;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
+
+                    <Button x:Name="RefreshButton" Padding="10,8" AutomationProperties.Name="{x:Bind loc:Strings.Reload}" ToolTipService.ToolTip="{x:Bind loc:Strings.ReloadTooltip}" Click="OnRefreshClick">
+                        <FontIcon Glyph="&#xE72C;" FontSize="16" />
+                    </Button>
+
+                    <Button x:Name="SaveButton" MinWidth="128" AutomationProperties.Name="{x:Bind loc:Strings.Save}" Style="{StaticResource AccentButtonStyle}" ToolTipService.ToolTip="{x:Bind loc:Strings.SaveTooltip}" Click="OnSaveClick">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE74E;" FontSize="14" />
+                            <TextBlock Text="{x:Bind loc:Strings.Save}" />
+                            <Border x:Name="PendingBadge" MinWidth="20" Height="18" Padding="6,0" VerticalAlignment="Center" Background="{ThemeResource TextOnAccentFillColorPrimaryBrush}" CornerRadius="9" Visibility="Collapsed">
+                                <TextBlock x:Name="PendingBadgeText" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Foreground="{ThemeResource AccentFillColorDefaultBrush}" />
+                            </Border>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <InfoBar x:Name="PageInfoBar" Grid.Row="2" Margin="24,0,24,8" IsClosable="True" IsOpen="False" />
+
+            <Grid Grid.Row="3">
+                <!-- Achievements -->
+                <ListView
+                    x:Name="AchievementsView"
+                    Padding="20,0,20,20"
+                    IsItemClickEnabled="True"
+                    SelectionMode="None"
+                    ItemClick="OnAchievementClick"
+                    ContainerContentChanging="OnAchievementContainerContentChanging"
+                    Visibility="Collapsed">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
+                            <Setter Property="Padding" Value="0" />
+                            <Setter Property="Margin" Value="0,0,0,4" />
+                            <Setter Property="MinHeight" Value="0" />
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <Setter Property="CornerRadius" Value="6" />
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <!-- Achievement sets: header with medal, name and progress (blue base game, purple DLC) -->
+                    <ListView.GroupStyle>
+                        <GroupStyle>
+                            <GroupStyle.HeaderContainerStyle>
+                                <Style TargetType="ListViewHeaderItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                    <Setter Property="Padding" Value="4,14,12,6" />
+                                    <Setter Property="Margin" Value="0" />
+                                    <Setter Property="MinHeight" Value="0" />
+                                </Style>
+                            </GroupStyle.HeaderContainerStyle>
+                            <GroupStyle.HeaderTemplate>
+                                <DataTemplate x:DataType="game:AchievementGroup">
+                                    <!-- The whole header collapses and expands the set; after the name ∧ (open) or ∨ (collapsed) -->
+                                    <Button
+                                        Margin="-8,0,0,0"
+                                        Padding="8,4,8,4"
+                                        HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Stretch"
+                                        AutomationProperties.Name="{x:Bind ToggleLabel}"
+                                        Style="{StaticResource SubtleButtonStyle}"
+                                        ToolTipService.ToolTip="{x:Bind ToggleTooltip}"
+                                        Click="OnSetToggleClick">
+                                        <Grid ColumnSpacing="12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="240" />
+                                            </Grid.ColumnDefinitions>
+                                            <helpers:MedalView Width="20" Height="28" VerticalAlignment="Center" Kind="{x:Bind MedalKind, Mode=OneWay}" ToolTipService.ToolTip="{x:Bind MedalTooltip, Mode=OneWay}" />
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" FontSize="16" Text="{x:Bind Name}" TextTrimming="CharacterEllipsis" />
+                                                <Border Style="{StaticResource BadgeStyle}" Visibility="{x:Bind IsDlc}">
+                                                    <TextBlock Style="{StaticResource BadgeTextStyle}" Text="DLC" />
+                                                </Border>
+                                                <TextBlock VerticalAlignment="Center" Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind NotOwnedText}" Visibility="{x:Bind IsNotOwned}" />
+                                                <FontIcon Margin="2,0,0,0" VerticalAlignment="Center" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Glyph="{x:Bind ToggleGlyph}" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="4">
+                                                <Grid>
+                                                    <TextBlock Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind SetProgressText, Mode=OneWay}" />
+                                                    <TextBlock HorizontalAlignment="Right" Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind SetPercentText, Mode=OneWay}" />
+                                                </Grid>
+                                                <ProgressBar Foreground="#1A9FFF" Maximum="1" Value="{x:Bind SetRatio, Mode=OneWay}" Visibility="{x:Bind IsBaseGame}" />
+                                                <ProgressBar Foreground="#B658C4" Maximum="1" Value="{x:Bind SetRatio, Mode=OneWay}" Visibility="{x:Bind IsDlc}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Button>
+                                </DataTemplate>
+                            </GroupStyle.HeaderTemplate>
+                        </GroupStyle>
+                    </ListView.GroupStyle>
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="game:AchievementItem">
+                            <Grid
+                                MinHeight="76"
+                                Padding="14,10,12,10"
+                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1"
+                                ColumnSpacing="14"
+                                CornerRadius="6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="52" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Marker for unsaved changes -->
+                                <Border
+                                    Width="3"
+                                    Margin="-11,4,0,4"
+                                    HorizontalAlignment="Left"
+                                    Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                    CornerRadius="2"
+                                    Visibility="{x:Bind IsModified, Mode=OneWay}" />
+
+                                <Border Width="52" Height="52" VerticalAlignment="Center" Background="{ThemeResource SubtleFillColorSecondaryBrush}" CornerRadius="6">
+                                    <Image FlowDirection="LeftToRight" Opacity="{x:Bind IconOpacity, Mode=OneWay}" Source="{x:Bind Icon, Mode=OneWay}" Stretch="UniformToFill" />
+                                </Border>
+
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="{x:Bind Name}" TextTrimming="CharacterEllipsis" />
+                                        <Border Style="{StaticResource BadgeStyle}" ToolTipService.ToolTip="{x:Bind ProtectedTooltip}" Visibility="{x:Bind IsProtected}">
+                                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                                <FontIcon FontSize="10" Glyph="&#xEA18;" />
+                                                <TextBlock Style="{StaticResource BadgeTextStyle}" Text="{x:Bind loc:Strings.Protected}" />
+                                            </StackPanel>
+                                        </Border>
+                                        <Border Style="{StaticResource BadgeStyle}" ToolTipService.ToolTip="{x:Bind loc:Strings.HiddenTooltip}" Visibility="{x:Bind IsHidden}">
+                                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                                <FontIcon FontSize="10" Glyph="&#xED1A;" />
+                                                <TextBlock Style="{StaticResource BadgeTextStyle}" Text="{x:Bind loc:Strings.Hidden}" />
+                                            </StackPanel>
+                                        </Border>
+                                        <Border Style="{StaticResource BadgeStyle}" ToolTipService.ToolTip="{x:Bind loc:Strings.ArchivedTooltip}" Visibility="{x:Bind IsArchived}">
+                                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                                <FontIcon FontSize="10" Glyph="&#xE7B8;" />
+                                                <TextBlock Style="{StaticResource BadgeTextStyle}" Text="{x:Bind loc:Strings.Archived}" />
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+                                    <TextBlock
+                                        MaxLines="2"
+                                        Style="{StaticResource SecondaryTextStyle}"
+                                        Text="{x:Bind Description}"
+                                        TextTrimming="CharacterEllipsis"
+                                        TextWrapping="Wrap"
+                                        Visibility="{x:Bind HasDescription}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2" VerticalAlignment="Center" Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Glyph="{x:Bind StatusGlyph, Mode=OneWay}" />
+                                    <TextBlock Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind StatusText, Mode=OneWay}" />
+                                </StackPanel>
+
+                                <ToggleSwitch
+                                    Grid.Column="3"
+                                    MinWidth="0"
+                                    AutomationProperties.Name="{x:Bind Name}"
+                                    VerticalAlignment="Center"
+                                    IsEnabled="{x:Bind CanEdit}"
+                                    IsOn="{x:Bind IsAchieved, Mode=TwoWay}"
+                                    OffContent=""
+                                    OnContent=""
+                                    ToolTipService.ToolTip="{x:Bind ProtectedTooltip}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+
+                <!-- Statistics -->
+                <Grid x:Name="StatsPanel" Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <InfoBar
+                        Margin="24,0,24,6"
+                        IsClosable="False"
+                        IsOpen="True"
+                        Message="{x:Bind loc:Strings.StatsWarning}"
+                        Severity="Warning"
+                        Title="{x:Bind loc:Strings.StatsWarningTitle}">
+                        <InfoBar.Content>
+                            <CheckBox x:Name="EditStatsCheckBox" Margin="0,-4,0,10" Content="{x:Bind loc:Strings.StatsAllowEditing}" Checked="OnEditStatsChanged" Unchecked="OnEditStatsChanged" />
+                        </InfoBar.Content>
+                    </InfoBar>
+
+                    <Grid Grid.Row="1" Margin="40,6,38,6" ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="200" />
+                            <ColumnDefinition Width="280" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Style="{StaticResource ColumnHeaderStyle}" Text="{x:Bind loc:Strings.ColumnStatistic}" />
+                        <TextBlock Grid.Column="1" Style="{StaticResource ColumnHeaderStyle}" Text="{x:Bind loc:Strings.ColumnValue}" />
+                        <TextBlock Grid.Column="2" Style="{StaticResource ColumnHeaderStyle}" Text="{x:Bind loc:Strings.ColumnProperties}" />
+                    </Grid>
+
+                    <ListView x:Name="StatsView" Grid.Row="2" Padding="20,0,20,20" SelectionMode="None">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
+                                <Setter Property="Padding" Value="0" />
+                                <Setter Property="Margin" Value="0,0,0,4" />
+                                <Setter Property="MinHeight" Value="0" />
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="CornerRadius" Value="6" />
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="game:StatItem">
+                                <Grid
+                                    MinHeight="58"
+                                    Padding="16,8,14,8"
+                                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                    BorderThickness="1"
+                                    ColumnSpacing="16"
+                                    CornerRadius="6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="200" />
+                                        <ColumnDefinition Width="280" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Border
+                                        Width="3"
+                                        Margin="-13,4,0,4"
+                                        HorizontalAlignment="Left"
+                                        Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                        CornerRadius="2"
+                                        Visibility="{x:Bind IsModified, Mode=OneWay}" />
+
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="{x:Bind DisplayName}" TextWrapping="Wrap" />
+                                        <TextBlock Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind Id}" Visibility="{x:Bind ShowId}" IsTextSelectionEnabled="True" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                        <TextBox
+                                            AutomationProperties.Name="{x:Bind DisplayName}"
+                                            IsReadOnly="{x:Bind IsReadOnly, Mode=OneWay}"
+                                            KeyDown="OnStatValueKeyDown"
+                                            LostFocus="OnStatValueLostFocus"
+                                            Text="{x:Bind ValueText, Mode=OneWay}"
+                                            ToolTipService.ToolTip="{x:Bind RangeText}"
+                                            Visibility="{x:Bind CanEditValue, Mode=OneWay}" />
+                                        <TextBlock
+                                            Padding="11,0,0,0"
+                                            Style="{StaticResource BodyTextBlockStyle}"
+                                            Text="{x:Bind ValueText, Mode=OneWay}"
+                                            IsTextSelectionEnabled="True"
+                                            Visibility="{x:Bind IsReadOnly, Mode=OneWay}" />
+                                        <TextBlock
+                                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                            Style="{StaticResource CaptionTextBlockStyle}"
+                                            Text="{x:Bind Error, Mode=OneWay}"
+                                            TextWrapping="Wrap"
+                                            Visibility="{x:Bind HasError, Mode=OneWay}" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Orientation="Horizontal" Spacing="6">
+                                        <Border Style="{StaticResource BadgeStyle}">
+                                            <TextBlock Style="{StaticResource BadgeTextStyle}" Text="{x:Bind TypeText}" />
+                                        </Border>
+                                        <Border Style="{StaticResource BadgeStyle}" ToolTipService.ToolTip="{x:Bind loc:Strings.IncrementOnlyTooltip}" Visibility="{x:Bind IsIncrementOnly}">
+                                            <TextBlock Style="{StaticResource BadgeTextStyle}" Text="{x:Bind loc:Strings.IncrementOnly}" />
+                                        </Border>
+                                        <Border Style="{StaticResource BadgeStyle}" ToolTipService.ToolTip="{x:Bind loc:Strings.ProtectedStatTooltip}" Visibility="{x:Bind IsProtected}">
+                                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                                <FontIcon FontSize="10" Glyph="&#xEA18;" />
+                                                <TextBlock Style="{StaticResource BadgeTextStyle}" Text="{x:Bind loc:Strings.Protected}" />
+                                            </StackPanel>
+                                        </Border>
+                                        <Border Style="{StaticResource BadgeStyle}" ToolTipService.ToolTip="{x:Bind loc:Strings.SpecialPermissionTooltip}" Visibility="{x:Bind HasUnknownPermission}">
+                                            <TextBlock Style="{StaticResource BadgeTextStyle}" Text="{x:Bind loc:Strings.SpecialPermission}" />
+                                        </Border>
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </Grid>
+
+                <!-- Loading -->
+                <StackPanel x:Name="LoadingPanel" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="14">
+                    <ProgressRing Width="44" Height="44" IsActive="True" />
+                    <TextBlock x:Name="LoadingText" HorizontalAlignment="Center" Style="{StaticResource BodyStrongTextBlockStyle}" Text="{x:Bind loc:Strings.ConnectingToSteam}" />
+                </StackPanel>
+
+                <!-- Empty -->
+                <StackPanel x:Name="EmptyPanel" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10" Visibility="Collapsed">
+                    <FontIcon x:Name="EmptyGlyph" Glyph="&#xE735;" Style="{StaticResource StateGlyphStyle}" />
+                    <TextBlock x:Name="EmptyTitle" Style="{StaticResource StateTitleStyle}" />
+                    <TextBlock x:Name="EmptyMessage" Style="{StaticResource StateMessageStyle}" />
+                </StackPanel>
+
+                <!-- Error -->
+                <StackPanel x:Name="ErrorPanel" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10" Visibility="Collapsed">
+                    <FontIcon Glyph="&#xE7BA;" Style="{StaticResource StateGlyphStyle}" />
+                    <TextBlock x:Name="ErrorTitle" Style="{StaticResource StateTitleStyle}" />
+                    <TextBlock x:Name="ErrorMessage" Style="{StaticResource StateMessageStyle}" IsTextSelectionEnabled="True" />
+                    <Button x:Name="RetryButton" Margin="0,8,0,0" HorizontalAlignment="Center" Content="{x:Bind loc:Strings.Retry}" Style="{StaticResource AccentButtonStyle}" Click="OnRetryClick" />
+                </StackPanel>
+
+                <InfoBar
+                    x:Name="NotifyBar"
+                    MaxWidth="560"
+                    Margin="24"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Bottom"
+                    IsClosable="True"
+                    IsOpen="False" />
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

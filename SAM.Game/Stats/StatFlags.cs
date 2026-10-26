@@ -20,6 +20,8 @@
  *    distribution.
  */
 
+#nullable disable
+
 using System;
 
 namespace SAM.Game.Stats

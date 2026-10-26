@@ -58,10 +58,31 @@ namespace SAM.API
 
         private static IntPtr _Handle = IntPtr.Zero;
 
+        // A 64-bit process does not see the WOW6432Node key the Steam installer writes,
+        // so check the 32-bit view first, then the native view, then the per-user SteamPath.
         public static string GetInstallPath()
         {
-            return (string)Registry.GetValue(@"HKEY_LOCAL_MACHINE\Software\Valve\Steam", "InstallPath", null);
+            foreach (var view in new[] { RegistryView.Registry32, RegistryView.Registry64 })
+            {
+                using var baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, view);
+                using var key = baseKey.OpenSubKey(@"Software\Valve\Steam");
+                if (key?.GetValue("InstallPath") is string installPath &&
+                    Directory.Exists(installPath) == true)
+                {
+                    return installPath;
+                }
+            }
+
+            if (Registry.GetValue(@"HKEY_CURRENT_USER\Software\Valve\Steam", "SteamPath", null) is string steamPath &&
+                Directory.Exists(steamPath) == true)
+            {
+                return Path.GetFullPath(steamPath);
+            }
+
+            return null;
         }
+
+        private static string ClientLibraryName => Environment.Is64BitProcess ? "steamclient64.dll" : "steamclient.dll";
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         private delegate IntPtr NativeCreateInterface(string version, IntPtr returnCode);
@@ -120,7 +141,7 @@ namespace SAM.API
 
             Native.SetDllDirectory(path + ";" + Path.Combine(path, "bin"));
 
-            path = Path.Combine(path, "steamclient.dll");
+            path = Path.Combine(path, ClientLibraryName);
             IntPtr module = Native.LoadLibraryEx(path, IntPtr.Zero, Native.LoadWithAlteredSearchPath);
             if (module == IntPtr.Zero)
             {

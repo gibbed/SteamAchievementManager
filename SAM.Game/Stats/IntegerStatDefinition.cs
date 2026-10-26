@@ -20,6 +20,8 @@
  *    distribution.
  */
 
+#nullable disable
+
 namespace SAM.Game.Stats
 {
     internal class IntegerStatDefinition : StatDefinition

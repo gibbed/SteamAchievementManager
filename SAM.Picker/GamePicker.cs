@@ -344,7 +344,7 @@ namespace SAM.Picker
             candidate = this._SteamClient.SteamApps001.GetAppData(id, _($"small_capsule/{currentLanguage}"));
             if (string.IsNullOrEmpty(candidate) == false)
             {
-                return _($"https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/{id}/{candidate}");
+                return _($"https://shared.steamstatic.com/store_item_assets/steam/apps/{id}/{candidate}");
             }
 
             if (currentLanguage != "english")
@@ -352,7 +352,7 @@ namespace SAM.Picker
                 candidate = this._SteamClient.SteamApps001.GetAppData(id, "small_capsule/english");
                 if (string.IsNullOrEmpty(candidate) == false)
                 {
-                    return _($"https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/{id}/{candidate}");
+                    return _($"https://shared.steamstatic.com/store_item_assets/steam/apps/{id}/{candidate}");
                 }
             }
 

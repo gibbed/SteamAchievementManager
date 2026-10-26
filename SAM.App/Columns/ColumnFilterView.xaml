@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="SAM.App.Columns.ColumnFilterView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:cols="using:SAM.App.Columns"
+    xmlns:loc="using:SAM.App.Localization">
+
+    <!-- Column header menu like in Excel: sort, then search values and check or uncheck them -->
+    <StackPanel Width="290" Spacing="6">
+        <Button x:Name="SortAscendingButton" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Style="{StaticResource SubtleButtonStyle}" Click="OnSortAscendingClick">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <FontIcon FontSize="12" Glyph="&#xE70E;" />
+                <TextBlock Text="{x:Bind loc:Strings.SortAscendingAction}" />
+            </StackPanel>
+        </Button>
+        <Button x:Name="SortDescendingButton" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Style="{StaticResource SubtleButtonStyle}" Click="OnSortDescendingClick">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <FontIcon FontSize="12" Glyph="&#xE70D;" />
+                <TextBlock Text="{x:Bind loc:Strings.SortDescendingAction}" />
+            </StackPanel>
+        </Button>
+
+        <Border Height="1" Margin="0,4" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
+        <Button x:Name="ClearButton" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Style="{StaticResource SubtleButtonStyle}" Click="OnClearClick">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <FontIcon FontSize="12" Glyph="&#xE894;" />
+                <TextBlock x:Name="ClearText" />
+            </StackPanel>
+        </Button>
+
+        <TextBox x:Name="SearchBox" PlaceholderText="{x:Bind loc:Strings.FilterSearch}" TextChanged="OnSearchChanged" />
+        <CheckBox x:Name="SelectAllBox" Content="{x:Bind loc:Strings.FilterSelectAll}" Click="OnSelectAllClick" />
+
+        <ListView
+            x:Name="ValuesList"
+            MaxHeight="280"
+            Margin="-12,0"
+            SelectionMode="None"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="0,1">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
+                    <Setter Property="MinHeight" Value="32" />
+                    <Setter Property="Padding" Value="12,0" />
+                </Style>
+            </ListView.ItemContainerStyle>
+            <ListView.ItemTemplate>
+                <DataTemplate x:DataType="cols:FilterOption">
+                    <CheckBox MinHeight="28" Padding="8,4,0,0" Content="{x:Bind Label}" IsChecked="{x:Bind IsChecked, Mode=TwoWay}" Click="OnOptionClick" />
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" Spacing="8">
+            <Button x:Name="OkButton" MinWidth="90" Content="{x:Bind loc:Strings.Ok}" Style="{StaticResource AccentButtonStyle}" Click="OnOkClick" />
+            <Button MinWidth="90" Content="{x:Bind loc:Strings.Cancel}" Click="OnCancelClick" />
+        </StackPanel>
+    </StackPanel>
+</UserControl>

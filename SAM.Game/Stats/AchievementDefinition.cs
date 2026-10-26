@@ -20,6 +20,8 @@
  *    distribution.
  */
 
+#nullable disable
+
 namespace SAM.Game.Stats
 {
     internal class AchievementDefinition
@@ -31,6 +33,12 @@ namespace SAM.Game.Stats
         public string IconLocked;
         public bool IsHidden;
         public int Permission;
+
+        // Achievement sets (used by SAM.App): groupid (0 = base game), archived and the position in the stat's bit field.
+        public int SetId;
+        public bool IsArchived;
+        public int StatId;
+        public int Bit;
 
         public override string ToString()
         {

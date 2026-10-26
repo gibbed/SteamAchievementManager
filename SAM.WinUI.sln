@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SAM.API.x64", "SAM.API.x64\SAM.API.x64.csproj", "{B4733186-8E25-4A86-9734-67076EA41E4C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SAM.App", "SAM.App\SAM.App.csproj", "{5135E101-D37E-4F42-BFFC-B6A2E68F80D2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B4733186-8E25-4A86-9734-67076EA41E4C}.Debug|x64.ActiveCfg = Debug|x64
+		{B4733186-8E25-4A86-9734-67076EA41E4C}.Debug|x64.Build.0 = Debug|x64
+		{B4733186-8E25-4A86-9734-67076EA41E4C}.Release|x64.ActiveCfg = Release|x64
+		{B4733186-8E25-4A86-9734-67076EA41E4C}.Release|x64.Build.0 = Release|x64
+		{5135E101-D37E-4F42-BFFC-B6A2E68F80D2}.Debug|x64.ActiveCfg = Debug|x64
+		{5135E101-D37E-4F42-BFFC-B6A2E68F80D2}.Debug|x64.Build.0 = Debug|x64
+		{5135E101-D37E-4F42-BFFC-B6A2E68F80D2}.Release|x64.ActiveCfg = Release|x64
+		{5135E101-D37E-4F42-BFFC-B6A2E68F80D2}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3C5D6B0E-7F41-4B8A-9E25-6A1D2C8F4E70}
+	EndGlobalSection
+EndGlobal

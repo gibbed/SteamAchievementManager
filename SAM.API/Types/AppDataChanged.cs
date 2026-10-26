@@ -28,6 +28,8 @@ namespace SAM.API.Types
     public struct AppDataChanged
     {
         public uint Id;
+
+        [MarshalAs(UnmanagedType.I1)]
         public bool Result;
     }
 }
