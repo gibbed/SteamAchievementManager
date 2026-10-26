@@ -21,6 +21,8 @@ public sealed class AchievementItem : ObservableObject
         Id = definition.Id;
         Permission = definition.Permission;
         IsHidden = definition.IsHidden;
+        SetId = definition.SetId;
+        IsArchived = definition.IsArchived;
         IconNormal = string.IsNullOrEmpty(definition.IconNormal) ? null : definition.IconNormal;
         IconLocked = string.IsNullOrEmpty(definition.IconLocked) ? IconNormal : definition.IconLocked;
 
@@ -52,6 +54,12 @@ public sealed class AchievementItem : ObservableObject
     public int Permission { get; }
 
     public bool IsHidden { get; }
+
+    /// <summary>Achievement set according to the schema (0 = base game).</summary>
+    public int SetId { get; }
+
+    /// <summary>Archived: can no longer be unlocked and does not count towards progress.</summary>
+    public bool IsArchived { get; }
 
     public string? IconNormal { get; }
 

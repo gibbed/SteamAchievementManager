@@ -35,6 +35,9 @@ namespace SAM.App.Schema
     {
         public readonly List<AchievementDefinition> Achievements = new();
         public readonly List<StatDefinition> Stats = new();
+
+        /// <summary>Achievement sets according to groups; empty for games without sets.</summary>
+        public readonly List<AchievementSet> Sets = new();
     }
 
     internal static class SchemaLoader
@@ -193,6 +196,8 @@ namespace SAM.App.Schema
                                 foreach (var bit in bits.Children)
                                 {
                                     string id = bit["name"].AsString("");
+                                    _ = int.TryParse(stat.Name, NumberStyles.None, CultureInfo.InvariantCulture, out var statId);
+                                    _ = int.TryParse(bit.Name, NumberStyles.None, CultureInfo.InvariantCulture, out var bitIndex);
                                     string name = GetLocalizedString(bit["display"]["name"], currentLanguage, id);
                                     string desc = GetLocalizedString(bit["display"]["desc"], currentLanguage, "");
 
@@ -205,6 +210,10 @@ namespace SAM.App.Schema
                                         IconLocked = bit["display"]["icon_gray"].AsString(""),
                                         IsHidden = bit["display"]["hidden"].AsBoolean(false),
                                         Permission = bit["permission"].AsInteger(0),
+                                        SetId = bit["groupid"].AsInteger(AchievementSet.BaseGameId),
+                                        IsArchived = bit["archived"].AsBoolean(false),
+                                        StatId = statId,
+                                        Bit = bitIndex,
                                     });
                                 }
                             }
@@ -220,7 +229,48 @@ namespace SAM.App.Schema
                 }
             }
 
+            LoadSets(kv[gameId.ToString(CultureInfo.InvariantCulture)]["groups"], currentLanguage, schema);
             return schema;
+        }
+
+        /// <summary>groups/&lt;id&gt;/name, dlcappid, order - new with achievement sets (Steam beta, October 2026).</summary>
+        private static void LoadSets(KeyValue groups, string currentLanguage, GameSchema schema)
+        {
+            if (groups.Children == null)
+            {
+                return;
+            }
+
+            foreach (var group in groups.Children)
+            {
+                if (int.TryParse(group.Name, NumberStyles.None, CultureInfo.InvariantCulture, out var id) == false || id == AchievementSet.BaseGameId)
+                {
+                    continue;
+                }
+
+                var name = GetLocalizedString(group["name"], currentLanguage, "");
+                schema.Sets.Add(new AchievementSet
+                {
+                    Id = id,
+                    Name = string.IsNullOrEmpty(name) || name.StartsWith('#') ? null : name,
+                    DlcAppId = (uint)group["dlcappid"].AsInteger(0),
+                    Order = group["order"].AsInteger(id),
+                });
+            }
+
+            // Achievements without groupid form the base game set.
+            if (schema.Sets.Count > 0 && schema.Achievements.Any(a => schema.Sets.All(s => s.Id != a.SetId)))
+            {
+                foreach (var achievement in schema.Achievements.Where(a => schema.Sets.All(s => s.Id != a.SetId)))
+                {
+                    achievement.SetId = AchievementSet.BaseGameId;
+                }
+
+                schema.Sets.Add(new AchievementSet { Id = AchievementSet.BaseGameId, Order = -1 });
+            }
+
+            // Like on Steam's achievement page: base game sets before DLC sets.
+            schema.Sets.Sort((a, b) => (a.IsDlc, a.Order, a.Id).CompareTo((b.IsDlc, b.Order, b.Id)));
         }
     }
 }

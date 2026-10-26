@@ -57,7 +57,7 @@ LATIN_TO_CYRILLIC = [
 ]
 SINGLE = dict(zip("abcčćdđefghijklmnoprsštuvzžABCČĆDĐEFGHIJKLMNOPRSŠTUVZŽ",
                   "абцчћдђефгхијклмнопрсштувзжАБЦЧЋДЂЕФГХИЈКЛМНОПРСШТУВЗЖ"))
-PROTECTED = {"Steam", "Steam-a", "Steamu", "Steamom", "Achievement", "Manager", "Spacewar", "ID", "Ctrl", "Family", "Sharing", "gib"}
+PROTECTED = {"Steam", "Steam-a", "Steamu", "Steamom", "Achievement", "Manager", "Spacewar", "ID", "Ctrl", "Family", "Sharing", "gib", "DLC"}
 
 
 def serbian_cyrillic(text):

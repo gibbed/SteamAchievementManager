@@ -22,6 +22,12 @@ internal sealed class ListState
     /// <summary>Detected automatically, but removed again by hand.</summary>
     public HashSet<uint> NotAnymoreDismissed { get; set; } = [];
 
+    /// <summary>App IDs added by hand - even if Steam's cache does not know them or Steam does not report them as owned.</summary>
+    public HashSet<uint> ManualApps { get; set; } = [];
+
+    /// <summary>Achievement sets that were completed before - Steam keeps the completion even if achievements are added.</summary>
+    public Dictionary<uint, HashSet<int>> CompletedSets { get; set; } = [];
+
     private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
 
     public static string PathFor(uint accountId)

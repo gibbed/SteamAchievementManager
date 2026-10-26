@@ -22,8 +22,32 @@ internal static class ImageCache
         return client;
     }
 
+    /// <summary>
+    /// Load a game icon: first the file from Steam's library cache, otherwise from the CDN
+    /// (Steam may be replacing the file right now, or it may be damaged).
+    /// </summary>
+    public static async Task<BitmapImage?> LoadIconAsync(string? path, string? url)
+    {
+        if (path is not null)
+        {
+            try
+            {
+                var bitmap = new BitmapImage();
+                await using var stream = File.OpenRead(path);
+                await bitmap.SetSourceAsync(stream.AsRandomAccessStream());
+                return bitmap;
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException)
+            {
+                // Then from the CDN.
+            }
+        }
+
+        return await LoadAsync(url);
+    }
+
     /// <summary>Load an image; null if it does not exist or could not be loaded.</summary>
-    /// <param name="decodePixelWidth">Large images only: decode scaled down to this width (physical pixels).</param>
+    /// <param name="decodePixelWidth">Only for large images: decode scaled down to this width (physical pixels).</param>
     public static async Task<BitmapImage?> LoadAsync(string? url, int? decodePixelWidth = null)
     {
         if (string.IsNullOrEmpty(url))

@@ -1,0 +1,392 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="SAM.App.Views.ListsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:cols="using:SAM.App.Columns"
+    xmlns:helpers="using:SAM.App.Helpers"
+    xmlns:lists="using:SAM.App.Lists"
+    xmlns:loc="using:SAM.App.Localization">
+    <Grid x:Name="Root">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid.KeyboardAccelerators>
+            <KeyboardAccelerator Key="F" Modifiers="Control" Invoked="OnSearchAccelerator" />
+            <KeyboardAccelerator Key="F5" Invoked="OnRefreshAccelerator" />
+        </Grid.KeyboardAccelerators>
+
+        <!-- Header -->
+        <Grid Padding="36,18,36,14" ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel VerticalAlignment="Bottom">
+                <!-- Gear next to the title like in the library: show, hide and reorder columns -->
+                <StackPanel Orientation="Horizontal" Spacing="20">
+                    <TextBlock VerticalAlignment="Center" Text="{x:Bind loc:Strings.ListsTitle}" Style="{StaticResource TitleTextBlockStyle}" />
+                    <Button x:Name="ColumnsChooserButton" VerticalAlignment="Center" Padding="10,8" AutomationProperties.Name="{x:Bind loc:Strings.ColumnsTooltip}" ToolTipService.ToolTip="{x:Bind loc:Strings.ColumnsTooltip}">
+                        <FontIcon Glyph="&#xE713;" FontSize="14" />
+                        <Button.Flyout>
+                            <Flyout x:Name="ColumnsFlyout" Placement="BottomEdgeAlignedLeft" Opening="OnColumnsFlyoutOpening" />
+                        </Button.Flyout>
+                    </Button>
+                </StackPanel>
+                <TextBlock x:Name="SummaryText" Margin="0,2,0,0" Style="{StaticResource SecondaryTextStyle}" Text=" " TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Bottom">
+                <Button x:Name="AddAppIdsButton" Click="OnAddAppIdsClick" IsEnabled="False" ToolTipService.ToolTip="{x:Bind loc:Strings.AddAppIdsHint}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE710;" FontSize="14" />
+                        <TextBlock Text="{x:Bind loc:Strings.AddAppIds}" />
+                    </StackPanel>
+                </Button>
+                <Button x:Name="RefreshButton" Padding="10,8" AutomationProperties.Name="{x:Bind loc:Strings.Reload}" ToolTipService.ToolTip="{x:Bind loc:Strings.ReloadTooltip}" Click="OnRefreshClick">
+                    <FontIcon Glyph="&#xE72C;" FontSize="16" />
+                </Button>
+                <Button x:Name="ExportButton" Style="{StaticResource AccentButtonStyle}" Click="OnExportClick">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE9F9;" FontSize="14" />
+                        <TextBlock Text="{x:Bind loc:Strings.ExportGuide}" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <InfoBar
+            x:Name="LegendBar"
+            Grid.Row="1"
+            Margin="36,0,36,12"
+            IsClosable="True"
+            IsOpen="True"
+            Message="{x:Bind loc:Strings.ListsLegend}"
+            Severity="Informational"
+            Title="{x:Bind loc:Strings.ListsLegendTitle}" />
+
+        <Grid Grid.Row="2">
+            <Grid x:Name="ContentGrid" Margin="28,0,36,0" ColumnSpacing="20" Visibility="Collapsed">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="320" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Categories -->
+                <ListView
+                    x:Name="CategoryList"
+                    Padding="0,0,0,24"
+                    SelectionChanged="OnCategoryChanged"
+                    SelectionMode="Single">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
+                            <Setter Property="Padding" Value="10,3" />
+                            <Setter Property="MinHeight" Value="0" />
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.GroupStyle>
+                        <GroupStyle>
+                            <GroupStyle.HeaderContainerStyle>
+                                <Style TargetType="ListViewHeaderItem">
+                                    <Setter Property="Padding" Value="4,8,10,0" />
+                                    <Setter Property="Margin" Value="0" />
+                                    <Setter Property="MinHeight" Value="0" />
+                                </Style>
+                            </GroupStyle.HeaderContainerStyle>
+                            <GroupStyle.HeaderTemplate>
+                                <DataTemplate x:DataType="lists:ListCategoryGroup">
+                                    <!-- The whole heading collapses and expands the group; after it ∧ (open) or ∨ (collapsed) -->
+                                    <Button
+                                        Padding="6,2,6,2"
+                                        AutomationProperties.Name="{x:Bind ToggleLabel}"
+                                        Style="{StaticResource SubtleButtonStyle}"
+                                        ToolTipService.ToolTip="{x:Bind ToggleTooltip}"
+                                        Click="OnCategoryGroupToggleClick">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <TextBlock VerticalAlignment="Center" Style="{StaticResource BodyStrongTextBlockStyle}" FontSize="13" Text="{x:Bind Title}" TextTrimming="CharacterEllipsis" />
+                                            <FontIcon VerticalAlignment="Center" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Glyph="{x:Bind ToggleGlyph}" />
+                                        </StackPanel>
+                                    </Button>
+                                </DataTemplate>
+                            </GroupStyle.HeaderTemplate>
+                        </GroupStyle>
+                    </ListView.GroupStyle>
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="lists:ListCategory">
+                            <StackPanel>
+                                <Grid ColumnSpacing="10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <!-- Medal always in the same place ("All" has none), the description below it -->
+                                    <Grid VerticalAlignment="Center" ColumnSpacing="6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="12" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <helpers:MedalView Width="10" Height="14" VerticalAlignment="Center" Kind="{x:Bind IconKind}" />
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" FontSize="13" Text="{x:Bind Title}" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Style="{StaticResource SecondaryCaptionStyle}" FontSize="11" Text="{x:Bind Description}" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <Border Grid.Column="1" VerticalAlignment="Center" Style="{StaticResource BadgeStyle}">
+                                        <TextBlock Style="{StaticResource BadgeTextStyle}" FontSize="11" Text="{x:Bind CountText}" />
+                                    </Border>
+                                </Grid>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+
+                <!-- Games of the selected category -->
+                <Grid Grid.Column="1" RowSpacing="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Grid Margin="4,6,0,0" ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Bottom">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <helpers:MedalView x:Name="CategoryIcon" Width="16" Height="22" VerticalAlignment="Center" Visibility="Collapsed" />
+                                <TextBlock x:Name="CategoryTitle" Style="{StaticResource SubtitleTextBlockStyle}" TextTrimming="CharacterEllipsis" IsTextSelectionEnabled="True" />
+                            </StackPanel>
+                            <TextBlock x:Name="CategoryDescription" Style="{StaticResource SecondaryTextStyle}" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <Button Grid.Column="1" VerticalAlignment="Bottom" Click="OnCopyIdsClick">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE8C8;" FontSize="14" />
+                                <TextBlock Text="{x:Bind loc:Strings.CopyAppIds}" />
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="2" VerticalAlignment="Bottom" Click="OnCopyNamesClick">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE8C8;" FontSize="14" />
+                                <TextBlock Text="{x:Bind loc:Strings.CopyNames}" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <!-- Search, sorting and time range -->
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8">
+                        <AutoSuggestBox
+                            x:Name="SearchBox"
+                            Width="260"
+                            PlaceholderText="{x:Bind loc:Strings.ListsSearch}"
+                            QueryIcon="Find"
+                            TextChanged="OnSearchTextChanged" />
+                        <ComboBox
+                            x:Name="SortBox"
+                            MinWidth="200"
+                            AutomationProperties.Name="{x:Bind loc:Strings.SortTooltip}"
+                            SelectionChanged="OnSortChanged"
+                            ToolTipService.ToolTip="{x:Bind loc:Strings.SortTooltip}" />
+                        <Button x:Name="SortDirectionButton" Padding="10,8" Click="OnSortDirectionClick">
+                            <FontIcon x:Name="SortDirectionIcon" FontSize="14" Glyph="&#xE74A;" />
+                        </Button>
+                        <Button x:Name="PeriodButton">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE787;" FontSize="14" />
+                                <TextBlock x:Name="PeriodText" />
+                            </StackPanel>
+                            <Button.Flyout>
+                                <Flyout Placement="BottomEdgeAlignedLeft">
+                                    <StackPanel Width="300" Spacing="12">
+                                        <RadioButtons x:Name="PeriodField" Header="{x:Bind loc:Strings.DateRangeField}" SelectionChanged="OnPeriodChanged" />
+                                        <CalendarDatePicker x:Name="PeriodFrom" HorizontalAlignment="Stretch" DateChanged="OnPeriodChanged" Header="{x:Bind loc:Strings.DateFrom}" />
+                                        <CalendarDatePicker x:Name="PeriodTo" HorizontalAlignment="Stretch" DateChanged="OnPeriodChanged" Header="{x:Bind loc:Strings.DateTo}" />
+                                        <TextBlock Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind loc:Strings.DateRangeHint}" TextWrapping="Wrap" />
+                                        <Button Content="{x:Bind loc:Strings.Reset}" Click="OnPeriodResetClick" />
+                                    </StackPanel>
+                                </Flyout>
+                            </Button.Flyout>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- Column headers, aligned with the rows: click sorts (∧/∨), the funnel filters like in Excel -->
+                    <Grid Grid.Row="2" Padding="15,0,9,0" ColumnSpacing="14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="36" />
+                        </Grid.ColumnDefinitions>
+                        <cols:ColumnsPanel x:Name="ListHeader" VerticalAlignment="Center" Layout="{x:Bind cols:ColumnLayouts.Lists}" Spacing="14" />
+                    </Grid>
+
+                    <ListView x:Name="GamesList" Grid.Row="3" Padding="0,0,0,24" SelectionMode="None" ContainerContentChanging="OnGameContainerContentChanging">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
+                                <Setter Property="Padding" Value="0" />
+                                <Setter Property="Margin" Value="0,0,0,4" />
+                                <Setter Property="MinHeight" Value="0" />
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="CornerRadius" Value="6" />
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="lists:ListGame">
+                                <Grid
+                                    MinHeight="58"
+                                    Padding="14,8,8,8"
+                                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                    BorderThickness="1"
+                                    ColumnSpacing="14"
+                                    CornerRadius="6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="36" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Columns in the chosen order; the "..." menu always stays on the right -->
+                                    <cols:ColumnsPanel Layout="{x:Bind cols:ColumnLayouts.Lists}" Spacing="14">
+                                        <TextBlock cols:ColumnsPanel.Column="AppId" VerticalAlignment="Center" Style="{StaticResource SecondaryTextStyle}" Text="{x:Bind AppIdText}" IsTextSelectionEnabled="True" />
+                                        <Grid cols:ColumnsPanel.Column="Name" ColumnSpacing="14">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="32" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Border
+                                                Width="32"
+                                                Height="32"
+                                                VerticalAlignment="Center"
+                                                Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                                CornerRadius="4">
+                                                <Image Source="{x:Bind Icon, Mode=OneWay}" Stretch="UniformToFill" />
+                                            </Border>
+
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="{x:Bind Name}" TextTrimming="CharacterEllipsis" IsTextSelectionEnabled="True" />
+                                                    <Border Style="{StaticResource BadgeStyle}" ToolTipService.ToolTip="{x:Bind VisibilityTooltip}">
+                                                        <TextBlock Style="{StaticResource BadgeTextStyle}" Text="{x:Bind VisibilityText}" />
+                                                    </Border>
+                                                    <Border Style="{StaticResource BadgeStyle}" ToolTipService.ToolTip="{x:Bind SetsTooltip}" Visibility="{x:Bind HasSets}">
+                                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                                            <StackPanel Orientation="Horizontal" Spacing="2" Visibility="{x:Bind HasSets}">
+                                                                <TextBlock VerticalAlignment="Center" Style="{StaticResource BadgeTextStyle}" Text="{x:Bind SetBadges.BaseCount}" Visibility="{x:Bind SetBadges.HasBase}" />
+                                                                <helpers:MedalView Width="{x:Bind SetBadges.BaseWidth}" Height="15" VerticalAlignment="Center" Kind="{x:Bind SetBadges.BaseKind}" Visibility="{x:Bind SetBadges.HasBase}" />
+                                                                <TextBlock Margin="4,0,0,0" VerticalAlignment="Center" Style="{StaticResource BadgeTextStyle}" Text="{x:Bind SetBadges.DlcCount}" Visibility="{x:Bind SetBadges.HasDlc}" />
+                                                                <helpers:MedalView Width="16" Height="15" VerticalAlignment="Center" Kind="{x:Bind SetBadges.DlcKind}" Visibility="{x:Bind SetBadges.HasDlc}" />
+                                                                <helpers:MedalView Width="10" Height="15" VerticalAlignment="Center" Kind="{x:Bind SetBadges.NoneKind}" Visibility="{x:Bind SetBadges.HasNone}" />
+                                                            </StackPanel>
+                                                            <TextBlock VerticalAlignment="Center" Style="{StaticResource BadgeTextStyle}" Text="{x:Bind SetsText}" />
+                                                        </StackPanel>
+                                                    </Border>
+                                                    <Border Style="{StaticResource BadgeStyle}" Visibility="{x:Bind IsManual}">
+                                                        <TextBlock Style="{StaticResource BadgeTextStyle}" Text="{x:Bind loc:Strings.ManualAppBadge}" />
+                                                    </Border>
+                                                </StackPanel>
+                                                <TextBlock Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind CantFinishReason}" TextTrimming="CharacterEllipsis" Visibility="{x:Bind HasReason}" />
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <TextBlock cols:ColumnsPanel.Column="FirstUnlock" VerticalAlignment="Center" Style="{StaticResource SecondaryTextStyle}" Text="{x:Bind FirstUnlockText}" ToolTipService.ToolTip="{x:Bind FirstUnlockTooltip}" />
+                                        <TextBlock cols:ColumnsPanel.Column="LastUnlock" VerticalAlignment="Center" Style="{StaticResource SecondaryTextStyle}" Text="{x:Bind LastUnlockText}" ToolTipService.ToolTip="{x:Bind LastUnlockTooltip}" />
+
+                                        <Grid cols:ColumnsPanel.Column="Medal">
+                                            <helpers:MedalView Width="16" Height="22" VerticalAlignment="Center" Kind="{x:Bind MedalKind}" ToolTipService.ToolTip="{x:Bind MedalTooltip}" Visibility="{x:Bind HasMedal}" />
+                                        </Grid>
+
+                                        <StackPanel cols:ColumnsPanel.Column="Progress" VerticalAlignment="Center" Spacing="4">
+                                            <Grid>
+                                                <TextBlock Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind ProgressText}" />
+                                                <TextBlock HorizontalAlignment="Right" Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind PercentText}" />
+                                            </Grid>
+                                            <ProgressBar Maximum="1" Value="{x:Bind Ratio}" />
+                                        </StackPanel>
+                                    </cols:ColumnsPanel>
+
+                                    <Button
+                                        Grid.Column="1"
+                                        Width="36"
+                                        Height="36"
+                                        Padding="0"
+                                        VerticalAlignment="Center"
+                                        AutomationProperties.Name="{x:Bind loc:Strings.MoreOptions}"
+                                        Style="{StaticResource SubtleButtonStyle}"
+                                        ToolTipService.ToolTip="{x:Bind loc:Strings.MoreOptions}">
+                                        <FontIcon FontSize="14" Glyph="&#xE712;" />
+                                        <Button.Flyout>
+                                            <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                                <MenuFlyoutItem Click="OnOpenGameClick" Tag="{x:Bind AppId}" Text="{x:Bind loc:Strings.ManageAchievements}">
+                                                    <MenuFlyoutItem.Icon>
+                                                        <FontIcon Glyph="&#xE735;" />
+                                                    </MenuFlyoutItem.Icon>
+                                                </MenuFlyoutItem>
+                                                <MenuFlyoutItem Click="OnStorePageClick" Tag="{x:Bind AppId}" Text="{x:Bind loc:Strings.OpenStorePage}">
+                                                    <MenuFlyoutItem.Icon>
+                                                        <FontIcon Glyph="&#xE719;" />
+                                                    </MenuFlyoutItem.Icon>
+                                                </MenuFlyoutItem>
+                                                <MenuFlyoutSeparator />
+                                                <MenuFlyoutItem Click="OnMarkCantFinishClick" Tag="{x:Bind AppId}" Text="{x:Bind loc:Strings.MarkCantFinish}" Visibility="{x:Bind CanMarkCantFinish}">
+                                                    <MenuFlyoutItem.Icon>
+                                                        <FontIcon Glyph="&#xE7BA;" />
+                                                    </MenuFlyoutItem.Icon>
+                                                </MenuFlyoutItem>
+                                                <MenuFlyoutItem Click="OnUnmarkCantFinishClick" Tag="{x:Bind AppId}" Text="{x:Bind loc:Strings.UnmarkCantFinish}" Visibility="{x:Bind IsCantFinishMarked}" />
+                                                <MenuFlyoutItem Click="OnMarkNotAnymoreClick" Tag="{x:Bind AppId}" Text="{x:Bind loc:Strings.MarkNotAnymore}" Visibility="{x:Bind CanMarkNotAnymore}" />
+                                                <MenuFlyoutItem Click="OnUnmarkNotAnymoreClick" Tag="{x:Bind AppId}" Text="{x:Bind loc:Strings.UnmarkNotAnymore}" Visibility="{x:Bind IsNotAnymore}" />
+                                                <MenuFlyoutItem Click="OnRemoveManualClick" Tag="{x:Bind AppId}" Text="{x:Bind loc:Strings.RemoveManualApp}" Visibility="{x:Bind IsManual}">
+                                                    <MenuFlyoutItem.Icon>
+                                                        <FontIcon Glyph="&#xE74D;" />
+                                                    </MenuFlyoutItem.Icon>
+                                                </MenuFlyoutItem>
+                                            </MenuFlyout>
+                                        </Button.Flyout>
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <TextBlock
+                        x:Name="EmptyText"
+                        Grid.Row="3"
+                        Margin="0,40,0,0"
+                        HorizontalAlignment="Center"
+                        Style="{StaticResource SecondaryTextStyle}"
+                        Text="{x:Bind loc:Strings.ListEmpty}"
+                        Visibility="Collapsed" />
+                </Grid>
+            </Grid>
+
+            <!-- Loading -->
+            <StackPanel x:Name="LoadingPanel" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="14">
+                <ProgressRing Width="44" Height="44" IsActive="True" />
+                <TextBlock x:Name="LoadingText" HorizontalAlignment="Center" Style="{StaticResource BodyStrongTextBlockStyle}" />
+            </StackPanel>
+
+            <!-- Error -->
+            <StackPanel x:Name="ErrorPanel" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10" Visibility="Collapsed">
+                <FontIcon Glyph="&#xE7BA;" Style="{StaticResource StateGlyphStyle}" />
+                <TextBlock x:Name="ErrorTitle" Style="{StaticResource StateTitleStyle}" />
+                <TextBlock x:Name="ErrorMessage" Style="{StaticResource StateMessageStyle}" IsTextSelectionEnabled="True" />
+                <Button Margin="0,8,0,0" HorizontalAlignment="Center" Content="{x:Bind loc:Strings.Retry}" Style="{StaticResource AccentButtonStyle}" Click="OnRefreshClick" />
+            </StackPanel>
+
+            <InfoBar
+                x:Name="NotifyBar"
+                MaxWidth="560"
+                Margin="24"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Bottom"
+                IsClosable="True"
+                IsOpen="False" />
+        </Grid>
+    </Grid>
+</UserControl>

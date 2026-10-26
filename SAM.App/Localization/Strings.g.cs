@@ -57,12 +57,6 @@ public static partial class Strings
     /// <summary>Which kinds of apps are shown</summary>
     public static string FilterTooltip => Get("FilterTooltip");
 
-    /// <summary>Filter</summary>
-    public static string Filter => Get("Filter");
-
-    /// <summary>Filter ({0})</summary>
-    public static string FilterActive(object arg0) => Format("FilterActive", arg0);
-
     /// <summary>Games</summary>
     public static string TypeGames => Get("TypeGames");
 
@@ -659,4 +653,223 @@ public static partial class Strings
 
     /// <summary>Steam has not reported the visibility yet</summary>
     public static string VisibilityUnknownTooltip => Get("VisibilityUnknownTooltip");
+
+    /// <summary>Game</summary>
+    public static string ColumnGame => Get("ColumnGame");
+
+    /// <summary>Last achievement</summary>
+    public static string ColumnLastUnlock => Get("ColumnLastUnlock");
+
+    /// <summary>First achievement</summary>
+    public static string ColumnFirstUnlock => Get("ColumnFirstUnlock");
+
+    /// <summary>Progress</summary>
+    public static string ColumnProgress => Get("ColumnProgress");
+
+    /// <summary>No unlock times on this PC yet. Steam saves them once it has loaded the game's achievements here.</summary>
+    public static string UnlockTimeUnknown => Get("UnlockTimeUnknown");
+
+    /// <summary>Ascending</summary>
+    public static string SortAscending => Get("SortAscending");
+
+    /// <summary>Descending</summary>
+    public static string SortDescending => Get("SortDescending");
+
+    /// <summary>Period</summary>
+    public static string DateRange => Get("DateRange");
+
+    /// <summary>Date</summary>
+    public static string DateRangeField => Get("DateRangeField");
+
+    /// <summary>From</summary>
+    public static string DateFrom => Get("DateFrom");
+
+    /// <summary>To</summary>
+    public static string DateTo => Get("DateTo");
+
+    /// <summary>Games without unlock times are hidden while a period is set.</summary>
+    public static string DateRangeHint => Get("DateRangeHint");
+
+    /// <summary>Add app IDs</summary>
+    public static string AddAppIds => Get("AddAppIds");
+
+    /// <summary>For games the lists do not pick up on their own. Enter one or more app IDs or store links, separated by spaces or commas. Progress and dates come from Steam's files on this PC where available.</summary>
+    public static string AddAppIdsHint => Get("AddAppIdsHint");
+
+    /// <summary>e.g. 440, 730</summary>
+    public static string AddAppIdsPlaceholder => Get("AddAppIdsPlaceholder");
+
+    /// <summary>Add</summary>
+    public static string Add => Get("Add");
+
+    /// <summary>Added: {0}</summary>
+    public static string AddAppIdsAdded(object arg0) => Format("AddAppIdsAdded", arg0);
+
+    /// <summary>No valid app ID found.</summary>
+    public static string AddAppIdsNone => Get("AddAppIdsNone");
+
+    /// <summary>Remove from the lists</summary>
+    public static string RemoveManualApp => Get("RemoveManualApp");
+
+    /// <summary>Added manually</summary>
+    public static string ManualAppBadge => Get("ManualAppBadge");
+
+    /// <summary>Pick a date</summary>
+    public static string DatePlaceholder => Get("DatePlaceholder");
+
+    /// <summary>Base Game</summary>
+    public static string SetBaseGame => Get("SetBaseGame");
+
+    /// <summary>Sets {0}/{1}</summary>
+    public static string SetsProgress(object arg0, object arg1) => Format("SetsProgress", arg0, arg1);
+
+    /// <summary>DLC not owned, does not count</summary>
+    public static string SetNotOwned => Get("SetNotOwned");
+
+    /// <summary>kept by Steam</summary>
+    public static string SetKept => Get("SetKept");
+
+    /// <summary>Set completed</summary>
+    public static string SetCompleted => Get("SetCompleted");
+
+    /// <summary>Archived</summary>
+    public static string Archived => Get("Archived");
+
+    /// <summary>Can no longer be unlocked. Counts neither towards its set nor towards the game.</summary>
+    public static string ArchivedTooltip => Get("ArchivedTooltip");
+
+    /// <summary>All sets</summary>
+    public static string SetFilterAll => Get("SetFilterAll");
+
+    /// <summary>Achievement set</summary>
+    public static string SetFilterTooltip => Get("SetFilterTooltip");
+
+    /// <summary>Completed</summary>
+    public static string ProgressCompleted => Get("ProgressCompleted");
+
+    /// <summary>In Progress</summary>
+    public static string ProgressInProgress => Get("ProgressInProgress");
+
+    /// <summary>Not Started</summary>
+    public static string ProgressNotStarted => Get("ProgressNotStarted");
+
+    /// <summary>Sets: {0}</summary>
+    public static string SetsCategory(object arg0) => Format("SetsCategory", arg0);
+
+    /// <summary>All achievement sets completed</summary>
+    public static string CategorySetsCompletedDesc => Get("CategorySetsCompletedDesc");
+
+    /// <summary>Started, not all sets completed yet</summary>
+    public static string CategorySetsInProgressDesc => Get("CategorySetsInProgressDesc");
+
+    /// <summary>Has achievement sets, nothing unlocked yet</summary>
+    public static string CategorySetsNotStartedDesc => Get("CategorySetsNotStartedDesc");
+
+    /// <summary>system language</summary>
+    public static string LanguageDetected => Get("LanguageDetected");
+
+    /// <summary>Categories</summary>
+    public static string FilterCategories => Get("FilterCategories");
+
+    /// <summary>Which progress categories are shown</summary>
+    public static string FilterCategoriesTooltip => Get("FilterCategoriesTooltip");
+
+    /// <summary>Game type</summary>
+    public static string FilterGameType => Get("FilterGameType");
+
+    /// <summary>Collapse section</summary>
+    public static string SectionCollapse => Get("SectionCollapse");
+
+    /// <summary>Expand section</summary>
+    public static string SectionExpand => Get("SectionExpand");
+
+    /// <summary>Tiles</summary>
+    public static string ViewTiles => Get("ViewTiles");
+
+    /// <summary>List</summary>
+    public static string ViewList => Get("ViewList");
+
+    /// <summary>View</summary>
+    public static string ViewLabel => Get("ViewLabel");
+
+    /// <summary>Category</summary>
+    public static string ColumnCategory => Get("ColumnCategory");
+
+    /// <summary>Sets</summary>
+    public static string SetsTitle => Get("SetsTitle");
+
+    /// <summary>Visibility</summary>
+    public static string ColumnVisibility => Get("ColumnVisibility");
+
+    /// <summary>Medal</summary>
+    public static string ColumnMedal => Get("ColumnMedal");
+
+    /// <summary>Columns</summary>
+    public static string ColumnsButton => Get("ColumnsButton");
+
+    /// <summary>Show, hide and arrange columns</summary>
+    public static string ColumnsTooltip => Get("ColumnsTooltip");
+
+    /// <summary>Checked columns are shown. Change the order with the arrows or by dragging.</summary>
+    public static string ColumnsHint => Get("ColumnsHint");
+
+    /// <summary>Restore defaults</summary>
+    public static string ColumnsReset => Get("ColumnsReset");
+
+    /// <summary>Move up</summary>
+    public static string MoveUp => Get("MoveUp");
+
+    /// <summary>Move down</summary>
+    public static string MoveDown => Get("MoveDown");
+
+    /// <summary>Sort ascending</summary>
+    public static string SortAscendingAction => Get("SortAscendingAction");
+
+    /// <summary>Sort descending</summary>
+    public static string SortDescendingAction => Get("SortDescendingAction");
+
+    /// <summary>Search</summary>
+    public static string FilterSearch => Get("FilterSearch");
+
+    /// <summary>(Select all)</summary>
+    public static string FilterSelectAll => Get("FilterSelectAll");
+
+    /// <summary>Clear filter from “{0}”</summary>
+    public static string FilterClear(object arg0) => Format("FilterClear", arg0);
+
+    /// <summary>Filter and sort</summary>
+    public static string ColumnFilterTooltip => Get("ColumnFilterTooltip");
+
+    /// <summary>Click to sort, click again to reverse</summary>
+    public static string SortByColumnTooltip => Get("SortByColumnTooltip");
+
+    /// <summary>Column filters active</summary>
+    public static string ColumnFiltersActive => Get("ColumnFiltersActive");
+
+    /// <summary>Area</summary>
+    public static string PagesLabel => Get("PagesLabel");
+
+    /// <summary>Split into categories</summary>
+    public static string GroupByCategory => Get("GroupByCategory");
+
+    /// <summary>Customize tiles</summary>
+    public static string TileOptionsTooltip => Get("TileOptionsTooltip");
+
+    /// <summary>Show on tiles</summary>
+    public static string TileOptionsTitle => Get("TileOptionsTitle");
+
+    /// <summary>With nothing checked, a tile shows only the cover image.</summary>
+    public static string TileOptionsHint => Get("TileOptionsHint");
+
+    /// <summary>Game sets</summary>
+    public static string SetsBaseCategory => Get("SetsBaseCategory");
+
+    /// <summary>At least one base game set completed</summary>
+    public static string SetsBaseDesc => Get("SetsBaseDesc");
+
+    /// <summary>DLC sets</summary>
+    public static string SetsDlcCategory => Get("SetsDlcCategory");
+
+    /// <summary>At least one DLC set completed</summary>
+    public static string SetsDlcDesc => Get("SetsDlcDesc");
 }

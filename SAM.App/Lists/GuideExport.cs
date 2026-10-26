@@ -3,8 +3,9 @@ using System.Text;
 
 namespace SAM.App.Lists;
 
-/// <summary>A section for a Steam guide: a heading and one game per line.</summary>
-public sealed record GuideSection(string Title, string Body)
+/// <summary>A section for a Steam guide: heading and text in Steam's formatting (BBCode).</summary>
+/// <param name="Count">Number of games for list sections - for the overview of untouched games.</param>
+public sealed record GuideSection(string Title, string Body, int Count = 0)
 {
     public string LengthText => Localization.Strings.ExportSectionInfo(Body.Length.ToString("N0", CultureInfo.CurrentCulture));
 
@@ -13,17 +14,25 @@ public sealed record GuideSection(string Title, string Body)
 
 /// <summary>
 /// Builds the guide text in the style of "Steam Achievement Statistics": VG = visible games, PFL = Profile Features
-/// Limited, UG = untouched games. Sections that are too long are split alphabetically ("A - H", "Sa - St"),
-/// so none exceeds the character limit of a guide section. Headings stay in English like in the model guide.
+/// Limited, UG = untouched games. Formatted with Steam's markup like the original - overviews as [table] with
+/// [h1]/[h2], games as a numbered list [olist][*]. Sections that are too long are split alphabetically ("A - H", "Sa - St"),
+/// so that none exceeds the character limit of a guide section including markup. Headings stay in English.
 /// </summary>
 internal static class GuideExport
 {
     public const int DefaultLimit = 8000;
 
+    private const string ListStart = "[olist]\n";
+    private const string ListEnd = "\n[/olist]";
+    private const string Item = "[*]";
+
+    /// <summary>Numbers like in the original: "11,733".</summary>
+    private static readonly CultureInfo Numbers = CultureInfo.GetCultureInfo("en-US");
+
     public static List<GuideSection> Build(IReadOnlyList<ListCategory> categories, bool includeUntouched, int limit)
     {
         limit = Math.Max(500, limit);
-        var sections = new List<GuideSection> { Overview(categories, includeUntouched) };
+        var sections = new List<GuideSection> { Overview(categories, includeUntouched), Legend() };
 
         foreach (var (scope, prefix) in new[] { (ListScope.Visible, "VG: "), (ListScope.Limited, "PFL: ") })
         {
@@ -56,11 +65,17 @@ internal static class GuideExport
         if (includeUntouched)
         {
             var untouched = Find(categories, ListScope.All, ListKind.Untouched).Games;
+            var groups = new List<GuideSection>();
 
             foreach (var group in untouched.GroupBy(g => InitialGroup(g.Name)).OrderBy(g => GroupOrder(g.Key)).ThenBy(g => g.Key, StringComparer.Ordinal))
             {
-                sections.AddRange(Split("UG: " + group.Key, "UG:", group.Select(g => g.Name).ToList(), limit, letters: 2));
+                groups.AddRange(Split("UG: " + group.Key, "UG:", group.Select(g => g.Name).ToList(), limit, letters: 2));
             }
+
+            // Like in the original: first a table of all UG sections, then the sections themselves.
+            var rows = groups.Select(g => Row(g.Title[..g.Title.LastIndexOf(" (", StringComparison.Ordinal)], g.Count));
+            sections.Add(new GuideSection("Untouched Games: Quick Overview", Table("Section", "Number of Games", rows)));
+            sections.AddRange(groups);
         }
 
         return sections;
@@ -69,52 +84,97 @@ internal static class GuideExport
     private static ListCategory Find(IReadOnlyList<ListCategory> categories, ListScope scope, ListKind kind)
         => categories.First(c => c.Scope == scope && c.Kind == kind);
 
+    /// <summary>"Own Stats" like in the original: table with [h2] rows for the groups and the categories below them.</summary>
     private static GuideSection Overview(IReadOnlyList<ListCategory> categories, bool includeUntouched)
     {
-        var lines = new List<string>
-        {
-            "VG = Visible Games (👀✔) · PFL = Profile Features Limited (👀✖) · UG = Untouched Games",
-            "",
-        };
+        int Count(ListScope scope, ListKind kind) => Find(categories, scope, kind).Games.Count;
+        var rows = new List<string>();
 
-        foreach (var category in categories)
+        foreach (var (scope, title) in new[] { (ListScope.All, "Games with Achievements"), (ListScope.Visible, "Visible Games"), (ListScope.Limited, "Profile Features Limited") })
         {
-            if (category.Kind == ListKind.Untouched && !includeUntouched)
+            rows.Add(GroupRow(title, Count(scope, ListKind.All)));
+            rows.Add(Row("Completed Games", Count(scope, ListKind.Done)));
+            rows.Add(Row("Not 100 % Anymore", Count(scope, ListKind.NotAnymore)));
+            rows.Add(Row("Unfinished Games", Count(scope, ListKind.Started)));
+            rows.Add(Row("Games I can't finish", Count(scope, ListKind.CantFinish)));
+
+            var unknown = scope == ListScope.All ? Find(categories, ListScope.All, ListKind.All).Games.Count(g => g.Vetted is null) : 0;
+
+            if (unknown > 0)
             {
-                continue;
+                rows.Add(Row("Unknown visibility", unknown));
             }
-
-            var title = category.Kind == ListKind.Untouched ? "Untouched Games" : category.Title;
-            lines.Add(title + ": " + category.Games.Count.ToString(CultureInfo.InvariantCulture));
         }
 
-        lines.Add("");
-        lines.Add("Date: " + DateTime.Now.ToString("MMMM yyyy", CultureInfo.InvariantCulture));
-        return new GuideSection("Quick Overview", string.Join("\n", lines));
+        var sets = new[] { ListKind.SetsCompleted, ListKind.SetsInProgress, ListKind.SetsNotStarted }.Sum(k => Count(ListScope.All, k));
+        rows.Add(GroupRow("Games with Achievement Sets", sets));
+        rows.Add(Row("All Sets Completed", Count(ListScope.All, ListKind.SetsCompleted)));
+        rows.Add(Row("Sets In Progress", Count(ListScope.All, ListKind.SetsInProgress)));
+        rows.Add(Row("Sets Not Started", Count(ListScope.All, ListKind.SetsNotStarted)));
+        rows.Add(Row("Base Game Sets Completed", Count(ListScope.All, ListKind.SetsBase)));
+        rows.Add(Row("DLC Sets Completed", Count(ListScope.All, ListKind.SetsDlc)));
+
+        if (includeUntouched)
+        {
+            rows.Add(GroupRow("Untouched Games", Count(ListScope.All, ListKind.Untouched)));
+            rows.Add(Row("Visible Games", Count(ListScope.Visible, ListKind.Untouched)));
+            rows.Add(Row("Profile Features Limited", Count(ListScope.Limited, ListKind.Untouched)));
+        }
+
+        var body = Heading("Own Stats") + "\n" + Table("Category", "Number of Games", rows)
+                   + "\n[hr][/hr]\nDate: " + DateTime.Now.ToString("MMMM yyyy", CultureInfo.InvariantCulture);
+        return new GuideSection("Quick Overview", body);
     }
 
-    /// <summary>If everything fits into one section the heading is "Label (n)"; otherwise "SplitLabel A - H (n)", for UG "UG: Sa - St (n)".</summary>
+    /// <summary>"Note for the listing of my Games": what VG, PFL and UG mean.</summary>
+    private static GuideSection Legend()
+    {
+        var rows = new[]
+        {
+            "[tr][td][b]V[/b]isible [b]G[/b]ames (👀✔)[/td][td][b]VG[/b][/td][/tr]",
+            "[tr][td][b]P[/b]rofile [b]F[/b]eatures [b]L[/b]imited (👀✖)[/td][td][b]PFL[/b][/td][/tr]",
+            "[tr][td][b]U[/b]ntouched [b]G[/b]ames[/td][td][b]UG[/b][/td][/tr]",
+        };
+        return new GuideSection("Note for the listing of my Games", Table("Full Description", "Short Description", rows));
+    }
+
+    private static string Heading(string text) => "[h1][u][b]" + text + "[/b][/u][/h1]";
+
+    private static string Table(string first, string second, IEnumerable<string> rows)
+        => "[table]\n[tr][th][b][h1][u]" + first + "[/u][/h1][/b][/th][th][b][h1][u]" + second + "[/u][/h1][/b][/th][/tr]\n"
+           + string.Join("\n", rows) + "\n[/table]";
+
+    private static string GroupRow(string title, int count) => "[tr][td][h2]" + title + "[/h2][/td][td][h2]" + Number(count) + "[/h2][/td][/tr]";
+
+    private static string Row(string title, int count) => "[tr][td]" + title + "[/td][td]" + Number(count) + "[/td][/tr]";
+
+    private static string Number(int count) => count.ToString("N0", Numbers);
+
+    /// <summary>Games as a numbered list: [olist], one [*] and one line per game.</summary>
+    private static string OrderedList(List<string> lines) => ListStart + string.Join("\n", lines.Select(l => Item + l)) + ListEnd;
+
+    /// <summary>If everything fits into one section, the heading stays "Label (n)"; otherwise "SplitLabel A - H (n)", for UG "UG: Sa - St (n)".</summary>
     private static IEnumerable<GuideSection> Split(string label, string splitLabel, List<string> lines, int limit, int letters)
     {
         if (Length(lines) <= limit)
         {
-            yield return new GuideSection(label + " (" + lines.Count.ToString(CultureInfo.InvariantCulture) + ")", string.Join("\n", lines));
+            yield return new GuideSection(label + " (" + lines.Count.ToString(CultureInfo.InvariantCulture) + ")", OrderedList(lines), lines.Count);
             yield break;
         }
 
         var chunk = new List<string>();
-        var length = 0;
+        var length = ListStart.Length + ListEnd.Length;
 
         foreach (var line in lines)
         {
-            var added = chunk.Count == 0 ? line.Length : line.Length + 1;
+            var added = Item.Length + line.Length + (chunk.Count == 0 ? 0 : 1);
 
             if (chunk.Count > 0 && length + added > limit)
             {
                 yield return Chunk(splitLabel, chunk, letters);
                 chunk = [];
-                added = line.Length;
-                length = 0;
+                added = Item.Length + line.Length;
+                length = ListStart.Length + ListEnd.Length;
             }
 
             chunk.Add(line);
@@ -132,10 +192,12 @@ internal static class GuideExport
         var first = RangeKey(chunk[0], letters);
         var last = RangeKey(chunk[^1], letters);
         var range = first == last ? first : first + " - " + last;
-        return new GuideSection(label + " " + range + " (" + chunk.Count.ToString(CultureInfo.InvariantCulture) + ")", string.Join("\n", chunk));
+        return new GuideSection(label + " " + range + " (" + chunk.Count.ToString(CultureInfo.InvariantCulture) + ")", OrderedList(chunk), chunk.Count);
     }
 
-    private static int Length(List<string> lines) => lines.Count == 0 ? 0 : lines.Sum(l => l.Length) + lines.Count - 1;
+    /// <summary>Length of the finished section including [olist] and [*].</summary>
+    private static int Length(List<string> lines)
+        => ListStart.Length + ListEnd.Length + lines.Sum(l => Item.Length + l.Length) + Math.Max(0, lines.Count - 1);
 
     /// <summary>Initial letters for range labels, e.g. "Sa" for "Satisfactory".</summary>
     private static string RangeKey(string name, int letters)

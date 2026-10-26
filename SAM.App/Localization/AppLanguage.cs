@@ -1,6 +1,4 @@
 using System.Globalization;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 using Microsoft.UI.Xaml;
 using SAM.App.Helpers;
 
@@ -28,9 +26,7 @@ public static class AppLanguage
         "ar-AE", "ar-SA", "he-IL", "ar-EG", "en-ZA",
     ];
 
-    private static string SettingsPath => Path.Combine(AppPaths.Data, "settings.json");
-
-    /// <summary>Selected language, or null for the Windows setting.</summary>
+    /// <summary>Chosen language, or null for the Windows setting.</summary>
     public static string? Selected { get; private set; }
 
     public static CultureInfo Culture { get; private set; } = CultureInfo.CurrentUICulture;
@@ -99,21 +95,53 @@ public static class AppLanguage
         return Strings.Exists(id) ? id : "en";
     }
 
+    /// <summary>
+    /// 1. Windows setting, 2. the variant that matches the Windows language, 3. all others by country code (af-ZA, am-ET, ...).
+    /// </summary>
     public static IReadOnlyList<LanguageOption> Options()
     {
+        var windows = WindowsLanguage();
         var options = new List<LanguageOption>
         {
-            new(null, Strings.LanguageSystem, Capitalize(WindowsLanguage().NativeName)),
+            new(null, Strings.LanguageSystem, Capitalize(windows.NativeName)),
         };
 
-        foreach (var locale in Locales)
+        var detected = DetectedLocale(windows);
+
+        if (detected is not null)
         {
-            var culture = CultureInfo.GetCultureInfo(locale);
-            var subtitle = Capitalize(culture.DisplayName);
-            options.Add(new LanguageOption(locale, Capitalize(culture.NativeName), subtitle == Capitalize(culture.NativeName) ? locale : subtitle + "  ·  " + locale));
+            options.Add(Option(detected, Strings.LanguageDetected));
+        }
+
+        foreach (var locale in Locales.Where(l => l != detected).OrderBy(l => l, StringComparer.OrdinalIgnoreCase))
+        {
+            options.Add(Option(locale, null));
         }
 
         return options;
+    }
+
+    private static LanguageOption Option(string locale, string? note)
+    {
+        var culture = CultureInfo.GetCultureInfo(locale);
+        var subtitle = Capitalize(culture.DisplayName);
+        subtitle = subtitle == Capitalize(culture.NativeName) ? locale : subtitle + "  ·  " + locale;
+        return new LanguageOption(locale, Capitalize(culture.NativeName), note is null ? subtitle : subtitle + "  ·  " + note);
+    }
+
+    /// <summary>The offered variant that matches the Windows language: same tag, otherwise same language.</summary>
+    private static string? DetectedLocale(CultureInfo windows)
+    {
+        var exact = Locales.FirstOrDefault(l => string.Equals(l, windows.Name, StringComparison.OrdinalIgnoreCase));
+
+        if (exact is not null)
+        {
+            return exact;
+        }
+
+        var translation = ResolveTranslation(windows);
+        return Locales.FirstOrDefault(l => ResolveTranslation(CultureInfo.GetCultureInfo(l)) == translation &&
+                                           CultureInfo.GetCultureInfo(l).TwoLetterISOLanguageName == windows.TwoLetterISOLanguageName);
     }
 
     /// <summary>
@@ -136,34 +164,10 @@ public static class AppLanguage
         }
     }
 
-    public static void Save(string? locale)
-    {
-        try
-        {
-            Directory.CreateDirectory(AppPaths.Data);
-            var root = File.Exists(SettingsPath) ? JsonNode.Parse(File.ReadAllText(SettingsPath)) as JsonObject ?? [] : [];
-            root["language"] = locale;
-            File.WriteAllText(SettingsPath, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
-        }
-        catch (Exception)
-        {
-            // Without write access the previous language stays.
-        }
-    }
+    /// <summary>Without write access the previous language stays.</summary>
+    public static void Save(string? locale) => AppSettings.Write("language", locale);
 
-    private static string? ReadSetting()
-    {
-        try
-        {
-            return File.Exists(SettingsPath) && JsonNode.Parse(File.ReadAllText(SettingsPath))?["language"]?.GetValue<string>() is { Length: > 0 } locale
-                ? locale
-                : null;
-        }
-        catch (Exception)
-        {
-            return null;
-        }
-    }
+    private static string? ReadSetting() => AppSettings.ReadString("language");
 
     /// <summary>Windows display language - even if a different language is selected in the app.</summary>
     private static CultureInfo WindowsLanguage()

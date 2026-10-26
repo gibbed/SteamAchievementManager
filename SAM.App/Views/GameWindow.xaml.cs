@@ -4,6 +4,7 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using SAM.App.Game;
 using SAM.App.Helpers;
@@ -27,6 +28,10 @@ public sealed partial class GameWindow : Window, INotifier
 
     private SteamSession? _session;
     private List<AchievementItem> _visibleAchievements = [];
+    private List<AchievementSet> _sets = [];
+    private HashSet<uint> _ownedDlcs = [];
+    private List<AchievementGroup> _groups = [];
+    private readonly HashSet<int> _collapsedSets = [];
     private string _gameName;
     private bool _awaitingStats;
     private bool _isReady;
@@ -212,6 +217,8 @@ public sealed partial class GameWindow : Window, INotifier
             return;
         }
 
+        LoadSets(schema, dlc => session.Client.SteamApps008.IsSubscribedApp(dlc));
+
         try
         {
             LoadAchievements(session, schema);
@@ -236,6 +243,31 @@ public sealed partial class GameWindow : Window, INotifier
         EditStatsCheckBox.IsChecked = false;
         ApplyFilter();
         UpdateSummary();
+    }
+
+    /// <summary>Achievement sets from the schema; which DLCs the account owns decides whether their set counts.</summary>
+    private void LoadSets(GameSchema schema, Func<uint, bool> ownsDlc)
+    {
+        _sets = schema.Sets;
+        _ownedDlcs = _sets.Where(s => s.IsDlc && ownsDlc(s.DlcAppId)).Select(s => s.DlcAppId).ToHashSet();
+
+        var options = new List<string> { Strings.SetFilterAll };
+        options.AddRange(_sets.Select(s => s.Name ?? Strings.SetBaseGame));
+        SetFilter.SelectionChanged -= OnSetFilterChanged;
+        SetFilter.ItemsSource = options;
+        SetFilter.SelectedIndex = 0;
+        SetFilter.SelectionChanged += OnSetFilterChanged;
+    }
+
+    private bool IsCounted(AchievementItem achievement)
+    {
+        if (achievement.IsArchived)
+        {
+            return false;
+        }
+
+        var set = _sets.FirstOrDefault(s => s.Id == achievement.SetId);
+        return set is null || !set.IsDlc || _ownedDlcs.Contains(set.DlcAppId);
     }
 
     private static string TranslateError(int id) => id switch
@@ -319,11 +351,11 @@ public sealed partial class GameWindow : Window, INotifier
 
             if (_stats.Count == 0)
             {
-                ShowEmpty("", Strings.NoStatistics, Strings.NoStatisticsHelp);
+                ShowEmpty("\uE9D2", Strings.NoStatistics, Strings.NoStatisticsHelp);
             }
             else if (stats.Count == 0)
             {
-                ShowEmpty("", Strings.NoStatisticsFound, Strings.AdjustSearch);
+                ShowEmpty("\uE721", Strings.NoStatisticsFound, Strings.AdjustSearch);
             }
             else
             {
@@ -334,7 +366,9 @@ public sealed partial class GameWindow : Window, INotifier
         }
 
         var state = StateFilter.SelectedIndex;
+        int? setId = SetFilter.SelectedIndex > 0 && SetFilter.SelectedIndex <= _sets.Count ? _sets[SetFilter.SelectedIndex - 1].Id : null;
         _visibleAchievements = _achievements
+            .Where(a => setId is null || a.SetId == setId)
             .Where(a => state switch
             {
                 1 => !a.IsAchieved,
@@ -347,15 +381,37 @@ public sealed partial class GameWindow : Window, INotifier
                         a.Description.Contains(search, StringComparison.CurrentCultureIgnoreCase) ||
                         a.Id.Contains(search, StringComparison.OrdinalIgnoreCase))
             .ToList();
-        AchievementsView.ItemsSource = _visibleAchievements;
+        var matched = _visibleAchievements.Count;
+
+        if (_sets.Count > 0)
+        {
+            // Grouped by sets, in the order of Steam's achievement page. Collapsed sets only show the
+            // header; "Unlock all" etc. then only affect the visible achievements.
+            _groups = _sets
+                .Select(s => new AchievementGroup(
+                    s,
+                    !s.IsDlc || _ownedDlcs.Contains(s.DlcAppId),
+                    _visibleAchievements.Where(a => a.SetId == s.Id).ToList(),
+                    _achievements.Where(a => a.SetId == s.Id).ToList(),
+                    _collapsedSets.Contains(s.Id)))
+                .Where(g => g.MatchCount > 0)
+                .ToList();
+            _visibleAchievements = _groups.SelectMany(g => g).ToList();
+            AchievementsView.ItemsSource = new CollectionViewSource { IsSourceGrouped = true, Source = _groups }.View;
+        }
+        else
+        {
+            _groups = [];
+            AchievementsView.ItemsSource = _visibleAchievements;
+        }
 
         if (_achievements.Count == 0)
         {
-            ShowEmpty("", Strings.NoAchievements, Strings.NoAchievementsHelp);
+            ShowEmpty("\uE735", Strings.NoAchievements, Strings.NoAchievementsHelp);
         }
-        else if (_visibleAchievements.Count == 0)
+        else if (matched == 0)
         {
-            ShowEmpty("", Strings.NoAchievementsFound, Strings.AdjustSearchOrSelection);
+            ShowEmpty("\uE721", Strings.NoAchievementsFound, Strings.AdjustSearchOrSelection);
         }
         else
         {
@@ -365,11 +421,46 @@ public sealed partial class GameWindow : Window, INotifier
         UpdateCommands();
     }
 
+    /// <summary>Collapse or expand a set (button in the set header).</summary>
+    private void OnSetToggleClick(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not AchievementGroup group)
+        {
+            return;
+        }
+
+        if (!_collapsedSets.Remove(group.Id))
+        {
+            _collapsedSets.Add(group.Id);
+        }
+
+        ApplyFilter();
+
+        // The new ItemsSource starts at the top again - jump back to the set header.
+        if (_groups.FirstOrDefault(g => g.Id == group.Id) is { } shown && _groups.IndexOf(shown) > 0)
+        {
+            AchievementsView.UpdateLayout();
+            AchievementsView.MakeVisible(new SemanticZoomLocation { Item = shown });
+        }
+    }
+
     private void UpdateSummary()
     {
-        var total = _achievements.Count;
-        var achieved = _achievements.Count(a => a.IsAchieved);
+        // Steam's rules since achievement sets: archived achievements and DLCs not owned do not count.
+        var counted = _achievements.Where(IsCounted).ToList();
+        var total = counted.Count;
+        var achieved = counted.Count(a => a.IsAchieved);
         var ratio = total == 0 ? 0 : (double)achieved / total;
+
+        foreach (var group in _groups)
+        {
+            group.Refresh();
+        }
+
+        var complete = total > 0 && achieved >= total;
+        ProgressMedal.Kind = complete ? MedalKind.Game : MedalKind.None;
+        ProgressMedal.Visibility = complete ? Visibility.Visible : Visibility.Collapsed;
+        UpdateSetBadges(complete);
 
         ProgressPanel.Visibility = _isReady && total > 0 ? Visibility.Visible : Visibility.Collapsed;
         ProgressText.Text = Strings.ProgressAchievements(Number(achieved), Number(total));
@@ -393,8 +484,8 @@ public sealed partial class GameWindow : Window, INotifier
 
         if (_isReady)
         {
-            GameSubtitle.Text = Strings.AppIdValue(_appId.ToString(CultureInfo.InvariantCulture)) + "  ·  " + Strings.StatisticsCount(Number(_stats.Count));
-            AchievementsTab.Text = Strings.Achievements + "  " + Number(total);
+            GameSubtitle.Text = Strings.AppIdValue(_appId.ToString(CultureInfo.InvariantCulture)) + "  ·  " + Strings.StatisticsCount(Number(_stats.Count)) + SetsSummary();
+            AchievementsTab.Text = Strings.Achievements + "  " + Number(_achievements.Count);
             StatsTab.Text = Strings.Statistics + "  " + Number(_stats.Count);
         }
 
@@ -402,6 +493,43 @@ public sealed partial class GameWindow : Window, INotifier
         PendingBadge.Visibility = pending > 0 ? Visibility.Visible : Visibility.Collapsed;
         UpdateCommands();
     }
+
+    /// <summary>"  ·  Sets 2/16" - completed out of the sets that count.</summary>
+    /// <summary>Completed sets like in Steam's header - only as long as the game is not fully completed.</summary>
+    private void UpdateSetBadges(bool complete)
+    {
+        var done = _sets.Where(s => !s.IsDlc || _ownedDlcs.Contains(s.DlcAppId))
+                        .Select(s => (s.IsDlc, Members: _achievements.Where(a => a.SetId == s.Id && !a.IsArchived).ToList()))
+                        .Where(s => s.Members.Count > 0 && s.Members.All(a => a.IsAchieved))
+                        .ToList();
+        var baseDone = done.Count(s => !s.IsDlc);
+        var dlcDone = done.Count(s => s.IsDlc);
+
+        SetBadgesPanel.Visibility = !complete && done.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        BaseSetsCount.Text = Number(baseDone);
+        BaseSetsCount.Visibility = BaseSetsMedal.Visibility = baseDone > 0 ? Visibility.Visible : Visibility.Collapsed;
+        BaseSetsMedal.Kind = baseDone >= 2 ? MedalKind.SetDouble : MedalKind.Set;
+        BaseSetsMedal.Width = baseDone >= 2 ? 23 : 15;
+        DlcSetsCount.Text = Number(dlcDone);
+        DlcSetsCount.Visibility = DlcSetsMedal.Visibility = dlcDone > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private string SetsSummary()
+    {
+        if (_sets.Count == 0)
+        {
+            return "";
+        }
+
+        var sets = _sets.Where(s => !s.IsDlc || _ownedDlcs.Contains(s.DlcAppId))
+                        .Select(s => _achievements.Where(a => a.SetId == s.Id && !a.IsArchived).ToList())
+                        .Where(members => members.Count > 0)
+                        .ToList();
+        var done = sets.Count(members => members.All(a => a.IsAchieved));
+        return "  ·  " + Strings.SetsProgress(Number(done), Number(sets.Count));
+    }
+
+    private void OnSetFilterChanged(object sender, SelectionChangedEventArgs e) => ApplyFilter();
 
     private void UpdateCommands()
     {
@@ -414,6 +542,8 @@ public sealed partial class GameWindow : Window, INotifier
         SearchBox.IsEnabled = ready;
         StateFilter.IsEnabled = achievements;
         StateFilter.Visibility = IsStatsTab ? Visibility.Collapsed : Visibility.Visible;
+        SetFilter.IsEnabled = achievements;
+        SetFilter.Visibility = IsStatsTab || _sets.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
         UnlockAllItem.IsEnabled = achievements && _visibleAchievements.Count > 0;
         LockAllItem.IsEnabled = achievements && _visibleAchievements.Count > 0;
         InvertAllItem.IsEnabled = achievements && _visibleAchievements.Count > 0;
@@ -747,9 +877,9 @@ public sealed partial class GameWindow : Window, INotifier
             panel.Children.Add(section);
         }
 
-        Section("", Strings.SummaryUnlock(Number(unlock.Count)), unlock.Select(a => a.Name));
-        Section("", Strings.SummaryLock(Number(relock.Count)), relock.Select(a => a.Name));
-        Section("", Strings.SummaryStats(Number(stats.Count)), stats.Select(s =>
+        Section("\uE785", Strings.SummaryUnlock(Number(unlock.Count)), unlock.Select(a => a.Name));
+        Section("\uE72E", Strings.SummaryLock(Number(relock.Count)), relock.Select(a => a.Name));
+        Section("\uE9D2", Strings.SummaryStats(Number(stats.Count)), stats.Select(s =>
             s.DisplayName + ": " + (s.IsFloat ? ((float)s.OriginalValue).ToString("G", CultureInfo.CurrentCulture) : ((int)s.OriginalValue).ToString(CultureInfo.CurrentCulture)) + " → " + s.ValueText));
 
         return panel;
@@ -930,19 +1060,22 @@ public sealed partial class GameWindow : Window, INotifier
 
         GameTitle.Text = _gameName;
         Title = _gameName + " – Steam Achievement Manager (Demo)";
-        TitleText.Text = "Steam Achievement Manager  ·  " + _gameName + "  ·  Demo without Steam";
+        // Debug build only: texts and achievement names in the UI language (German or English).
+        var german = AppLanguage.Culture.TwoLetterISOLanguageName == "de";
+        TitleText.Text = "Steam Achievement Manager  ·  " + _gameName + (german ? "  ·  Demo ohne Steam" : "  ·  Demo without Steam");
         _ = LoadHeroAsync(SteamImages.StoreAsset(_appId, "library_hero.jpg"));
 
-        var schema = SchemaLoader.Load(_appId, "english");
+        var schema = SchemaLoader.Load(_appId, german ? "german" : "english");
 
         if (schema is null)
         {
-            ShowError("No schema", path, canRetry: false);
+            ShowError(german ? "Kein Schema" : "No schema", path, canRetry: false);
             return;
         }
 
         _achievements.Clear();
         _stats.Clear();
+        LoadSets(schema, _ => true);
         var index = 0;
         var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 

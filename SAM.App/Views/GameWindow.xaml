@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:game="using:SAM.App.Game"
+    xmlns:helpers="using:SAM.App.Helpers"
     xmlns:loc="using:SAM.App.Localization"
     Title="Steam Achievement Manager">
     <Window.SystemBackdrop>
@@ -95,8 +96,18 @@
 
                     <StackPanel x:Name="ProgressPanel" Grid.Column="1" Width="300" VerticalAlignment="Bottom" Spacing="6" Visibility="Collapsed">
                         <Grid>
-                            <TextBlock x:Name="ProgressText" Foreground="White" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                            <TextBlock x:Name="ProgressPercent" HorizontalAlignment="Right" Foreground="White" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <helpers:MedalView x:Name="ProgressMedal" Width="16" Height="24" VerticalAlignment="Center" Visibility="Collapsed" ToolTipService.ToolTip="{x:Bind loc:Strings.CategoryDoneDesc}" />
+                                <!-- Completed sets like in Steam's header: "1" + blue medal, "2" + purple double medal -->
+                                <StackPanel x:Name="SetBadgesPanel" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center" Visibility="Collapsed">
+                                    <TextBlock x:Name="BaseSetsCount" VerticalAlignment="Center" Foreground="White" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                    <helpers:MedalView x:Name="BaseSetsMedal" Height="22" VerticalAlignment="Center" />
+                                    <TextBlock x:Name="DlcSetsCount" Margin="6,0,0,0" VerticalAlignment="Center" Foreground="White" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                    <helpers:MedalView x:Name="DlcSetsMedal" Width="23" Height="22" VerticalAlignment="Center" Kind="DlcSet" />
+                                </StackPanel>
+                                <TextBlock x:Name="ProgressText" VerticalAlignment="Center" Foreground="White" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            </StackPanel>
+                            <TextBlock x:Name="ProgressPercent" HorizontalAlignment="Right" VerticalAlignment="Bottom" Foreground="White" Style="{StaticResource BodyStrongTextBlockStyle}" />
                         </Grid>
                         <ProgressBar x:Name="ProgressBarControl" Maximum="1" MinHeight="6" CornerRadius="3" />
                         <TextBlock x:Name="ProgressDetail" Foreground="#C8FFFFFF" Style="{StaticResource CaptionTextBlockStyle}" TextTrimming="CharacterEllipsis" />
@@ -133,6 +144,15 @@
                         PlaceholderText="{x:Bind loc:Strings.SearchAchievements}"
                         QueryIcon="Find"
                         TextChanged="OnSearchTextChanged" />
+
+                    <ComboBox
+                        x:Name="SetFilter"
+                        MinWidth="150"
+                        MaxWidth="190"
+                        VerticalAlignment="Center"
+                        AutomationProperties.Name="{x:Bind loc:Strings.SetFilterTooltip}"
+                        ToolTipService.ToolTip="{x:Bind loc:Strings.SetFilterTooltip}"
+                        Visibility="Collapsed" />
 
                     <ComboBox x:Name="StateFilter" MinWidth="156" VerticalAlignment="Center" SelectedIndex="0" SelectionChanged="OnStateFilterChanged" ToolTipService.ToolTip="{x:Bind loc:Strings.StateFilterTooltip}">
                         <ComboBoxItem Content="{x:Bind loc:Strings.StateAll}" />
@@ -218,6 +238,58 @@
                             <Setter Property="CornerRadius" Value="6" />
                         </Style>
                     </ListView.ItemContainerStyle>
+                    <!-- Achievement sets: header with medal, name and progress (blue base game, purple DLC) -->
+                    <ListView.GroupStyle>
+                        <GroupStyle>
+                            <GroupStyle.HeaderContainerStyle>
+                                <Style TargetType="ListViewHeaderItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                    <Setter Property="Padding" Value="4,14,12,6" />
+                                    <Setter Property="Margin" Value="0" />
+                                    <Setter Property="MinHeight" Value="0" />
+                                </Style>
+                            </GroupStyle.HeaderContainerStyle>
+                            <GroupStyle.HeaderTemplate>
+                                <DataTemplate x:DataType="game:AchievementGroup">
+                                    <!-- The whole header collapses and expands the set; after the name ∧ (open) or ∨ (collapsed) -->
+                                    <Button
+                                        Margin="-8,0,0,0"
+                                        Padding="8,4,8,4"
+                                        HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Stretch"
+                                        AutomationProperties.Name="{x:Bind ToggleLabel}"
+                                        Style="{StaticResource SubtleButtonStyle}"
+                                        ToolTipService.ToolTip="{x:Bind ToggleTooltip}"
+                                        Click="OnSetToggleClick">
+                                        <Grid ColumnSpacing="12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="240" />
+                                            </Grid.ColumnDefinitions>
+                                            <helpers:MedalView Width="20" Height="28" VerticalAlignment="Center" Kind="{x:Bind MedalKind, Mode=OneWay}" ToolTipService.ToolTip="{x:Bind MedalTooltip, Mode=OneWay}" />
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" FontSize="16" Text="{x:Bind Name}" TextTrimming="CharacterEllipsis" />
+                                                <Border Style="{StaticResource BadgeStyle}" Visibility="{x:Bind IsDlc}">
+                                                    <TextBlock Style="{StaticResource BadgeTextStyle}" Text="DLC" />
+                                                </Border>
+                                                <TextBlock VerticalAlignment="Center" Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind NotOwnedText}" Visibility="{x:Bind IsNotOwned}" />
+                                                <FontIcon Margin="2,0,0,0" VerticalAlignment="Center" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Glyph="{x:Bind ToggleGlyph}" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="4">
+                                                <Grid>
+                                                    <TextBlock Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind SetProgressText, Mode=OneWay}" />
+                                                    <TextBlock HorizontalAlignment="Right" Style="{StaticResource SecondaryCaptionStyle}" Text="{x:Bind SetPercentText, Mode=OneWay}" />
+                                                </Grid>
+                                                <ProgressBar Foreground="#1A9FFF" Maximum="1" Value="{x:Bind SetRatio, Mode=OneWay}" Visibility="{x:Bind IsBaseGame}" />
+                                                <ProgressBar Foreground="#B658C4" Maximum="1" Value="{x:Bind SetRatio, Mode=OneWay}" Visibility="{x:Bind IsDlc}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Button>
+                                </DataTemplate>
+                            </GroupStyle.HeaderTemplate>
+                        </GroupStyle>
+                    </ListView.GroupStyle>
                     <ListView.ItemTemplate>
                         <DataTemplate x:DataType="game:AchievementItem">
                             <Grid
@@ -261,6 +333,12 @@
                                             <StackPanel Orientation="Horizontal" Spacing="4">
                                                 <FontIcon FontSize="10" Glyph="&#xED1A;" />
                                                 <TextBlock Style="{StaticResource BadgeTextStyle}" Text="{x:Bind loc:Strings.Hidden}" />
+                                            </StackPanel>
+                                        </Border>
+                                        <Border Style="{StaticResource BadgeStyle}" ToolTipService.ToolTip="{x:Bind loc:Strings.ArchivedTooltip}" Visibility="{x:Bind IsArchived}">
+                                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                                <FontIcon FontSize="10" Glyph="&#xE7B8;" />
+                                                <TextBlock Style="{StaticResource BadgeTextStyle}" Text="{x:Bind loc:Strings.Archived}" />
                                             </StackPanel>
                                         </Border>
                                     </StackPanel>
