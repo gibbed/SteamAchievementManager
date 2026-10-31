@@ -141,20 +141,31 @@ namespace SAM.API
 
             this._RunningCallbacks = true;
 
-            Types.CallbackMessage message;
-            while (Steam.GetCallback(this._Pipe, out message, out _) == true)
+            try
             {
-                var callbackId = message.Id;
-                foreach (ICallback callback in this._Callbacks.Where(
-                    candidate => candidate.Id == callbackId &&
-                                 candidate.IsServer == server))
+                Types.CallbackMessage message;
+                while (Steam.GetCallback(this._Pipe, out message, out _) == true)
                 {
-                    callback.Run(message.ParamPointer);
+                    try
+                    {
+                        var callbackId = message.Id;
+                        foreach (ICallback callback in this._Callbacks.Where(
+                            candidate => candidate.Id == callbackId &&
+                                         candidate.IsServer == server))
+                        {
+                            callback.Run(message.ParamPointer);
+                        }
+                    }
+                    finally
+                    {
+                        Steam.FreeLastCallback(this._Pipe);
+                    }
                 }
-                Steam.FreeLastCallback(this._Pipe);
             }
-
-            this._RunningCallbacks = false;
+            finally
+            {
+                this._RunningCallbacks = false;
+            }
         }
     }
 }

@@ -22,6 +22,7 @@
 
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Windows.Forms;
 
 namespace SAM.Game
@@ -35,7 +36,7 @@ namespace SAM.Game
 
             if (args.Length == 0)
             {
-                Process.Start("SAM.Picker.exe");
+                Process.Start(Path.Combine(Application.StartupPath, "SAM.Picker.exe"));
                 return;
             }
 
@@ -67,34 +68,15 @@ namespace SAM.Game
                 }
                 catch (API.ClientInitializeException e)
                 {
-                    if (e.Failure == API.ClientInitializeFailure.ConnectToGlobalUser)
-                    {
-                        MessageBox.Show(
-                            "Steam is not running. Please start Steam then run this tool again.\n\n" +
-                            "If you have the game through Family Share, the game may be locked due to\n" +
-                            "the Family Share account actively playing a game.\n\n" +
-                            "(" + e.Message + ")",
-                            "Error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
-                    }
-                    else if (string.IsNullOrEmpty(e.Message) == false)
-                    {
-                        MessageBox.Show(
-                            "Steam is not running. Please start Steam then run this tool again.\n\n" +
-                            "(" + e.Message + ")",
-                            "Error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
-                    }
-                    else
-                    {
-                        MessageBox.Show(
-                            "Steam is not running. Please start Steam then run this tool again.",
-                            "Error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
-                    }
+                    var familyShareNote = e.Failure == API.ClientInitializeFailure.ConnectToGlobalUser
+                        ? "If you have the game through Family Share, the game may be locked due to\n" +
+                          "the Family Share account actively playing a game.\n\n"
+                        : "";
+                    MessageBox.Show(
+                        e.Description + "\n\n" + familyShareNote + "(" + e.Message + ")",
+                        "Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
                     return;
                 }
                 catch (DllNotFoundException)

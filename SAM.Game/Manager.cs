@@ -46,11 +46,20 @@ namespace SAM.Game
 
         private readonly List<Stats.AchievementDefinition> _AchievementDefinitions = new();
 
+        // unsaved achievement changes by ID, kept here because filtering rebuilds the list
+        private readonly Dictionary<string, bool> _PendingAchievements = new();
+
         private readonly BindingList<Stats.StatInfo> _Statistics = new();
 
         private readonly API.Callbacks.UserStatsReceived _UserStatsReceivedCallback;
+        private readonly API.Callbacks.UserStatsStored _UserStatsStoredCallback;
 
-        //private API.Callback<APITypes.UserStatsStored> UserStatsStoredCallback;
+        private const int StoreTimeoutSeconds = 30;
+
+        private bool _IsStorePending;
+        private DateTime _StoreDeadline;
+        private int _PendingAchievementCount;
+        private int _PendingStatisticCount;
 
         public Manager(long gameId, API.Client client)
         {
@@ -101,7 +110,8 @@ namespace SAM.Game
             this._UserStatsReceivedCallback = client.CreateAndRegisterCallback<API.Callbacks.UserStatsReceived>();
             this._UserStatsReceivedCallback.OnRun += this.OnUserStatsReceived;
 
-            //this.UserStatsStoredCallback = new API.Callback(1102, new API.Callback.CallbackFunction(this.OnUserStatsStored));
+            this._UserStatsStoredCallback = client.CreateAndRegisterCallback<API.Callbacks.UserStatsStored>();
+            this._UserStatsStoredCallback.OnRun += this.OnUserStatsStored;
 
             this.RefreshStats();
         }
@@ -216,7 +226,7 @@ namespace SAM.Game
                     return false;
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return false;
             }
@@ -373,10 +383,24 @@ namespace SAM.Game
                 return;
             }
 
-            if (this.LoadUserGameStatsSchema() == false)
+            try
             {
-                this._GameStatusLabel.Text = "Failed to load schema.";
+                if (this.LoadUserGameStatsSchema() == false)
+                {
+                    this._GameStatusLabel.Text = "Failed to load schema.";
+                    this.EnableInput();
+                    return;
+                }
+            }
+            catch (Exception e)
+            {
+                this._GameStatusLabel.Text = "Error when loading schema.";
                 this.EnableInput();
+                MessageBox.Show(
+                    "Error when loading schema:\n" + e,
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
                 return;
             }
 
@@ -416,8 +440,42 @@ namespace SAM.Game
             this.EnableInput();
         }
 
+        private void OnUserStatsStored(APITypes.UserStatsStored param)
+        {
+            if (this._IsStorePending == false)
+            {
+                return;
+            }
+
+            this._IsStorePending = false;
+
+            if (param.Result == 1)
+            {
+                MessageBox.Show(
+                    this,
+                    $"Stored {this._PendingAchievementCount} achievements and {this._PendingStatisticCount} statistics.",
+                    "Information",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            else
+            {
+                MessageBox.Show(
+                    this,
+                    param.Result == 8
+                        ? "Steam rejected the store because a stat broke one of its rules. Rejected values were reverted."
+                        : $"Steam reported an error while storing: {TranslateError(param.Result)}",
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+
+            this.RefreshStats();
+        }
+
         private void RefreshStats()
         {
+            this._PendingAchievements.Clear();
             this._AchievementListView.Items.Clear();
             this._StatisticsDataGridView.Rows.Clear();
 
@@ -428,6 +486,7 @@ namespace SAM.Game
             var callHandle = this._SteamClient.SteamUserStats.RequestUserStats(steamId);
             if (callHandle == API.CallHandle.Invalid)
             {
+                this.EnableInput();
                 MessageBox.Show(this, "Failed.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
@@ -446,6 +505,7 @@ namespace SAM.Game
 
             this._IsUpdatingAchievementList = true;
 
+            this._IconQueue.Clear();
             this._AchievementListView.Items.Clear();
             this._AchievementListView.BeginUpdate();
             //this.Achievements.Clear();
@@ -503,7 +563,9 @@ namespace SAM.Game
 
                 ListViewItem item = new()
                 {
-                    Checked = isAchieved,
+                    Checked = this._PendingAchievements.TryGetValue(def.Id, out var pendingValue) == true
+                        ? pendingValue
+                        : isAchieved,
                     Tag = info,
                     Text = info.Name,
                     BackColor = (def.Permission & 3) == 0 ? Color.Black : Color.FromArgb(64, 0, 0),
@@ -559,6 +621,8 @@ namespace SAM.Game
                         DisplayName = intStat.DisplayName,
                         IntValue = value,
                         OriginalValue = value,
+                        MinValue = intStat.MinValue,
+                        MaxValue = intStat.MaxValue,
                         IsIncrementOnly = intStat.IncrementOnly,
                         Permission = intStat.Permission,
                     });
@@ -575,6 +639,8 @@ namespace SAM.Game
                         DisplayName = floatStat.DisplayName,
                         FloatValue = value,
                         OriginalValue = value,
+                        MinValue = floatStat.MinValue,
+                        MaxValue = floatStat.MaxValue,
                         IsIncrementOnly = floatStat.IncrementOnly,
                         Permission = floatStat.Permission,
                     });
@@ -604,36 +670,13 @@ namespace SAM.Game
 
         private int StoreAchievements()
         {
-            if (this._AchievementListView.Items.Count == 0)
+            foreach (var kv in this._PendingAchievements)
             {
-                return 0;
-            }
-
-            List<Stats.AchievementInfo> achievements = new();
-            foreach (ListViewItem item in this._AchievementListView.Items)
-            {
-                if (item.Tag is not Stats.AchievementInfo achievementInfo ||
-                    achievementInfo.IsAchieved == item.Checked)
-                {
-                    continue;
-                }
-
-                achievementInfo.IsAchieved = item.Checked;
-                achievements.Add(achievementInfo);
-            }
-
-            if (achievements.Count == 0)
-            {
-                return 0;
-            }
-
-            foreach (var info in achievements)
-            {
-                if (this._SteamClient.SteamUserStats.SetAchievement(info.Id, info.IsAchieved) == false)
+                if (this._SteamClient.SteamUserStats.SetAchievement(kv.Key, kv.Value) == false)
                 {
                     MessageBox.Show(
                         this,
-                        $"An error occurred while setting the state for {info.Id}, aborting store.",
+                        $"An error occurred while setting the state for {kv.Key}, aborting store.",
                         "Error",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
@@ -641,7 +684,7 @@ namespace SAM.Game
                 }
             }
 
-            return achievements.Count;
+            return this._PendingAchievements.Count;
         }
 
         private int StoreStatistics()
@@ -713,8 +756,26 @@ namespace SAM.Game
         private void OnTimer(object sender, EventArgs e)
         {
             this._CallbackTimer.Enabled = false;
-            this._SteamClient.RunCallbacks(false);
-            this._CallbackTimer.Enabled = true;
+            try
+            {
+                this._SteamClient.RunCallbacks(false);
+
+                if (this._IsStorePending == true && DateTime.UtcNow >= this._StoreDeadline)
+                {
+                    this._IsStorePending = false;
+                    MessageBox.Show(
+                        this,
+                        $"Steam did not confirm the store within {StoreTimeoutSeconds} seconds. Reloading to show the current values.",
+                        "Warning",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    this.RefreshStats();
+                }
+            }
+            finally
+            {
+                this._CallbackTimer.Enabled = true;
+            }
         }
 
         private void OnRefresh(object sender, EventArgs e)
@@ -722,11 +783,19 @@ namespace SAM.Game
             this.RefreshStats();
         }
 
+        private static bool IsProtected(ListViewItem item)
+        {
+            return item.Tag is Stats.AchievementInfo info && (info.Permission & 3) != 0;
+        }
+
         private void OnLockAll(object sender, EventArgs e)
         {
             foreach (ListViewItem item in this._AchievementListView.Items)
             {
-                item.Checked = false;
+                if (IsProtected(item) == false)
+                {
+                    item.Checked = false;
+                }
             }
         }
 
@@ -734,7 +803,10 @@ namespace SAM.Game
         {
             foreach (ListViewItem item in this._AchievementListView.Items)
             {
-                item.Checked = !item.Checked;
+                if (IsProtected(item) == false)
+                {
+                    item.Checked = !item.Checked;
+                }
             }
         }
 
@@ -742,7 +814,10 @@ namespace SAM.Game
         {
             foreach (ListViewItem item in this._AchievementListView.Items)
             {
-                item.Checked = true;
+                if (IsProtected(item) == false)
+                {
+                    item.Checked = true;
+                }
             }
         }
 
@@ -778,19 +853,30 @@ namespace SAM.Game
                 return;
             }
 
+            if (achievements == 0 && stats == 0)
+            {
+                MessageBox.Show(
+                    this,
+                    "There are no changes to store.",
+                    "Information",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+                return;
+            }
+
             if (this.Store() == false)
             {
                 this.RefreshStats();
                 return;
             }
 
-            MessageBox.Show(
-                this,
-                $"Stored {achievements} achievements and {stats} statistics.",
-                "Information",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
-            this.RefreshStats();
+            this._PendingAchievementCount = achievements;
+            this._PendingStatisticCount = stats;
+            this._StoreDeadline = DateTime.UtcNow.AddSeconds(StoreTimeoutSeconds);
+            this._IsStorePending = true;
+
+            this._GameStatusLabel.Text = "Waiting for Steam to confirm the store...";
+            this.DisableInput();
         }
 
         private void OnStatDataError(object sender, DataGridViewDataErrorEventArgs e)
@@ -806,6 +892,12 @@ namespace SAM.Game
                 e.ThrowException = false;
                 e.Cancel = true;
                 view.Rows[e.RowIndex].ErrorText = "Stat is protected! -- you can't modify it";
+            }
+            else if (e.Exception is ArgumentOutOfRangeException)
+            {
+                e.ThrowException = false;
+                e.Cancel = true;
+                view.Rows[e.RowIndex].ErrorText = "Value breaks this stat's minimum, maximum, or increment-only rule";
             }
             else
             {
@@ -887,6 +979,17 @@ namespace SAM.Game
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
                 e.NewValue = e.CurrentValue;
+                return;
+            }
+
+            var isChecked = e.NewValue == CheckState.Checked;
+            if (isChecked == info.IsAchieved)
+            {
+                this._PendingAchievements.Remove(info.Id);
+            }
+            else
+            {
+                this._PendingAchievements[info.Id] = isChecked;
             }
         }
 

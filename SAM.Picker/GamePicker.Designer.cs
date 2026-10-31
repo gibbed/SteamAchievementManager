@@ -237,8 +237,10 @@
             //
             // _ListWorker
             //
+            this._ListWorker.WorkerReportsProgress = true;
             this._ListWorker.WorkerSupportsCancellation = true;
             this._ListWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.DoDownloadList);
+            this._ListWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.OnDownloadListProgress);
             this._ListWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.OnDownloadList);
             //
             // GamePicker

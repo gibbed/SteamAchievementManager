@@ -41,7 +41,7 @@ namespace SAM.Picker
     {
         private readonly API.Client _SteamClient;
 
-        private readonly Dictionary<uint, GameInfo> _Games;
+        private readonly ConcurrentDictionary<uint, GameInfo> _Games;
         private readonly List<GameInfo> _FilteredGames;
 
         private readonly object _LogoLock;
@@ -98,7 +98,7 @@ namespace SAM.Picker
 
         private void DoDownloadList(object sender, DoWorkEventArgs e)
         {
-            this._PickerStatusLabel.Text = "Downloading game list...";
+            this._ListWorker.ReportProgress(0, "Downloading game list...");
 
             byte[] bytes;
             using (WebClient downloader = new())
@@ -123,11 +123,16 @@ namespace SAM.Picker
                 }
             }
 
-            this._PickerStatusLabel.Text = "Checking game ownership...";
+            this._ListWorker.ReportProgress(0, "Checking game ownership...");
             foreach (var kv in pairs)
             {
                 this.AddGame(kv.Key, kv.Value);
             }
+        }
+
+        private void OnDownloadListProgress(object sender, ProgressChangedEventArgs e)
+        {
+            this._PickerStatusLabel.Text = (string)e.UserState;
         }
 
         private void OnDownloadList(object sender, RunWorkerCompletedEventArgs e)
@@ -135,7 +140,11 @@ namespace SAM.Picker
             if (e.Error != null || e.Cancelled == true)
             {
                 this.AddDefaultGames();
-                MessageBox.Show(e.Error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(
+                    e.Error?.ToString() ?? "The game list download was cancelled.",
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
             }
 
             this.RefreshGames();
@@ -230,7 +239,7 @@ namespace SAM.Picker
             if (e.StartIndex >= count)
             {
                 // starting from the last item in the list
-                index = this._FilteredGames.FindIndex(0, startIndex - 1, predicate);
+                index = this._FilteredGames.FindIndex(0, count, predicate);
             }
             else if (startIndex <= 0)
             {
@@ -242,7 +251,7 @@ namespace SAM.Picker
                 index = this._FilteredGames.FindIndex(startIndex, count - startIndex, predicate);
                 if (index < 0)
                 {
-                    index = this._FilteredGames.FindIndex(0, startIndex - 1, predicate);
+                    index = this._FilteredGames.FindIndex(0, startIndex, predicate);
                 }
             }
 
@@ -315,6 +324,7 @@ namespace SAM.Picker
 
                     if (info.Item == null)
                     {
+                        this._LogosAttempting.Remove(info.ImageUrl);
                         continue;
                     }
 
@@ -413,7 +423,7 @@ namespace SAM.Picker
 
             GameInfo info = new(id, type);
             info.Name = this._SteamClient.SteamApps001.GetAppData(info.Id, "name");
-            this._Games.Add(id, info);
+            this._Games.TryAdd(id, info);
         }
 
         private void AddGames()
@@ -431,8 +441,14 @@ namespace SAM.Picker
         private void OnTimer(object sender, EventArgs e)
         {
             this._CallbackTimer.Enabled = false;
-            this._SteamClient.RunCallbacks(false);
-            this._CallbackTimer.Enabled = true;
+            try
+            {
+                this._SteamClient.RunCallbacks(false);
+            }
+            finally
+            {
+                this._CallbackTimer.Enabled = true;
+            }
         }
 
         private void OnActivateGame(object sender, EventArgs e)
@@ -452,7 +468,9 @@ namespace SAM.Picker
 
             try
             {
-                Process.Start("SAM.Game.exe", info.Id.ToString(CultureInfo.InvariantCulture));
+                Process.Start(
+                    Path.Combine(Application.StartupPath, "SAM.Game.exe"),
+                    info.Id.ToString(CultureInfo.InvariantCulture));
             }
             catch (Win32Exception)
             {
@@ -495,7 +513,7 @@ namespace SAM.Picker
             while (this._LogoQueue.TryDequeue(out var logo) == true)
             {
                 // clear the download queue because we will be showing only one app
-                this._LogosAttempted.Remove(logo.ImageUrl);
+                this._LogosAttempting.Remove(logo.ImageUrl);
             }
 
             this._AddGameTextBox.Text = "";
