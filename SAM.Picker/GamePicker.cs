@@ -426,6 +426,13 @@ namespace SAM.Picker
                 this._DownloadStatusLabel.Text = $"Downloading {1 + this._LogoQueue.Count} game icons...";
                 this._DownloadStatusLabel.Visible = true;
 
+                // the UI work above can redraw the list, and OnGameListViewDrawItem may have started a download
+                if (this._LogoWorker.IsBusy == true)
+                {
+                    this._LogoQueue.Enqueue(info);
+                    return;
+                }
+
                 this._LogoWorker.RunWorkerAsync(info);
             }
         }
