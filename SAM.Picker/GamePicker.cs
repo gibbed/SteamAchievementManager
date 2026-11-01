@@ -31,6 +31,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Windows.Forms;
+using System.Xml;
 using System.Xml.XPath;
 using static SAM.Picker.InvariantShorthand;
 using APITypes = SAM.API.Types;
@@ -39,6 +40,12 @@ namespace SAM.Picker
 {
     internal partial class GamePicker : Form
     {
+        private static readonly string _GameListCachePath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "SAM",
+            "games.xml");
+        private static readonly TimeSpan _GameListCacheLifetime = TimeSpan.FromDays(1);
+
         private readonly API.Client _SteamClient;
 
         private readonly ConcurrentDictionary<uint, GameInfo> _Games;
@@ -77,7 +84,7 @@ namespace SAM.Picker
             this._AppDataChangedCallback = client.CreateAndRegisterCallback<API.Callbacks.AppDataChanged>();
             this._AppDataChangedCallback.OnRun += this.OnAppDataChanged;
 
-            this.AddGames();
+            this.AddGames(false);
         }
 
         private void OnAppDataChanged(APITypes.AppDataChanged param)
@@ -100,14 +107,89 @@ namespace SAM.Picker
 
         private void DoDownloadList(object sender, DoWorkEventArgs e)
         {
-            this._ListWorker.ReportProgress(0, "Downloading game list...");
+            var pairs = this.LoadGameList((bool)e.Argument);
 
-            byte[] bytes;
-            using (WebClient downloader = new())
+            this._ListWorker.ReportProgress(0, "Checking game ownership...");
+            foreach (var kv in pairs)
             {
-                bytes = downloader.DownloadData(new Uri("https://gib.me/sam/games.xml"));
+                if (this._ListWorker.CancellationPending == true)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+
+                this.AddGame(kv.Key, kv.Value);
+            }
+        }
+
+        private List<KeyValuePair<uint, string>> LoadGameList(bool forceDownload)
+        {
+            var cacheAge = DateTime.UtcNow - File.GetLastWriteTimeUtc(_GameListCachePath);
+            if (forceDownload == false && cacheAge < _GameListCacheLifetime)
+            {
+                var cachedPairs = ReadCachedGameList();
+                if (cachedPairs != null)
+                {
+                    return cachedPairs;
+                }
             }
 
+            this._ListWorker.ReportProgress(0, "Downloading game list...");
+
+            try
+            {
+                byte[] bytes;
+                using (WebClient downloader = new())
+                {
+                    bytes = downloader.DownloadData(new Uri("https://gib.me/sam/games.xml"));
+                }
+
+                var pairs = ParseGameList(bytes);
+                if (pairs.Count > 0)
+                {
+                    WriteCachedGameList(bytes);
+                }
+                return pairs;
+            }
+            catch (Exception e) when (e is WebException or XmlException or FormatException)
+            {
+                // an old list is better than no list
+                var cachedPairs = ReadCachedGameList();
+                if (cachedPairs == null)
+                {
+                    throw;
+                }
+                return cachedPairs;
+            }
+        }
+
+        private static List<KeyValuePair<uint, string>> ReadCachedGameList()
+        {
+            try
+            {
+                return ParseGameList(File.ReadAllBytes(_GameListCachePath));
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException or XmlException or FormatException)
+            {
+                return null;
+            }
+        }
+
+        private static void WriteCachedGameList(byte[] bytes)
+        {
+            // an interrupted write fails to parse next time, which downloads the list again
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(_GameListCachePath));
+                File.WriteAllBytes(_GameListCachePath, bytes);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+            }
+        }
+
+        private static List<KeyValuePair<uint, string>> ParseGameList(byte[] bytes)
+        {
             List<KeyValuePair<uint, string>> pairs = new();
             using (MemoryStream stream = new(bytes, false))
             {
@@ -124,18 +206,7 @@ namespace SAM.Picker
                     pairs.Add(new((uint)nodes.Current.ValueAsLong, type));
                 }
             }
-
-            this._ListWorker.ReportProgress(0, "Checking game ownership...");
-            foreach (var kv in pairs)
-            {
-                if (this._ListWorker.CancellationPending == true)
-                {
-                    e.Cancel = true;
-                    return;
-                }
-
-                this.AddGame(kv.Key, kv.Value);
-            }
+            return pairs;
         }
 
         private void OnDownloadListProgress(object sender, ProgressChangedEventArgs e)
@@ -440,11 +511,11 @@ namespace SAM.Picker
             this._Games.TryAdd(id, info);
         }
 
-        private void AddGames()
+        private void AddGames(bool forceDownload)
         {
             this._Games.Clear();
             this._RefreshGamesButton.Enabled = false;
-            this._ListWorker.RunWorkerAsync();
+            this._ListWorker.RunWorkerAsync(forceDownload);
         }
 
         private void AddDefaultGames()
@@ -515,7 +586,7 @@ namespace SAM.Picker
         private void OnRefresh(object sender, EventArgs e)
         {
             this._AddGameTextBox.Text = "";
-            this.AddGames();
+            this.AddGames(true);
         }
 
         private void OnAddGame(object sender, EventArgs e)
