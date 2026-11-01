@@ -610,17 +610,24 @@ namespace SAM.Picker
                 return;
             }
 
-            while (this._LogoQueue.TryDequeue(out var logo) == true)
-            {
-                // clear the download queue because we will be showing only one app
-                this._LogosAttempting.Remove(logo.ImageUrl);
-            }
-
             this._AddGameTextBox.Text = "";
-            this._Games.Clear();
+            this._SearchGameTextBox.Text = "";
+
+            // add it again as a normal game so the type filters can't hide it
+            this._Games.TryRemove(id, out var _);
             this.AddGame(id, "normal");
             this._FilterGamesMenuItem.Checked = true;
             this.RefreshGames();
+
+            var index = this._FilteredGames.FindIndex(gi => gi.Id == id);
+            if (index >= 0)
+            {
+                var item = this._GameListView.Items[index];
+                item.Selected = true;
+                item.Focused = true;
+                this._GameListView.EnsureVisible(index);
+            }
+
             this.DownloadNextLogo();
         }
 
