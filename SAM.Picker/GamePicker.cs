@@ -51,6 +51,8 @@ namespace SAM.Picker
 
         private readonly API.Callbacks.AppDataChanged _AppDataChangedCallback;
 
+        private bool _IsCloseRequested;
+
         public GamePicker(API.Client client)
         {
             this._Games = new();
@@ -126,6 +128,12 @@ namespace SAM.Picker
             this._ListWorker.ReportProgress(0, "Checking game ownership...");
             foreach (var kv in pairs)
             {
+                if (this._ListWorker.CancellationPending == true)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+
                 this.AddGame(kv.Key, kv.Value);
             }
         }
@@ -137,6 +145,12 @@ namespace SAM.Picker
 
         private void OnDownloadList(object sender, RunWorkerCompletedEventArgs e)
         {
+            if (this._IsCloseRequested == true)
+            {
+                this.Close();
+                return;
+            }
+
             if (e.Error != null || e.Cancelled == true)
             {
                 this.AddDefaultGames();
@@ -436,6 +450,21 @@ namespace SAM.Picker
         private void AddDefaultGames()
         {
             this.AddGame(480, "normal"); // Spacewar
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            // the worker calls into Steam, so wait for it before the client gets released
+            // ponytail: the process stays hidden until a list download ends, up to WebClient's 100 second timeout
+            if (this._ListWorker.IsBusy == true)
+            {
+                this._IsCloseRequested = true;
+                this._ListWorker.CancelAsync();
+                this.Hide();
+                e.Cancel = true;
+            }
+
+            base.OnFormClosing(e);
         }
 
         private void OnTimer(object sender, EventArgs e)

@@ -1,5 +1,7 @@
 # Steam Achievement Manager
 
+> **This is a modified version** of [Steam Achievement Manager](https://github.com/gibbed/SteamAchievementManager) by Rick Gibbed, not the original software. The changes are in this repository's commit history. The download link and build status below belong to the original project and do not include these changes.
+
 Steam Achievement Manager (SAM) is a lightweight, portable application used to manage achievements and statistics in the popular PC gaming platform Steam. This application requires the [Steam client](https://store.steampowered.com/about/), a Steam account and network access. Steam must be running and the user must be logged in.
 
 This is the code for SAM. The closed-source version originally released in 2008, last major release in 2011, and last updated in 2013 (a hotfix).
