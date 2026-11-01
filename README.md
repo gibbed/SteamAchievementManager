@@ -17,6 +17,18 @@ There are some changes to the code since the last closed-source release:
 
 [![Build status](https://ci.appveyor.com/api/projects/status/00vic6jliar6j0ol/branch/master?svg=true)](https://ci.appveyor.com/project/gibbed/steamachievementmanager/branch/master)
 
+## Building
+
+Build with the MSBuild that comes with Visual Studio. Run this from a Developer Command Prompt in the repository root:
+
+```
+msbuild SAM.sln /restore /p:Configuration=Release /p:Platform=x86 /m /nr:false
+```
+
+- `/nr:false` stops MSBuild from leaving worker processes running that can keep the output files locked.
+- `dotnet build` does not work, because the projects have non-string resources (`MSB3822`, `MSB3823`).
+- The programs are written to `upload\`. Run them from there, because `obj\` does not have `SAM.API.dll`.
+
 ## Attribution
 
 Most (if not all) icons are from the [Fugue Icons](https://p.yusukekamiyamane.com/) set.
