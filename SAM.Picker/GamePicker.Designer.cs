@@ -130,7 +130,7 @@
             this._SearchGameTextBox.Font = new System.Drawing.Font("Segoe UI", 9F);
             this._SearchGameTextBox.Name = "_SearchGameTextBox";
             this._SearchGameTextBox.Size = new System.Drawing.Size(100, 25);
-            this._SearchGameTextBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.OnFilterUpdate);
+            this._SearchGameTextBox.TextChanged += new System.EventHandler(this.OnFilterUpdate);
             //
             // _FilterDropDownButton
             //

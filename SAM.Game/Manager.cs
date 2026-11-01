@@ -1013,7 +1013,7 @@ namespace SAM.Game
             this.GetAchievements();
         }
 
-        private void OnFilterUpdate(object sender, KeyEventArgs e)
+        private void OnFilterUpdate(object sender, EventArgs e)
         {
             this.GetAchievements();
         }

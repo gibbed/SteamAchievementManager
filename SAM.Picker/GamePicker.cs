@@ -628,7 +628,7 @@ namespace SAM.Picker
         {
             this.RefreshGames();
 
-            // Compatibility with _GameListView SearchForVirtualItemEventHandler (otherwise _SearchGameTextBox loose focus on KeyUp)
+            // Compatibility with _GameListView SearchForVirtualItemEventHandler (otherwise _SearchGameTextBox loose focus on TextChanged)
             this._SearchGameTextBox.Focus();
         }
 
