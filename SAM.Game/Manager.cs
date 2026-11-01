@@ -49,6 +49,9 @@ namespace SAM.Game
         // unsaved achievement changes by ID, kept here because filtering rebuilds the list
         private readonly Dictionary<string, bool> _PendingAchievements = new();
 
+        private int _AchievementSortColumn;
+        private bool _IsAchievementSortDescending;
+
         private readonly BindingList<Stats.StatInfo> _Statistics = new();
 
         private readonly API.Callbacks.UserStatsReceived _UserStatsReceivedCallback;
@@ -67,6 +70,8 @@ namespace SAM.Game
 
             this._MainTabControl.SelectedTab = this._AchievementsTabPage;
             //this.statisticsList.Enabled = this.checkBox1.Checked;
+
+            this._AchievementListView.ListViewItemSorter = Comparer<ListViewItem>.Create(this.CompareAchievements);
 
             this._AchievementImageList.Images.Add("Blank", new Bitmap(64, 64));
 
@@ -991,6 +996,32 @@ namespace SAM.Game
             {
                 this._PendingAchievements[info.Id] = isChecked;
             }
+        }
+
+        private void OnAchievementColumnClick(object sender, ColumnClickEventArgs e)
+        {
+            this._IsAchievementSortDescending = e.Column == this._AchievementSortColumn &&
+                                                this._IsAchievementSortDescending == false;
+            this._AchievementSortColumn = e.Column;
+            this._AchievementListView.Sort();
+        }
+
+        private int CompareAchievements(ListViewItem x, ListViewItem y)
+        {
+            // unlock times compare as dates, their text depends on the user's date format
+            var column = this._AchievementSortColumn;
+            var result = column == this._AchievementUnlockTimeColumnHeader.Index
+                ? Nullable.Compare(((Stats.AchievementInfo)x.Tag).UnlockTime, ((Stats.AchievementInfo)y.Tag).UnlockTime)
+                : string.Compare(x.SubItems[column].Text, y.SubItems[column].Text, StringComparison.CurrentCultureIgnoreCase);
+
+            if (this._IsAchievementSortDescending == true)
+            {
+                result = -result;
+            }
+
+            return result != 0
+                ? result
+                : string.Compare(x.Text, y.Text, StringComparison.CurrentCultureIgnoreCase);
         }
 
         private void OnDisplayUncheckedOnly(object sender, EventArgs e)
