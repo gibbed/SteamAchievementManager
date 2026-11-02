@@ -45,6 +45,7 @@
             this._MainTabControl = new System.Windows.Forms.TabControl();
             this._AchievementsTabPage = new System.Windows.Forms.TabPage();
             this._AchievementListView = new SAM.Game.DoubleBufferedListView();
+            this._AchievementStatusColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this._AchievementNameColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this._AchievementDescriptionColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this._AchievementUnlockTimeColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -199,6 +200,7 @@
             this._AchievementListView.BackgroundImageTiled = true;
             this._AchievementListView.CheckBoxes = true;
             this._AchievementListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this._AchievementStatusColumnHeader,
             this._AchievementNameColumnHeader,
             this._AchievementDescriptionColumnHeader,
             this._AchievementUnlockTimeColumnHeader});
@@ -212,11 +214,17 @@
             this._AchievementListView.Name = "_AchievementListView";
             this._AchievementListView.Size = new System.Drawing.Size(682, 277);
             this._AchievementListView.SmallImageList = this._AchievementImageList;
-            this._AchievementListView.Sorting = System.Windows.Forms.SortOrder.Ascending;
+            this._AchievementListView.Sorting = System.Windows.Forms.SortOrder.None;
             this._AchievementListView.TabIndex = 4;
             this._AchievementListView.UseCompatibleStateImageBehavior = false;
             this._AchievementListView.View = System.Windows.Forms.View.Details;
             this._AchievementListView.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.OnCheckAchievement);
+            this._AchievementListView.ColumnClick += new System.Windows.Forms.ColumnClickEventHandler(this.OnAchievementColumnClick);
+            //
+            // _AchievementStatusColumnHeader
+            //
+            this._AchievementStatusColumnHeader.Text = "Status";
+            this._AchievementStatusColumnHeader.Width = 85;
             // 
             // _AchievementNameColumnHeader
             // 
@@ -411,6 +419,7 @@
         private System.Windows.Forms.TabPage _StatisticsTabPage;
         private DoubleBufferedListView _AchievementListView;
         private System.Windows.Forms.ColumnHeader _AchievementNameColumnHeader;
+        private System.Windows.Forms.ColumnHeader _AchievementStatusColumnHeader;
         private System.Windows.Forms.ColumnHeader _AchievementDescriptionColumnHeader;
         private System.Windows.Forms.ToolStrip _AchievementsToolStrip;
         private System.Windows.Forms.ToolStripButton _LockAllButton;

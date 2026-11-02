@@ -21,6 +21,7 @@
  */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
@@ -50,6 +51,9 @@ namespace SAM.Game
 
         private readonly API.Callbacks.UserStatsReceived _UserStatsReceivedCallback;
 
+        private int _AchievementSortColumn = 1;
+        private bool _AchievementSortAscending = true;
+
         //private API.Callback<APITypes.UserStatsStored> UserStatsStoredCallback;
 
         public Manager(long gameId, API.Client client)
@@ -60,6 +64,7 @@ namespace SAM.Game
             //this.statisticsList.Enabled = this.checkBox1.Checked;
 
             this._AchievementImageList.Images.Add("Blank", new Bitmap(64, 64));
+            this.UpdateAchievementSortHeader();
 
             this._StatisticsDataGridView.AutoGenerateColumns = false;
 
@@ -505,22 +510,20 @@ namespace SAM.Game
                 {
                     Checked = isAchieved,
                     Tag = info,
-                    Text = info.Name,
+                    Text = isAchieved ? "Unlocked" : "Locked",
                     BackColor = (def.Permission & 3) == 0 ? Color.Black : Color.FromArgb(64, 0, 0),
                 };
 
                 info.Item = item;
 
-                if (item.Text.StartsWith("#", StringComparison.InvariantCulture) == true)
+                string displayName = info.Name;
+                if (info.Name.StartsWith("#", StringComparison.InvariantCulture) == true)
                 {
-                    item.Text = info.Id;
-                    item.SubItems.Add("");
-                }
-                else
-                {
-                    item.SubItems.Add(info.Description);
+                    displayName = info.Id;
                 }
 
+                item.SubItems.Add(displayName);
+                item.SubItems.Add(info.Name.StartsWith("#", StringComparison.InvariantCulture) ? "" : info.Description);
                 item.SubItems.Add(info.UnlockTime.HasValue == true
                     ? info.UnlockTime.Value.ToString()
                     : "");
@@ -532,6 +535,7 @@ namespace SAM.Game
             }
 
             this._AchievementListView.EndUpdate();
+            this.SortAchievements();
             this._IsUpdatingAchievementList = false;
 
             this.DownloadNextIcon();
@@ -890,6 +894,55 @@ namespace SAM.Game
             }
         }
 
+        private void OnAchievementColumnClick(object sender, ColumnClickEventArgs e)
+        {
+            if (e.Column == this._AchievementSortColumn)
+            {
+                this._AchievementSortAscending = !this._AchievementSortAscending;
+            }
+            else
+            {
+                this._AchievementSortColumn = e.Column;
+                this._AchievementSortAscending = true;
+            }
+
+            this.UpdateAchievementSortHeader();
+            this.SortAchievements();
+        }
+
+        private void SortAchievements()
+        {
+            this._AchievementListView.ListViewItemSorter = new AchievementListViewItemComparer(
+                this._AchievementSortColumn,
+                this._AchievementSortAscending);
+            this._AchievementListView.Sort();
+        }
+
+        private void UpdateAchievementSortHeader()
+        {
+            ColumnHeader[] headers =
+            {
+                this._AchievementStatusColumnHeader,
+                this._AchievementNameColumnHeader,
+                this._AchievementDescriptionColumnHeader,
+                this._AchievementUnlockTimeColumnHeader,
+            };
+
+            for (int i = 0; i < headers.Length; i++)
+            {
+                string title = i switch
+                {
+                    0 => "Status",
+                    1 => "Name",
+                    2 => "Description",
+                    _ => "Unlock Time",
+                };
+                headers[i].Text = i == this._AchievementSortColumn
+                    ? title + (this._AchievementSortAscending ? " ▲" : " ▼")
+                    : title;
+            }
+        }
+
         private void OnDisplayUncheckedOnly(object sender, EventArgs e)
         {
             if ((sender as ToolStripButton).Checked == true)
@@ -913,6 +966,44 @@ namespace SAM.Game
         private void OnFilterUpdate(object sender, KeyEventArgs e)
         {
             this.GetAchievements();
+        }
+    }
+
+    internal sealed class AchievementListViewItemComparer : IComparer
+    {
+        private readonly int _Column;
+        private readonly bool _Ascending;
+
+        public AchievementListViewItemComparer(int column, bool ascending)
+        {
+            this._Column = column;
+            this._Ascending = ascending;
+        }
+
+        public int Compare(object x, object y)
+        {
+            if (x is not ListViewItem left || y is not ListViewItem right ||
+                left.Tag is not Stats.AchievementInfo leftInfo ||
+                right.Tag is not Stats.AchievementInfo rightInfo)
+            {
+                return 0;
+            }
+
+            if (this._Column == 3 && leftInfo.UnlockTime.HasValue != rightInfo.UnlockTime.HasValue)
+            {
+                return leftInfo.UnlockTime.HasValue ? -1 : 1;
+            }
+
+            int result = this._Column switch
+            {
+                0 => leftInfo.IsAchieved.CompareTo(rightInfo.IsAchieved),
+                1 => StringComparer.CurrentCultureIgnoreCase.Compare(leftInfo.Name, rightInfo.Name),
+                2 => StringComparer.CurrentCultureIgnoreCase.Compare(leftInfo.Description, rightInfo.Description),
+                3 => Nullable.Compare(leftInfo.UnlockTime, rightInfo.UnlockTime),
+                _ => 0,
+            };
+
+            return this._Ascending ? result : -result;
         }
     }
 }
