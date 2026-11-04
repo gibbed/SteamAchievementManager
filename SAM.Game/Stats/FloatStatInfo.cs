@@ -26,6 +26,8 @@ namespace SAM.Game.Stats
     {
         public float OriginalValue;
         public float FloatValue;
+        public float MinValue;
+        public float MaxValue;
 
         public override object Value
         {
@@ -37,6 +39,14 @@ namespace SAM.Game.Stats
                     this.FloatValue.Equals(f) == false)
                 {
                     throw new StatIsProtectedException();
+                }
+                // an unchanged value is always allowed, even if it's already out of range
+                // the range check is written so that NaN fails it
+                if (f.Equals(this.OriginalValue) == false &&
+                    ((f >= this.MinValue && f <= this.MaxValue) == false ||
+                     (this.IsIncrementOnly == true && f < this.OriginalValue)))
+                {
+                    throw new System.ArgumentOutOfRangeException(nameof(value));
                 }
                 this.FloatValue = f;
             }

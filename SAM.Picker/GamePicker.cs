@@ -31,6 +31,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Windows.Forms;
+using System.Xml;
 using System.Xml.XPath;
 using static SAM.Picker.InvariantShorthand;
 using APITypes = SAM.API.Types;
@@ -39,9 +40,15 @@ namespace SAM.Picker
 {
     internal partial class GamePicker : Form
     {
+        private static readonly string _GameListCachePath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "SAM",
+            "games.xml");
+        private static readonly TimeSpan _GameListCacheLifetime = TimeSpan.FromDays(1);
+
         private readonly API.Client _SteamClient;
 
-        private readonly Dictionary<uint, GameInfo> _Games;
+        private readonly ConcurrentDictionary<uint, GameInfo> _Games;
         private readonly List<GameInfo> _FilteredGames;
 
         private readonly object _LogoLock;
@@ -50,6 +57,8 @@ namespace SAM.Picker
         private readonly ConcurrentQueue<GameInfo> _LogoQueue;
 
         private readonly API.Callbacks.AppDataChanged _AppDataChangedCallback;
+
+        private bool _IsCloseRequested;
 
         public GamePicker(API.Client client)
         {
@@ -75,7 +84,7 @@ namespace SAM.Picker
             this._AppDataChangedCallback = client.CreateAndRegisterCallback<API.Callbacks.AppDataChanged>();
             this._AppDataChangedCallback.OnRun += this.OnAppDataChanged;
 
-            this.AddGames();
+            this.AddGames(false);
         }
 
         private void OnAppDataChanged(APITypes.AppDataChanged param)
@@ -98,14 +107,89 @@ namespace SAM.Picker
 
         private void DoDownloadList(object sender, DoWorkEventArgs e)
         {
-            this._PickerStatusLabel.Text = "Downloading game list...";
+            var pairs = this.LoadGameList((bool)e.Argument);
 
-            byte[] bytes;
-            using (WebClient downloader = new())
+            this._ListWorker.ReportProgress(0, "Checking game ownership...");
+            foreach (var kv in pairs)
             {
-                bytes = downloader.DownloadData(new Uri("https://gib.me/sam/games.xml"));
+                if (this._ListWorker.CancellationPending == true)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+
+                this.AddGame(kv.Key, kv.Value);
+            }
+        }
+
+        private List<KeyValuePair<uint, string>> LoadGameList(bool forceDownload)
+        {
+            var cacheAge = DateTime.UtcNow - File.GetLastWriteTimeUtc(_GameListCachePath);
+            if (forceDownload == false && cacheAge < _GameListCacheLifetime)
+            {
+                var cachedPairs = ReadCachedGameList();
+                if (cachedPairs != null)
+                {
+                    return cachedPairs;
+                }
             }
 
+            this._ListWorker.ReportProgress(0, "Downloading game list...");
+
+            try
+            {
+                byte[] bytes;
+                using (WebClient downloader = new())
+                {
+                    bytes = downloader.DownloadData(new Uri("https://gib.me/sam/games.xml"));
+                }
+
+                var pairs = ParseGameList(bytes);
+                if (pairs.Count > 0)
+                {
+                    WriteCachedGameList(bytes);
+                }
+                return pairs;
+            }
+            catch (Exception e) when (e is WebException or XmlException or FormatException)
+            {
+                // an old list is better than no list
+                var cachedPairs = ReadCachedGameList();
+                if (cachedPairs == null)
+                {
+                    throw;
+                }
+                return cachedPairs;
+            }
+        }
+
+        private static List<KeyValuePair<uint, string>> ReadCachedGameList()
+        {
+            try
+            {
+                return ParseGameList(File.ReadAllBytes(_GameListCachePath));
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException or XmlException or FormatException)
+            {
+                return null;
+            }
+        }
+
+        private static void WriteCachedGameList(byte[] bytes)
+        {
+            // an interrupted write fails to parse next time, which downloads the list again
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(_GameListCachePath));
+                File.WriteAllBytes(_GameListCachePath, bytes);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+            }
+        }
+
+        private static List<KeyValuePair<uint, string>> ParseGameList(byte[] bytes)
+        {
             List<KeyValuePair<uint, string>> pairs = new();
             using (MemoryStream stream = new(bytes, false))
             {
@@ -122,20 +206,30 @@ namespace SAM.Picker
                     pairs.Add(new((uint)nodes.Current.ValueAsLong, type));
                 }
             }
+            return pairs;
+        }
 
-            this._PickerStatusLabel.Text = "Checking game ownership...";
-            foreach (var kv in pairs)
-            {
-                this.AddGame(kv.Key, kv.Value);
-            }
+        private void OnDownloadListProgress(object sender, ProgressChangedEventArgs e)
+        {
+            this._PickerStatusLabel.Text = (string)e.UserState;
         }
 
         private void OnDownloadList(object sender, RunWorkerCompletedEventArgs e)
         {
+            if (this._IsCloseRequested == true)
+            {
+                this.Close();
+                return;
+            }
+
             if (e.Error != null || e.Cancelled == true)
             {
                 this.AddDefaultGames();
-                MessageBox.Show(e.Error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(
+                    e.Error?.ToString() ?? "The game list download was cancelled.",
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
             }
 
             this.RefreshGames();
@@ -230,7 +324,7 @@ namespace SAM.Picker
             if (e.StartIndex >= count)
             {
                 // starting from the last item in the list
-                index = this._FilteredGames.FindIndex(0, startIndex - 1, predicate);
+                index = this._FilteredGames.FindIndex(0, count, predicate);
             }
             else if (startIndex <= 0)
             {
@@ -242,7 +336,7 @@ namespace SAM.Picker
                 index = this._FilteredGames.FindIndex(startIndex, count - startIndex, predicate);
                 if (index < 0)
                 {
-                    index = this._FilteredGames.FindIndex(0, startIndex - 1, predicate);
+                    index = this._FilteredGames.FindIndex(0, startIndex, predicate);
                 }
             }
 
@@ -315,6 +409,7 @@ namespace SAM.Picker
 
                     if (info.Item == null)
                     {
+                        this._LogosAttempting.Remove(info.ImageUrl);
                         continue;
                     }
 
@@ -330,6 +425,13 @@ namespace SAM.Picker
 
                 this._DownloadStatusLabel.Text = $"Downloading {1 + this._LogoQueue.Count} game icons...";
                 this._DownloadStatusLabel.Visible = true;
+
+                // the UI work above can redraw the list, and OnGameListViewDrawItem may have started a download
+                if (this._LogoWorker.IsBusy == true)
+                {
+                    this._LogoQueue.Enqueue(info);
+                    return;
+                }
 
                 this._LogoWorker.RunWorkerAsync(info);
             }
@@ -413,14 +515,14 @@ namespace SAM.Picker
 
             GameInfo info = new(id, type);
             info.Name = this._SteamClient.SteamApps001.GetAppData(info.Id, "name");
-            this._Games.Add(id, info);
+            this._Games.TryAdd(id, info);
         }
 
-        private void AddGames()
+        private void AddGames(bool forceDownload)
         {
             this._Games.Clear();
             this._RefreshGamesButton.Enabled = false;
-            this._ListWorker.RunWorkerAsync();
+            this._ListWorker.RunWorkerAsync(forceDownload);
         }
 
         private void AddDefaultGames()
@@ -428,11 +530,32 @@ namespace SAM.Picker
             this.AddGame(480, "normal"); // Spacewar
         }
 
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            // the worker calls into Steam, so wait for it before the client gets released
+            // ponytail: the process stays hidden until a list download ends, up to WebClient's 100 second timeout
+            if (this._ListWorker.IsBusy == true)
+            {
+                this._IsCloseRequested = true;
+                this._ListWorker.CancelAsync();
+                this.Hide();
+                e.Cancel = true;
+            }
+
+            base.OnFormClosing(e);
+        }
+
         private void OnTimer(object sender, EventArgs e)
         {
             this._CallbackTimer.Enabled = false;
-            this._SteamClient.RunCallbacks(false);
-            this._CallbackTimer.Enabled = true;
+            try
+            {
+                this._SteamClient.RunCallbacks(false);
+            }
+            finally
+            {
+                this._CallbackTimer.Enabled = true;
+            }
         }
 
         private void OnActivateGame(object sender, EventArgs e)
@@ -452,7 +575,9 @@ namespace SAM.Picker
 
             try
             {
-                Process.Start("SAM.Game.exe", info.Id.ToString(CultureInfo.InvariantCulture));
+                Process.Start(
+                    Path.Combine(Application.StartupPath, "SAM.Game.exe"),
+                    info.Id.ToString(CultureInfo.InvariantCulture));
             }
             catch (Win32Exception)
             {
@@ -468,7 +593,7 @@ namespace SAM.Picker
         private void OnRefresh(object sender, EventArgs e)
         {
             this._AddGameTextBox.Text = "";
-            this.AddGames();
+            this.AddGames(true);
         }
 
         private void OnAddGame(object sender, EventArgs e)
@@ -492,17 +617,24 @@ namespace SAM.Picker
                 return;
             }
 
-            while (this._LogoQueue.TryDequeue(out var logo) == true)
-            {
-                // clear the download queue because we will be showing only one app
-                this._LogosAttempted.Remove(logo.ImageUrl);
-            }
-
             this._AddGameTextBox.Text = "";
-            this._Games.Clear();
+            this._SearchGameTextBox.Text = "";
+
+            // add it again as a normal game so the type filters can't hide it
+            this._Games.TryRemove(id, out var _);
             this.AddGame(id, "normal");
             this._FilterGamesMenuItem.Checked = true;
             this.RefreshGames();
+
+            var index = this._FilteredGames.FindIndex(gi => gi.Id == id);
+            if (index >= 0)
+            {
+                var item = this._GameListView.Items[index];
+                item.Selected = true;
+                item.Focused = true;
+                this._GameListView.EnsureVisible(index);
+            }
+
             this.DownloadNextLogo();
         }
 
@@ -510,7 +642,7 @@ namespace SAM.Picker
         {
             this.RefreshGames();
 
-            // Compatibility with _GameListView SearchForVirtualItemEventHandler (otherwise _SearchGameTextBox loose focus on KeyUp)
+            // Compatibility with _GameListView SearchForVirtualItemEventHandler (otherwise _SearchGameTextBox loose focus on TextChanged)
             this._SearchGameTextBox.Focus();
         }
 

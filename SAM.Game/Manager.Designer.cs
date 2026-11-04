@@ -216,6 +216,7 @@
             this._AchievementListView.TabIndex = 4;
             this._AchievementListView.UseCompatibleStateImageBehavior = false;
             this._AchievementListView.View = System.Windows.Forms.View.Details;
+            this._AchievementListView.ColumnClick += new System.Windows.Forms.ColumnClickEventHandler(this.OnAchievementColumnClick);
             this._AchievementListView.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.OnCheckAchievement);
             // 
             // _AchievementNameColumnHeader
@@ -323,8 +324,8 @@
             this._MatchingStringTextBox.Font = new System.Drawing.Font("Segoe UI", 9F);
             this._MatchingStringTextBox.Name = "_MatchingStringTextBox";
             this._MatchingStringTextBox.Size = new System.Drawing.Size(100, 25);
-            this._MatchingStringTextBox.ToolTipText = "Type at least 3 characters that must appear in the name or description";
-            this._MatchingStringTextBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.OnFilterUpdate);
+            this._MatchingStringTextBox.ToolTipText = "Show only achievements with this text in the name or description";
+            this._MatchingStringTextBox.TextChanged += new System.EventHandler(this.OnFilterUpdate);
             // 
             // _StatisticsTabPage
             // 

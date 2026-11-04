@@ -26,6 +26,8 @@ namespace SAM.Game.Stats
     {
         public int OriginalValue;
         public int IntValue;
+        public int MinValue;
+        public int MaxValue;
 
         public override object Value
         {
@@ -37,6 +39,13 @@ namespace SAM.Game.Stats
                     this.IntValue != i)
                 {
                     throw new StatIsProtectedException();
+                }
+                // an unchanged value is always allowed, even if it's already out of range
+                if (i != this.OriginalValue &&
+                    (i < this.MinValue || i > this.MaxValue ||
+                     (this.IsIncrementOnly == true && i < this.OriginalValue)))
+                {
+                    throw new System.ArgumentOutOfRangeException(nameof(value));
                 }
                 this.IntValue = i;
             }

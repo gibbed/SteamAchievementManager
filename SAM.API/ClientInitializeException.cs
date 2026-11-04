@@ -27,6 +27,19 @@ namespace SAM.API
     {
         public readonly ClientInitializeFailure Failure;
 
+        public string Description => this.Failure switch
+        {
+            ClientInitializeFailure.GetInstallPath =>
+                "Could not find the Steam install path. Please make sure Steam is installed.",
+            ClientInitializeFailure.Load =>
+                "Could not load Steam's client library. Please make sure Steam is installed correctly.",
+            ClientInitializeFailure.CreateSteamPipe or ClientInitializeFailure.ConnectToGlobalUser =>
+                "Steam is not running. Please start Steam then run this tool again.",
+            ClientInitializeFailure.AppIdMismatch =>
+                "Steam reported a different game than the one requested.",
+            _ => "Could not connect to Steam. Please make sure Steam is running and up to date.",
+        };
+
         public ClientInitializeException(ClientInitializeFailure failure)
         {
             this.Failure = failure;

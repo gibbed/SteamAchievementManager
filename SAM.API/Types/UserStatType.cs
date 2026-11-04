@@ -29,6 +29,7 @@ namespace SAM.API.Types
         Int = Integer,
         Float = 2,
         AverageRate = 3,
+        AvgRate = AverageRate,
         Achievements = 4,
         GroupAchievements = 5,
     }
