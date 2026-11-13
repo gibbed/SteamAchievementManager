@@ -42,6 +42,44 @@ There are some changes to the code since the last closed-source release:
 
 [![Build status](https://ci.appveyor.com/api/projects/status/00vic6jliar6j0ol/branch/master?svg=true)](https://ci.appveyor.com/project/gibbed/steamachievementmanager/branch/master)
 
+
+## Why This Fork Exists
+
+This project exists because I got annoyed at a 1.84 MB XML file.
+
+Yes, seriously.
+
+While using the original [Steam Achievement Manager](https://github.com/gibbed/SteamAchievementManager), I encountered a recurring issue where the application would hang or throw a `System.Net.WebException` while downloading its game catalogue from `gib.me`.
+
+Naturally, I started investigating.
+
+What followed was an unexpectedly lengthy debugging session involving:
+
+- Reproducing the error using Windows `curl.exe` and .NET Framework.
+- Testing different internet connections, HTTP configurations, and byte-range requests.
+- Discovering that the server could successfully deliver an 8 KB chunk while larger transfers repeatedly stalled.
+- Finding [issue #152](https://github.com/gibbed/SteamAchievementManager/issues/152), which dates back to April 2020 and documents recurring game catalogue availability problems.
+- Submitting my findings to [issue #660](https://github.com/gibbed/SteamAchievementManager/issues/660).
+
+Eventually, I started wondering why an application that already communicates with Steam needed to download an external catalogue just to discover games installed on my computer.
+
+So I forked the project.
+
+The result is **Local PC Steam Achievement Manager**, which discovers installed games directly from Steam's local library metadata, removing the external catalogue dependency from the game picker.
+
+This was also my introduction to contributing to open-source software. I learned how to investigate an upstream issue, reproduce a bug, navigate an unfamiliar C# codebase, fix build errors, work with Git branches, and prepare a pull request.
+
+All because a **1.84 MB XML file refused to download properly**.
+
+Sometimes spite is a surprisingly effective motivation for software engineering.
+
+### Acknowledgements
+
+Credit goes to [Rick Gibbed](https://github.com/gibbed) for developing and open-sourcing Steam Achievement Manager. This fork builds upon his original work and retains its existing achievement-management functionality.
+
+The original project remains available at [gibbed/SteamAchievementManager](https://github.com/gibbed/SteamAchievementManager).
+
+
 ## Attribution
 
 Most (if not all) icons are from the [Fugue Icons](https://p.yusukekamiyamane.com/) set.
