@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <AssemblyTitle>Steam Achievement Manager Picker</AssemblyTitle>
+    <AssemblyTitle>Local PC Steam Achievement Manager</AssemblyTitle>
     <Company>Gibbed</Company>
     <Authors>Gibbed</Authors>
-    <Description>A game picker for the Steam Achievement Manager.</Description>
+    <Description>Steam Achievement Manager with local game discovery.</Description>
     <Copyright>Copyright © Gibbed 2019</Copyright>
   </PropertyGroup>
   <PropertyGroup>
-    <Version>7.0.0</Version>
-    <AssemblyVersion>7.0.0.0</AssemblyVersion>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>7.0.0.0</FileVersion>
   </PropertyGroup>
   <PropertyGroup>
