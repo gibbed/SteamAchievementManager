@@ -10,11 +10,12 @@ pnpm --version
 npm list -g --depth=0
 ```
 
-`codex --version` checks whether the Codex command is discoverable, `pnpm --version` checks Understand Anything's package manager, and `npm list -g --depth=0` lists globally installed npm packages. If Codex is missing, jump to [How to actually install Codex if your PC forgot Codex was installed](#how-to-actually-install-codex-if-your-pc-forgot-codex-was-installed). After replacing Node.js, follow [Replacing Node.js](#replacing-nodejs).
+`codex --version` checks whether the Codex command is discoverable, `pnpm --version` checks Understand Anything's package manager, and `npm list -g --depth=0` lists globally installed npm packages. If Codex is missing, jump to [How to actually install Codex if your PC forgot Codex was installed](#how-to-actually-install-codex-if-your-pc-forgot-codex-was-installed). After replacing Node.js, follow [Replacing Node.js](#replacing-nodejs). If Codex refuses to display a saved graph, see [When Codex refuses to open your graph](#when-codex-refuses-to-open-your-graph-verified-sql-lab7-recovery).
 
 
 **A Windows PowerShell walkthrough, troubleshooting record, and project retrospective**  
 **Case study:** [Local PC Steam Achievement Manager](https://github.com/zacw-243L/LocalPCSteamAchievementManager)  
+**Additional troubleshooting:** SQL Lab7 Python/MySQL project  
 **Session date:** 14 November 2026  
 **Tooling used:** OpenAI Codex CLI v0.169.0, Understand Anything, Git, Node.js, pnpm, and a local Vite dashboard
 
@@ -242,6 +243,105 @@ The dashboard runs a **local web server** and prints a URL. In this session it w
 
 **Viewer fallback observed:** npm rejected an attempted download of the packaged viewer with `EALLOWREMOTE` (remote packages disabled). Codex then successfully launched the installed local Vite dashboard. This was a **viewer-launch problem**, not a graph-generation failure.
 
+### When Codex refuses to open your graph: verified SQL Lab7 recovery
+
+**Real case: SQL Lab7, 14 November 2026.** Understand Anything finished analyzing the old Python/MySQL coursework project, but Codex couldn't start the dashboard. The packaged viewer wasn't cached, its sandbox blocked child processes with `spawn EPERM`, and the helper it generated (`.ua/launch-dashboard.ps1`) produced one Vite configuration error after another. **A manual Vite launch with the bundled config loader ultimately worked.** The screenshot showed the actual graph in a browser, with **224 nodes, 858 edges, 21 inventoried functions, 4 architectural layers, and 8 guided tour steps**.
+
+The practical lesson: **graph generation and viewer startup are two separate operations.** Check the saved graph first, then fix the viewer. Avoid rerunning a potentially expensive multi-phase analysis solely because a browser window refuses to open.
+
+#### The errors we encountered
+
+| Symptom | Why it mattered | What we did |
+|---|---|---|
+| `spawn EPERM` | Codex's restricted environment blocked a Node/esbuild child process. | Switched to a normal Windows PowerShell terminal. |
+| `ReferenceError: __dirname is not defined` | A generated launcher used Vite's runner config-loader, which didn't provide the CommonJS-style variable expected in the plugin config. | Stopped using the generated temporary config. |
+| `ERR_MODULE_NOT_FOUND .../packages/core/src/staleness` | The non-bundled ESM loading path could not resolve the dashboard's TypeScript source import. | Launched Vite using `--configLoader bundle`. |
+| `Knowledge graph freshness could not be verified` | The running dashboard couldn't read Git `HEAD` for the viewed project. | Treated it as an advisory graph-freshness warning, since the graph itself displayed successfully. |
+
+The later `node: module.register() is deprecated` warning was incidental. Neither the Vite errors nor the Git freshness warning demonstrated corruption of the already-generated graph.
+
+#### Step 1: Verify the graph and redacted viewer copy
+
+Open a **separate, ordinary PowerShell window**. Keep Codex's failed session and the SQL program itself out of the repair procedure. This example uses the actual Windows paths from our experiment:
+
+```powershell
+$project = 'D:\Utilities\Programing\Python REPOS\SQL Lab7'
+$plugin = 'D:\Utilities\Understand-Anything-Codex\understand-anything-plugin'
+
+Test-Path (Join-Path $project '.ua\knowledge-graph.json')
+Test-Path (Join-Path $project '.ua\viewer\.ua\knowledge-graph.json')
+Test-Path (Join-Path $plugin 'packages\core\src\staleness.ts')
+```
+
+The first check is the canonical graph location. The second is the **redacted viewer's nested `.ua` directory**, reported by Codex during recovery. The third confirms that the core TypeScript source file needed by the dashboard exists. The previous session's initial path checks returned `False`, but a later Codex inspection found and validated both graph copies. Don't assume a saved graph is missing until you've checked the exact location and the generated analysis report.
+
+If the canonical graph or viewer copy is absent, ask Codex to inspect `.ua/`, `.ua/tmp/`, `.ua/intermediate/`, and any recovery report before regenerating anything. If `staleness.ts` is missing, repair or update the plugin checkout rather than creating a dummy file.
+
+**Privacy:** SQL Lab7 contains a historical `secrets.txt` and hardcoded MySQL credentials. The successful dashboard was pointed at Codex's **redacted viewer copy** so the browser wasn't serving the original project tree. Preserve that separation. A local dashboard token should also be treated as private.
+
+#### Step 2: Bypass Codex's generated launcher (working fix)
+
+After confirming that the redacted graph and plugin source exist, run Vite directly from the installed dashboard workspace:
+
+```powershell
+$project = 'D:\Utilities\Programing\Python REPOS\SQL Lab7'
+$plugin = 'D:\Utilities\Understand-Anything-Codex\understand-anything-plugin'
+
+$env:GRAPH_DIR = Join-Path $project '.ua\viewer'
+Set-Location (Join-Path $plugin 'packages\dashboard')
+pnpm exec vite --config vite.config.ts --configLoader bundle --host 127.0.0.1
+```
+
+**This was the successful workaround in the SQL Lab7 experiment.** The important details are: run outside Codex's sandbox, point `GRAPH_DIR` at the **redacted** viewer folder (which contains `.ua/knowledge-graph.json`), use the installed plugin's `vite.config.ts`, and explicitly request the **bundled** config loader. That avoids the failed `.ua/tmp/viewer.config.mjs` path and the unbundled TypeScript-import resolution that produced `ERR_MODULE_NOT_FOUND`.
+
+Do not modify `vite.config.ts`, change machine-wide PowerShell execution policy, or elevate to Administrator as a first response. This workaround started the server using the existing installation and graph files.
+
+Vite prints a local URL, usually resembling:
+
+```text
+http://127.0.0.1:5173/?token=<generated-token>
+```
+
+Open **the actual full URL printed by Vite**, including its token when supplied. Port 5173 may change if something else is using it. Keep that terminal running while viewing the dashboard, and stop the server with `Ctrl+C` when finished.
+
+#### Step 3: Interpret the Git freshness warning
+
+The working dashboard displayed a yellow warning saying **“Knowledge graph freshness could not be verified”** because it could not read Git `HEAD`. This is a **comparison/metadata warning**, not a launch failure. The graph, four architectural layers, and guided tour were visible.
+
+The analyzed SQL Lab7 folder might not be a conventional Git checkout, or Git metadata might be unavailable to the dashboard. To inspect this separately, open another terminal in the project and run:
+
+```powershell
+Set-Location 'D:\Utilities\Programing\Python REPOS\SQL Lab7'
+git rev-parse --show-toplevel
+git rev-parse HEAD
+```
+
+If the commands report that the folder is outside a Git repository, the dashboard cannot compare the saved graph against a current commit there. You can still explore the graph. To obtain reliable freshness checks in future, analyze an actual Git working tree. Do not initialize Git or rewrite graph metadata merely to dismiss this warning.
+
+#### If the direct launch still fails
+
+Inspect rather than repeatedly editing global config files. Run these checks in a separate PowerShell session:
+
+```powershell
+$plugin = 'D:\Utilities\Understand-Anything-Codex\understand-anything-plugin'
+Test-Path (Join-Path $plugin 'packages\dashboard\vite.config.ts')
+Test-Path (Join-Path $plugin 'packages\core\src\staleness.ts')
+node --version
+pnpm --version
+```
+
+If dependencies are missing or the core hasn't been built, use the plugin workspace to restore them, then retry the verified launch command:
+
+```powershell
+Set-Location 'D:\Utilities\Understand-Anything-Codex\understand-anything-plugin'
+pnpm install
+pnpm --filter @understand-anything/core build
+```
+
+`pnpm install` installs package dependencies; it does not restore a deleted TypeScript source file. If an agent previously edited the plugin's config, review and preserve those differences before updating or reinstalling the plugin. This install is shared by other projects, so arbitrary config edits can break a dashboard that used to work.
+
+**What the repair did not require:** rerunning `$understand`, executing the old SQL Lab7 application, reinstalling MySQL, exposing the original secret-bearing source files, or altering Windows administrator permissions.
+
 ## 7. Real output from the Steam Achievement Manager case study
 
 The completed run reported:
@@ -362,10 +462,15 @@ A repository-local `.ua/README.md` can explain how to reproduce the graph and us
 | Dashboard URL stopped responding after exiting the server | The local Vite process must be running to serve the viewer; the saved JSON is unaffected. |
 | `node`, `npm`, or `pnpm` became unrecognized in another PowerShell window | Open a fresh session, check `where.exe node`, the npm prefix and PATH, and repair missing prerequisites as needed. |
 | `codex` disappeared after changing Node.js even though it ran earlier | Check `npm list -g --depth=0`, the npm prefix and `codex.cmd`; reinstall `@openai/codex` globally only if missing. |
+| SQL Lab7 dashboard failed with `spawn EPERM` | Codex could not spawn the viewer process. Run Vite directly from normal PowerShell; the generated helper was also broken. |
+| Vite reported `__dirname is not defined` | The generated launcher used an incompatible config runner; bypass it and use Vite with `--configLoader bundle`. |
+| Vite reported missing `packages/core/src/staleness` | The bundled Vite config loader resolved this issue in the SQL Lab7 experiment; verify the module exists first. |
+
+| Dashboard displays `Knowledge graph freshness could not be verified` | Graph viewer can work even when Git HEAD is unavailable; check whether the analyzed folder is a Git working tree. |
 
 ## 12. The experiment in one paragraph
 
-The project started with the question of whether Understand Anything could work inside ChatGPT. The workable route was Codex CLI, followed by the Understand Anything Windows installer and Codex's `$understand` skill. Installing the tool on D: while keeping Git projects on C: was valid. A first attempt to relocate an installed checkout failed, and the first graph run hit a missing pnpm/core-build prerequisite. After resolving that, Codex scanned 84 files and generated a full C# knowledge graph, pausing for `.understandignore` review and later requesting permission to read Git metadata. The graph was saved with 265 nodes, 662 edges, seven architectural layers, and 13 tour steps. The packaged viewer download was blocked, so Codex launched a local Vite dashboard on the user's PC instead. The graph and documentation were then added to GitHub. The broader lesson was that agentic analysis produces far more low-level terminal output than a person can comfortably digest, so the graph should be paired with a concise, source-linked written report. A later check exposed another lesson: the tools that worked during the initial session were not all discoverable from a subsequent PowerShell environment, and the globally installed Codex command had to be restored after Node.js changes. Version checks and an npm global-package inventory now appear at the top of this guide.
+The project started with the question of whether Understand Anything could work inside ChatGPT. The workable route was Codex CLI, followed by the Understand Anything Windows installer and Codex's `$understand` skill. Installing the tool on D: while keeping Git projects on C: was valid. A first attempt to relocate an installed checkout failed, and the first graph run hit a missing pnpm/core-build prerequisite. After resolving that, Codex scanned 84 files and generated a full C# knowledge graph, pausing for `.understandignore` review and later requesting permission to read Git metadata. The graph was saved with 265 nodes, 662 edges, seven architectural layers, and 13 tour steps. The packaged viewer download was blocked, so Codex launched a local Vite dashboard on the user's PC instead. The graph and documentation were then added to GitHub. The broader lesson was that agentic analysis produces far more low-level terminal output than a person can comfortably digest, so the graph should be paired with a concise, source-linked written report. A later check exposed another lesson: the tools that worked during the initial session were not all discoverable from a subsequent PowerShell environment, and the globally installed Codex command had to be restored after Node.js changes. Version checks and an npm global-package inventory now appear at the top of this guide. A subsequent SQL Lab7 experiment encountered Vite dashboard failures (`spawn EPERM`, `__dirname` and missing `staleness` module) after the analysis workflow; the guide now distinguishes saved graph output from viewer startup and records a cautious config/debugging procedure. The subsequent manual PowerShell launch of Vite with `--config vite.config.ts --configLoader bundle` succeeded, opening a redacted SQL Lab7 graph with 224 nodes, 858 edges, four layers, and eight tour steps. A Git HEAD freshness warning remained advisory.
 
 ## References
 
@@ -377,4 +482,4 @@ The project started with the question of whether Understand Anything could work 
 
 ---
 
-*Document status: updated post-session learning guide, not a verbatim transcript. Specific outputs, errors, and decisions above come from the recorded conversation and the repository documentation available at the time. This document revision does not modify the GitHub repository or local project files.*
+*Document status: updated post-session learning guide, not a verbatim transcript. Specific outputs, errors, and decisions above come from the recorded conversation and the repository documentation available at the time. This document revision does not modify the GitHub repository, the local Codex installation, or project source files.*
