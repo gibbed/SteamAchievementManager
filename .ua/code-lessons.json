@@ -1,0 +1,1409 @@
+{
+  "version": 1,
+  "generatedAt": "2026-11-14T15:00:34.586Z",
+  "files": {
+    "README.md": {
+      "overview": "This document explains the fork’s move from a downloaded catalogue to local Steam metadata. It also records build requirements and the distinction between installed candidates and the active account’s access.",
+      "sections": [
+        {
+          "title": "Discovery contract",
+          "lineRange": [
+            1,
+            14
+          ],
+          "explanation": "The picker uses libraryfolders.vdf and ACF manifests to identify local candidates. IsSubscribedApp then filters access for the current account, while artwork can still require network access.",
+          "tourOrder": 1
+        },
+        {
+          "title": "Build and maturity",
+          "lineRange": [
+            16,
+            26
+          ],
+          "explanation": "The documented commands restore and build the x86 .NET Framework 4.8 solution. The experimental-status note explicitly says the scanner integration still needs Windows Steam testing.",
+          "tourOrder": 1
+        },
+        {
+          "title": "Upstream and motivation",
+          "lineRange": [
+            28,
+            85
+          ],
+          "explanation": "The remainder preserves upstream attribution and explains the recurring catalogue download problem that prompted this fork. That background explains why local discovery is the central architectural change.",
+          "tourOrder": 1
+        }
+      ]
+    },
+    "SAM.sln": {
+      "overview": "The solution groups two executables and one shared library. Its project and configuration entries establish the build structure behind the runtime flow.",
+      "sections": [
+        {
+          "title": "Three project entries",
+          "lineRange": [
+            1,
+            12
+          ],
+          "explanation": "SAM.Picker and SAM.Game are separate projects alongside SAM.API. SteamLibraryScanner is a source file inside the picker rather than a separate solution project.",
+          "tourOrder": 1
+        },
+        {
+          "title": "x86 build matrix",
+          "lineRange": [
+            13,
+            35
+          ],
+          "explanation": "Debug and Release configurations map each project to x86. This aligns the managed build with the native Steam interop assumptions and shared executable output folders.",
+          "tourOrder": 1
+        }
+      ]
+    },
+    "SAM.Picker/Program.cs": {
+      "overview": "This is the picker executable’s entry point. Steam initialization must succeed before the GamePicker form can launch its local file scan.",
+      "sections": [
+        {
+          "title": "Startup location guard",
+          "lineRange": [
+            30,
+            41
+          ],
+          "explanation": "Main runs in a single-threaded apartment and compares the executable directory with Steam’s registry installation path. Matching paths cause an error dialog and an early return.",
+          "tourOrder": 2
+        },
+        {
+          "title": "Connect to Steam",
+          "lineRange": [
+            43,
+            78
+          ],
+          "explanation": "The using block owns API.Client and calls Initialize(0), leaving game-specific AppID setup to the editor process. Initialization and DLL failures display errors and stop startup before any scanner work.",
+          "tourOrder": 2
+        },
+        {
+          "title": "Enter WinForms loop",
+          "lineRange": [
+            80,
+            83
+          ],
+          "explanation": "Visual styles and text rendering settings are established before creating GamePicker. Application.Run keeps the UI alive, and leaving the using block releases the native client connection.",
+          "tourOrder": 2
+        }
+      ]
+    },
+    "SAM.API/Client.cs": {
+      "overview": "Client manages the shared native Steam session abstraction used by both executables. It holds interface wrappers, a pipe and user handle, and registered callback handlers.",
+      "sections": [
+        {
+          "title": "State and wrapper fields",
+          "lineRange": [
+            30,
+            43
+          ],
+          "explanation": "The public wrapper fields expose the versioned Steam interfaces to picker and editor code. Private pipe, user and disposal fields track the native resources owned by this Client instance.",
+          "tourOrder": 3
+        },
+        {
+          "title": "Load and connect",
+          "lineRange": [
+            45,
+            78
+          ],
+          "explanation": "Initialize requires the machine-registry Steam path, sets SteamAppId only for nonzero input, then loads Steam and creates SteamClient018. Pipe creation and global-user connection each have explicit failure codes so startup can report the failing stage.",
+          "tourOrder": 3
+        },
+        {
+          "title": "Acquire app interfaces",
+          "lineRange": [
+            80,
+            90
+          ],
+          "explanation": "Utilities validate a positive requested AppID before user, stats and apps wrappers are acquired. The picker uses zero, while SAM.Game supplies its selected game ID and receives its own Client instance.",
+          "tourOrder": 3
+        },
+        {
+          "title": "Release native resources",
+          "lineRange": [
+            92,
+            123
+          ],
+          "explanation": "Both finalization and explicit disposal route through an idempotent cleanup path. The connected user is released before its pipe, and explicit Dispose suppresses the finalizer.",
+          "tourOrder": 3
+        },
+        {
+          "title": "Register and dispatch callbacks",
+          "lineRange": [
+            125,
+            158
+          ],
+          "explanation": "Registration retains managed callback objects rather than calling a native registration API here. RunCallbacks guards reentry, drains native messages, matches ID and server identity, invokes handlers and frees the last native message.",
+          "tourOrder": 8
+        }
+      ]
+    },
+    "SAM.API/Steam.cs": {
+      "overview": "Steam bridges the managed API to steamclient.dll exports. Its machine-registry lookup is independent of SteamLibraryScanner’s environment-variable and multi-registry discovery.",
+      "sections": [
+        {
+          "title": "Bind Windows exports",
+          "lineRange": [
+            32,
+            57
+          ],
+          "explanation": "P/Invoke supplies DLL loading and export-address lookup. Generic helper methods turn a native address into a managed delegate, returning null when the named export is absent.",
+          "tourOrder": 3
+        },
+        {
+          "title": "Locate and create interfaces",
+          "lineRange": [
+            59,
+            84
+          ],
+          "explanation": "GetInstallPath reads HKLM Software/Valve/Steam InstallPath only. CreateInterface calls the bound export, rejects a zero pointer and asks a new managed wrapper to bind its function table.",
+          "tourOrder": 3
+        },
+        {
+          "title": "Callback export adapters",
+          "lineRange": [
+            86,
+            106
+          ],
+          "explanation": "The native callback delegate includes the Steam pipe and an output message structure. Thin managed adapters expose callback retrieval and release to Client.RunCallbacks.",
+          "tourOrder": 8
+        },
+        {
+          "title": "Load native client once",
+          "lineRange": [
+            108,
+            150
+          ],
+          "explanation": "A cached DLL handle avoids repeated loading after success. The method loads steamclient.dll from the registry path, resolves three required exports and returns false when any prerequisite fails.",
+          "tourOrder": 3
+        }
+      ]
+    },
+    "SAM.API/NativeWrapper.cs": {
+      "overview": "This generic base attaches a managed wrapper to a native Steam interface. Each concrete wrapper chooses a function-pointer layout, while this base handles pointer marshaling and invocation.",
+      "sections": [
+        {
+          "title": "Bind object and vtable",
+          "lineRange": [
+            29,
+            50
+          ],
+          "explanation": "SetupFunctions first reads the native object’s virtual-table pointer, then marshals that table into TNativeFunctions. ObjectAddress is retained so instance-style calls can pass the native receiver.",
+          "tourOrder": 4
+        },
+        {
+          "title": "Cache function delegates",
+          "lineRange": [
+            52,
+            68
+          ],
+          "explanation": "A dictionary caches the managed delegate produced for each function pointer. GetFunction exposes that cached delegate with a requested static type for direct invocation.",
+          "tourOrder": 4
+        },
+        {
+          "title": "Invoke pointer calls",
+          "lineRange": [
+            70,
+            78
+          ],
+          "explanation": "Two Call overloads invoke delegates dynamically, with or without a return value. Concrete Steam wrappers supply arguments and the expected delegate signature.",
+          "tourOrder": 4
+        }
+      ]
+    },
+    "SAM.API/Wrappers/SteamClient018.cs": {
+      "overview": "This wrapper exposes connection setup and versioned interface acquisition through SteamClient018. It is the hub Client.Initialize uses to obtain apps, user, stats and utilities wrappers.",
+      "sections": [
+        {
+          "title": "Pipe and user lifetime",
+          "lineRange": [
+            29,
+            84
+          ],
+          "explanation": "Delegate declarations describe native calling conventions and marshaling. The public methods create and release pipes, connect the global user, or create a local user; Client.Initialize uses the global-user path.",
+          "tourOrder": 4
+        },
+        {
+          "title": "Binding and user interface",
+          "lineRange": [
+            86,
+            123
+          ],
+          "explanation": "Local IP binding forwards native host and port arguments. The generic user-interface helper encodes a version string in an owned native UTF-8 handle, obtains an object pointer and binds the corresponding managed wrapper.",
+          "tourOrder": 4
+        },
+        {
+          "title": "Statistics interface version",
+          "lineRange": [
+            125,
+            152
+          ],
+          "explanation": "The user-stat helper follows the same version-string pattern. GetSteamUserStats013 requests STEAMUSERSTATS_INTERFACE_VERSION013, making the required native interface version explicit.",
+          "tourOrder": 4
+        },
+        {
+          "title": "Utilities wrapper selection",
+          "lineRange": [
+            154,
+            180
+          ],
+          "explanation": "The generic utility helper acquires an interface for a pipe without a user argument. Despite its method name GetSteamUtils004, the concrete helper requests SteamUtils005 and returns that wrapper.",
+          "tourOrder": 4
+        },
+        {
+          "title": "Apps interface versions",
+          "lineRange": [
+            182,
+            214
+          ],
+          "explanation": "The apps helper acquires either the legacy metadata interface or the newer subscription/language interface. Separate version strings let the picker use GetAppData from Apps001 and IsSubscribedApp from Apps008 together.",
+          "tourOrder": 4
+        }
+      ]
+    },
+    "SAM.API/Interfaces/ISteamClient018.cs": {
+      "overview": "This structure is the native function-table layout consumed by SteamClient018. Pointer position and layout attributes matter even for entries the wrapper does not currently call.",
+      "sections": [
+        {
+          "title": "Connection table slots",
+          "lineRange": [
+            28,
+            46
+          ],
+          "explanation": "Sequential layout with packing one represents consecutive native function pointers. Pipe and user functions come before the interface acquisition slots used during Client initialization.",
+          "tourOrder": 4
+        },
+        {
+          "title": "Preserve remaining positions",
+          "lineRange": [
+            47,
+            71
+          ],
+          "explanation": "The remaining pointers describe later SteamClient018 vtable slots. Keeping these entries in native order maintains the layout contract rather than treating the structure as a freely reorderable managed model.",
+          "tourOrder": 4
+        }
+      ]
+    },
+    "SAM.Picker/SteamLibraryScanner.cs": {
+      "overview": "The scanner returns local manifest candidates without using SAM.API or downloading a catalogue. It supports multiple libraries and its own small text KeyValues parser; current-account access checks happen later in GamePicker.",
+      "sections": [
+        {
+          "title": "Candidate result model",
+          "lineRange": [
+            16,
+            33
+          ],
+          "explanation": "InstalledGame retains only AppId and Name. This keeps file discovery independent of UI state, native Steam handles and achievement metadata.",
+          "tourOrder": 5
+        },
+        {
+          "title": "Collect library locations",
+          "lineRange": [
+            35,
+            69
+          ],
+          "explanation": "The primary root is always included in a case-insensitive set. Numeric libraryfolders.vdf entries can be old string paths or newer objects with a path value, and duplicate paths collapse after normalization.",
+          "tourOrder": 5
+        },
+        {
+          "title": "Enumerate manifest files",
+          "lineRange": [
+            71,
+            92
+          ],
+          "explanation": "Each root contributes its steamapps directory and matching appmanifest_*.acf files. Missing libraries and enumeration failures are skipped so an offline or inaccessible secondary library does not block the others.",
+          "tourOrder": 5
+        },
+        {
+          "title": "Parse and deduplicate apps",
+          "lineRange": [
+            94,
+            129
+          ],
+          "explanation": "A candidate needs AppState and a parseable unsigned appid; missing names fall back to App plus the ID. Individual I/O, permission and format failures are ignored, IDs deduplicate through a dictionary, and names determine the final ordering. StateFlags and installdir are not validated here.",
+          "tourOrder": 5
+        },
+        {
+          "title": "Choose the Steam root",
+          "lineRange": [
+            131,
+            183
+          ],
+          "explanation": "Candidates are tried in order: SAM_STEAM_PATH, user registry, machine registry variants and Program Files (x86). The first normalized location containing steamapps wins; exhausting the list raises an explanatory error. This override does not alter the earlier SAM.API DLL-loader path.",
+          "tourOrder": 5
+        },
+        {
+          "title": "Normalize paths and values",
+          "lineRange": [
+            185,
+            193
+          ],
+          "explanation": "Path normalization trims spaces and quotes, replaces slash separators and resolves a full path. GetString returns string values while nested dictionary objects remain separate.",
+          "tourOrder": 5
+        },
+        {
+          "title": "Parse nested KeyValues",
+          "lineRange": [
+            195,
+            257
+          ],
+          "explanation": "The parser creates case-insensitive dictionaries and recursively handles brace-delimited objects. Unexpected braces, missing values and unclosed nested objects produce FormatException rather than silently fabricating data.",
+          "tourOrder": 5
+        },
+        {
+          "title": "Tokenize Valve text",
+          "lineRange": [
+            259,
+            334
+          ],
+          "explanation": "ReadToken skips whitespace, BOM characters and line comments before recognizing braces, quoted strings or bare tokens. Quoted parsing decodes escaped backslashes and quotes, supporting Windows paths in Valve metadata.",
+          "tourOrder": 5
+        }
+      ]
+    },
+    "SAM.Picker/GamePicker.cs": {
+      "overview": "GamePicker coordinates the local scanner with the live Steam account and the virtual game list. File discovery runs in a BackgroundWorker, while admission checks, metadata access and control updates stay in the UI flow.",
+      "sections": [
+        {
+          "title": "Initialize picker state",
+          "lineRange": [
+            40,
+            79
+          ],
+          "explanation": "The constructor creates game collections and artwork queues, initializes designer controls and adds a placeholder bitmap. It registers the app-data callback before AddGames starts the initial scan.",
+          "tourOrder": 6
+        },
+        {
+          "title": "Callbacks and scan completion",
+          "lineRange": [
+            81,
+            133
+          ],
+          "explanation": "App-data callbacks update already accepted games. DoDownloadList only calls the local scanner; OnDownloadList receives results or errors, admits candidates as normal games and rebuilds the display on completion. Its legacy download naming no longer means a catalogue HTTP request.",
+          "tourOrder": 6
+        },
+        {
+          "title": "Filter virtual rows",
+          "lineRange": [
+            135,
+            239
+          ],
+          "explanation": "RefreshGames sorts accepted records, applies name and type filters and sets VirtualListSize. RetrieveVirtualItem constructs the requested row from _FilteredGames, while the search handler supports prefix navigation and wraparound.",
+          "tourOrder": 6
+        },
+        {
+          "title": "Download visible artwork",
+          "lineRange": [
+            241,
+            325
+          ],
+          "explanation": "Artwork download occurs in a separate worker, and completion stores successful bitmaps in the ImageList. DownloadNextLogo serializes work and skips games outside the current filtered viewport, so artwork is driven by visibility rather than scanning.",
+          "tourOrder": 6
+        },
+        {
+          "title": "Choose and cache artwork",
+          "lineRange": [
+            327,
+            384
+          ],
+          "explanation": "Steam metadata selects a localized small capsule, English fallback or legacy logo URL. Queue bookkeeping avoids repeatedly scheduling the same URL and reuses images already present in the list.",
+          "tourOrder": 8
+        },
+        {
+          "title": "Admit account-accessible apps",
+          "lineRange": [
+            386,
+            407
+          ],
+          "explanation": "OwnsGame delegates to IsSubscribedApp for the active account. AddGame rejects duplicates and inaccessible candidates, prefers the native metadata name, and uses the scanner name as fallback.",
+          "tourOrder": 7
+        },
+        {
+          "title": "Start scans and pump callbacks",
+          "lineRange": [
+            409,
+            421
+          ],
+          "explanation": "AddGames clears accepted records, disables refresh and starts the list worker. The timer temporarily disables itself while draining native callbacks, then resumes tick delivery.",
+          "tourOrder": 6
+        },
+        {
+          "title": "Launch the editor process",
+          "lineRange": [
+            423,
+            451
+          ],
+          "explanation": "Activation resolves the focused virtual item and starts SAM.Game.exe with its AppID. This is a process handoff rather than sharing the picker’s live Client instance; launch failures produce a dialog.",
+          "tourOrder": 9
+        },
+        {
+          "title": "Refresh and manual lookup",
+          "lineRange": [
+            453,
+            492
+          ],
+          "explanation": "Refresh starts a new manifest scan. Manual Add Game validates an ID and account access, clears the current catalogue and shows that single app without requiring a local manifest.",
+          "tourOrder": 6
+        },
+        {
+          "title": "Filter and draw events",
+          "lineRange": [
+            494,
+            517
+          ],
+          "explanation": "Filter changes rebuild the virtual list and restore search focus. Drawing a visible row lazily requests its artwork when it still has the placeholder image.",
+          "tourOrder": 6
+        }
+      ]
+    },
+    "SAM.Picker/GamePicker.Designer.cs": {
+      "overview": "The designer partial class creates controls and connects WinForms events to GamePicker’s behavior. These subscriptions explain how worker completion, callback ticks and virtual row retrieval reach the runtime methods.",
+      "sections": [
+        {
+          "title": "Control lifetime and creation",
+          "lineRange": [
+            5,
+            74
+          ],
+          "explanation": "Dispose releases the component container and then the base form. InitializeComponent creates the list, image list, controls, timer and both BackgroundWorkers before configuring their behavior.",
+          "tourOrder": 6
+        },
+        {
+          "title": "Callback and toolbar events",
+          "lineRange": [
+            76,
+            181
+          ],
+          "explanation": "The enabled timer invokes OnTimer, while toolbar clicks dispatch refresh and manual Add Game actions. Search key events and type-menu changes invoke OnFilterUpdate; normal games are checked initially.",
+          "tourOrder": 6
+        },
+        {
+          "title": "Virtual list event wiring",
+          "lineRange": [
+            183,
+            204
+          ],
+          "explanation": "VirtualMode means the control asks GamePicker for rows instead of owning a fully populated collection. RetrieveVirtualItem, draw, activation and search events are connected to the handlers that access _FilteredGames.",
+          "tourOrder": 6
+        },
+        {
+          "title": "Workers and status controls",
+          "lineRange": [
+            206,
+            242
+          ],
+          "explanation": "The status strip separates picker counts from optional artwork progress. Each BackgroundWorker has distinct DoWork and RunWorkerCompleted handlers, linking asynchronous file or image work back to UI completion.",
+          "tourOrder": 6
+        },
+        {
+          "title": "Form layout and fields",
+          "lineRange": [
+            244,
+            281
+          ],
+          "explanation": "The final layout adds the fill-docked list, toolbar and status strip and sets the window properties. The generated fields are the controls referenced by the behavior partial class.",
+          "tourOrder": 6
+        }
+      ]
+    },
+    "SAM.API/Wrappers/SteamApps008.cs": {
+      "overview": "SteamApps008 supplies the picker’s account access check and current language selection. The wrapper consumes its native vtable layout through NativeWrapper rather than enumerating local games.",
+      "sections": [
+        {
+          "title": "Subscription admission call",
+          "lineRange": [
+            29,
+            40
+          ],
+          "explanation": "IsSubscribedApp forwards the AppID and native receiver to the vtable function. The return value is marshaled as a one-byte Boolean and determines whether GamePicker accepts a scanner candidate.",
+          "tourOrder": 7
+        },
+        {
+          "title": "Artwork language selection",
+          "lineRange": [
+            42,
+            53
+          ],
+          "explanation": "GetCurrentGameLanguage receives a native string pointer and decodes it through NativeStrings. GamePicker uses that language when looking up localized small-capsule artwork metadata.",
+          "tourOrder": 7
+        }
+      ]
+    },
+    "SAM.API/Wrappers/SteamApps001.cs": {
+      "overview": "SteamApps001 exposes the native GetAppData function used to enrich local discovery results. GamePicker uses it for preferred names and artwork metadata after a manifest has supplied the candidate app ID.",
+      "sections": [
+        {
+          "title": "Native metadata contract",
+          "lineRange": [
+            29,
+            38
+          ],
+          "explanation": "The wrapper binds the ISteamApps001 vtable through NativeWrapper. Its delegate uses ThisCall and explicitly passes the native object, app ID, key pointer, output buffer and buffer length.",
+          "tourOrder": 7
+        },
+        {
+          "title": "Read and decode metadata",
+          "lineRange": [
+            40,
+            57
+          ],
+          "explanation": "GetAppData converts the requested key to a native string and allocates a 1024-byte output buffer. A zero native result becomes null; successful bytes become a managed string before the output buffer is freed. The picker can therefore fall back to the manifest name when metadata is unavailable.",
+          "tourOrder": 7
+        }
+      ]
+    },
+    "SAM.Picker/GameInfo.cs": {
+      "overview": "GameInfo is the picker’s mutable record for an admitted app. It joins the discovery identity and category to display text, a virtual ListView item and artwork state; it contains no Steam library scanning logic.",
+      "sections": [
+        {
+          "title": "Identity and safe names",
+          "lineRange": [
+            28,
+            40
+          ],
+          "explanation": "Id identifies the app, while Type controls the picker category filter and ImageIndex identifies the image-list entry. Assigning null to Name produces an invariant App <id> label. The picker’s AddGame method supplies Steam metadata first and the manifest name second before this final fallback applies.",
+          "tourOrder": 7
+        },
+        {
+          "title": "Virtual row and artwork",
+          "lineRange": [
+            42,
+            53
+          ],
+          "explanation": "ImageUrl and Item connect the data record to deferred artwork downloading and virtual list rendering. Construction stores the supplied identity and type, installs a fallback name and selects placeholder image index zero. The ListView item itself is populated later when WinForms requests the virtual row.",
+          "tourOrder": 7
+        }
+      ]
+    },
+    "SAM.API/Callback.cs": {
+      "overview": "The callback base classes adapt Steam native callback delivery into managed events. Client.RunCallbacks matches registered callback IDs and calls Run; concrete callbacks choose the ID, server flag and payload type.",
+      "sections": [
+        {
+          "title": "Pointer callback events",
+          "lineRange": [
+            28,
+            41
+          ],
+          "explanation": "The non-generic form exposes the native payload pointer directly to an OnRun subscriber. Id and IsServer remain abstract because the concrete callback determines which Steam message it accepts. Run invokes the event directly, so the callback needs a registered event subscriber before dispatch.",
+          "tourOrder": 8
+        },
+        {
+          "title": "Typed payload marshalling",
+          "lineRange": [
+            43,
+            58
+          ],
+          "explanation": "The generic form restricts payloads to structs and marshals the native pointer into TParameter before raising OnRun. This allows picker handlers to receive Types.AppDataChanged rather than manually interpreting unmanaged memory. The same mechanism is reused for the editor’s statistics completion callback.",
+          "tourOrder": 8
+        }
+      ]
+    },
+    "SAM.API/Callbacks/AppDataChanged.cs": {
+      "overview": "This concrete callback identifies the app-data update message consumed by GamePicker. Payload conversion and event delivery come from the generic Callback base class.",
+      "sections": [
+        {
+          "title": "Choose the payload type",
+          "lineRange": [
+            23,
+            26
+          ],
+          "explanation": "AppDataChanged specializes Callback with Types.AppDataChanged. This fixes the managed event argument shape for the picker while reusing the shared native pointer marshalling implementation.",
+          "tourOrder": 8
+        },
+        {
+          "title": "Select the callback channel",
+          "lineRange": [
+            27,
+            29
+          ],
+          "explanation": "Id 1001 identifies the message in Client.RunCallbacks, and IsServer false selects client dispatch. GamePicker registers this callback and handles successful updates only for app IDs already present in its collection.",
+          "tourOrder": 8
+        }
+      ]
+    },
+    "SAM.API/Types/CallbackMessage.cs": {
+      "overview": "CallbackMessage is the unmanaged envelope read by the shared Steam callback pump. Its fields describe the message identity and payload location; concrete callback classes interpret the payload.",
+      "sections": [
+        {
+          "title": "Packed native layout",
+          "lineRange": [
+            26,
+            30
+          ],
+          "explanation": "Sequential layout and Pack = 1 make the managed struct follow the native field order without ordinary alignment padding. This is an interop contract rather than a UI data model.",
+          "tourOrder": 8
+        },
+        {
+          "title": "Message routing and payload",
+          "lineRange": [
+            31,
+            35
+          ],
+          "explanation": "User and Id identify the native callback context and message type. ParamPointer points to the payload and ParamSize records its size. Client uses the ID to dispatch a matching registered callback and frees the native callback after processing.",
+          "tourOrder": 8
+        }
+      ]
+    },
+    "SAM.Game/Program.cs": {
+      "overview": "SAM.Game is a separate executable started by the picker with an app ID. It initializes its own Steam client for that game and then opens Manager; no live Client instance crosses the process boundary.",
+      "sections": [
+        {
+          "title": "Route startup arguments",
+          "lineRange": [
+            31,
+            50
+          ],
+          "explanation": "With no arguments, SAM.Game starts SAM.Picker.exe and returns. Otherwise it parses the first argument as a long app ID and reports invalid input. This is the receiving end of GamePicker’s Process.Start call.",
+          "tourOrder": 9
+        },
+        {
+          "title": "Initialize the game session",
+          "lineRange": [
+            52,
+            67
+          ],
+          "explanation": "The executable refuses to run directly from Steam’s install directory. It creates a disposable API.Client and initializes it with the selected app ID, allowing the shared API code to set the SteamAppId environment variable and validate the native app context.",
+          "tourOrder": 9
+        },
+        {
+          "title": "Explain initialization failures",
+          "lineRange": [
+            68,
+            108
+          ],
+          "explanation": "Steam initialization failures are caught before any editor window opens. The global-user failure has an additional Family Share explanation, while other initialization and DLL-loading failures show error dialogs and return.",
+          "tourOrder": 9
+        },
+        {
+          "title": "Open the editor loop",
+          "lineRange": [
+            110,
+            114
+          ],
+          "explanation": "WinForms visual styles are enabled before constructing Manager with the app ID and initialized client. Application.Run owns the editor message loop; leaving that loop exits the using scope and disposes the client.",
+          "tourOrder": 9
+        }
+      ]
+    },
+    "SAM.Game/Manager.cs": {
+      "overview": "Manager owns the per-game achievement and statistic editor after the picker launches SAM.Game. It requests live user statistics, loads the local binary schema for definitions, binds display models and submits user edits through SAM.API. It does not scan Steam libraries.",
+      "sections": [
+        {
+          "title": "Bind the editor and session",
+          "lineRange": [
+            37,
+            107
+          ],
+          "explanation": "The form builds the statistics grid around a BindingList and stores its own game ID and API.Client. It looks up a title, subscribes to UserStatsReceived and immediately calls RefreshStats. This begins asynchronous retrieval after the independent game process has initialized Steam.",
+          "tourOrder": 9
+        },
+        {
+          "title": "Download achievement artwork",
+          "lineRange": [
+            109,
+            172
+          ],
+          "explanation": "Icon completion decodes a bitmap and updates the achievement image list before advancing the queue. DownloadNextIcon keeps one asynchronous WebClient download active and constructs a Steam CDN URL from the game ID and locked or normal icon. These requests supply imagery rather than game discovery.",
+          "tourOrder": 9
+        },
+        {
+          "title": "Interpret local schema definitions",
+          "lineRange": [
+            174,
+            365
+          ],
+          "explanation": "Localization tries the current language, English, a direct string and finally a caller fallback. LoadUserGameStatsSchema reads appcache/stats/UserGameStatsSchema_<appId>.bin under API.Steam.GetInstallPath and converts its binary KeyValue tree into typed statistic and achievement definitions. It accepts string type names as well as older numeric type fields; this schema cache is separate from the text VDF/ACF discovery files.",
+          "tourOrder": 10
+        },
+        {
+          "title": "Complete asynchronous retrieval",
+          "lineRange": [
+            367,
+            437
+          ],
+          "explanation": "UserStatsReceived first validates Steam’s result, then loads the schema and populates both editor views. RefreshStats requests the active user’s statistics and disables reload and store while waiting for the callback. Failure paths restore input and show status or dialogs.",
+          "tourOrder": 9
+        },
+        {
+          "title": "Construct achievement rows",
+          "lineRange": [
+            439,
+            538
+          ],
+          "explanation": "GetAchievements combines schema definitions with live achieved state and unlock time from SteamUserStats. It applies lock-state and text filters, creates AchievementInfo records and ListView rows, and queues artwork. A guard prevents programmatic row construction from being treated as a user editing protected achievements.",
+          "tourOrder": 11
+        },
+        {
+          "title": "Construct statistic records",
+          "lineRange": [
+            540,
+            603
+          ],
+          "explanation": "GetStatistics reads each schema-defined integer or floating point value from Steam and stores both the current and original values in typed StatInfo records. That original value later drives IsModified. The following icon helper reuses cached artwork or schedules an icon download.",
+          "tourOrder": 11
+        },
+        {
+          "title": "Apply edited values",
+          "lineRange": [
+            605,
+            699
+          ],
+          "explanation": "StoreAchievements compares each row’s checked state to the stored achievement state and submits only changes. StoreStatistics selects modified records and chooses the matching integer or float setter. Both methods stop on a failed native write and return a count or failure sentinel to the caller.",
+          "tourOrder": 12
+        },
+        {
+          "title": "Pump callbacks and commit",
+          "lineRange": [
+            701,
+            794
+          ],
+          "explanation": "The timer runs the shared callback dispatcher while temporarily disabling itself, and bulk buttons adjust visible checkbox states. OnStore first applies achievement and statistic edits, then calls StoreStats through Store and refreshes the displayed data. A failed stage triggers a refresh rather than claiming the store succeeded.",
+          "tourOrder": 12
+        },
+        {
+          "title": "Handle edit errors and reset",
+          "lineRange": [
+            796,
+            862
+          ],
+          "explanation": "Grid commit errors distinguish protected statistics from invalid input, and an opt-in checkbox controls whether the value column is editable. Reset requires several user confirmations, optionally includes achievements, and calls the native reset function before retrieving data again.",
+          "tourOrder": 11
+        },
+        {
+          "title": "Protect and filter achievements",
+          "lineRange": [
+            864,
+            916
+          ],
+          "explanation": "OnCheckAchievement rejects edits when permission bits mark an achievement protected, while allowing programmatic population under the update guard. Lock-state buttons and search rebuild achievement rows from the loaded definitions and current Steam values. These are editor filters and do not affect the picker’s local game inventory.",
+          "tourOrder": 11
+        }
+      ]
+    },
+    "SAM.Game/KeyValue.cs": {
+      "overview": "KeyValue represents and reads the editor’s binary Steam statistics schema cache. It is independent of SteamLibraryScanner.KeyValuesReader, which parses the text library and app manifests used for discovery.",
+      "sections": [
+        {
+          "title": "Represent a schema tree",
+          "lineRange": [
+            30,
+            59
+          ],
+          "explanation": "Each node records a type, name, value, validity and optional children. The case-insensitive indexer returns a shared invalid sentinel when a child is missing, allowing chained lookups such as gameId/stats without null checks at every level. Duplicate matching children would cause SingleOrDefault to throw.",
+          "tourOrder": 10
+        },
+        {
+          "title": "Convert optional node values",
+          "lineRange": [
+            61,
+            182
+          ],
+          "explanation": "The conversion helpers return caller defaults for invalid nodes and unsupported types. Integer, float and boolean conversions recognize stored strings and numeric variants explicitly, while AsString accepts any non-null value via ToString. Schema construction relies on these defaults when optional metadata is absent.",
+          "tourOrder": 10
+        },
+        {
+          "title": "Open binary schema files",
+          "lineRange": [
+            184,
+            222
+          ],
+          "explanation": "ToString distinguishes invalid nodes, object names and scalar assignments for inspection. LoadAsBinary opens an existing file with shared read/write access and returns null if parsing fails or any exception occurs. Manager uses this null result to report a schema-load failure.",
+          "tourOrder": 10
+        },
+        {
+          "title": "Decode typed records recursively",
+          "lineRange": [
+            224,
+            320
+          ],
+          "explanation": "ReadAsBinary consumes a type byte and name until an End marker, recursing for object nodes and using StreamHelpers for scalar values. Wide strings and unknown types are rejected; numeric, color and pointer payloads are read with fixed primitive widths. Parsed nodes become valid and are appended to Children, while exceptions convert the parse result to false.",
+          "tourOrder": 10
+        }
+      ]
+    },
+    "SAM.Game/StreamHelpers.cs": {
+      "overview": "StreamHelpers supplies stream extension methods consumed by the binary KeyValue reader. It decodes primitive values and null-terminated strings from the editor schema cache rather than reading libraryfolders.vdf or app manifests.",
+      "sections": [
+        {
+          "title": "Read binary primitive values",
+          "lineRange": [
+            31,
+            68
+          ],
+          "explanation": "The helpers read byte, integer and floating point payloads and use BitConverter to decode the fixed-size buffers. Debug assertions check expected byte counts. The code depends on the runtime’s byte-order interpretation and does not perform an explicit byte-order swap.",
+          "tourOrder": 10
+        },
+        {
+          "title": "Grow a string buffer",
+          "lineRange": [
+            70,
+            103
+          ],
+          "explanation": "ReadStringInternalDynamic reads an encoding-sized character at a time until the requested terminator, expanding the buffer in chunks. It returns an empty string when the terminator appears immediately and otherwise decodes the accumulated bytes. The byte-count assertion is a debug check rather than a thrown end-of-stream error.",
+          "tourOrder": 10
+        },
+        {
+          "title": "Select schema string encodings",
+          "lineRange": [
+            105,
+            113
+          ],
+          "explanation": "ReadStringAscii uses ASCII with a null terminator. Despite its name, ReadStringUnicode passes UTF-8 rather than UTF-16 to the shared reader. The binary schema parser calls these extension methods directly on its input stream.",
+          "tourOrder": 10
+        }
+      ]
+    },
+    "SAM.API/Types/UserStatType.cs": {
+      "overview": "UserStatType names the kinds of entries in Steam’s statistics schema. Manager uses the enum to select integer, floating point and achievement definition construction after the binary cache is parsed.",
+      "sections": [
+        {
+          "title": "Scalar statistic kinds",
+          "lineRange": [
+            23,
+            31
+          ],
+          "explanation": "Invalid is the zero fallback for an unrecognized type. Integer has a second name, Int, with the same value, and Float and AverageRate are distinct enum members. Manager accepts case-insensitive string names or numeric fields when decoding older schemas.",
+          "tourOrder": 10
+        },
+        {
+          "title": "Achievement schema groups",
+          "lineRange": [
+            32,
+            34
+          ],
+          "explanation": "Achievements and GroupAchievements identify bit-based achievement entries. Manager handles both by iterating bits children and extracting display metadata, icons, hidden state and permission flags for each achievement.",
+          "tourOrder": 10
+        }
+      ]
+    },
+    "SAM.Game/Stats/StatDefinition.cs": {
+      "overview": "StatDefinition is the shared schema-side base for integer and floating point statistics. These definitions describe what is available; separate StatInfo records hold editable live values.",
+      "sections": [
+        {
+          "title": "Identify a schema entry",
+          "lineRange": [
+            23,
+            27
+          ],
+          "explanation": "The abstract base gives both numeric definition subclasses a common identity field. Manager fills Id from the schema name and later uses it for native GetStatValue and SetStatValue calls.",
+          "tourOrder": 11
+        },
+        {
+          "title": "Carry display and permission metadata",
+          "lineRange": [
+            28,
+            30
+          ],
+          "explanation": "DisplayName supplies the localized grid label, while Permission retains Steam schema permission bits. The derived definitions add numeric bounds and defaults; the live StatInfo records receive the display and permission values when statistics are retrieved.",
+          "tourOrder": 11
+        }
+      ]
+    },
+    "SAM.Game/Stats/StatInfo.cs": {
+      "overview": "StatInfo defines the bindable contract for live editable statistics in Manager’s grid. Integer and float subclasses provide concrete values and compare them with their original values to implement IsModified.",
+      "sections": [
+        {
+          "title": "Bind identity and live values",
+          "lineRange": [
+            23,
+            32
+          ],
+          "explanation": "The abstract Value property lets one grid column work with both numeric subclasses, while IsModified tells store logic whether a write is needed. Identity, display text, increment-only state and permission bits are populated from the schema plus retrieved Steam values. The typed subclasses perform value parsing and protected-value checks.",
+          "tourOrder": 11
+        },
+        {
+          "title": "Explain statistic permissions",
+          "lineRange": [
+            34,
+            45
+          ],
+          "explanation": "Extra derives a human-readable StatFlags value for the grid. It exposes increment-only behavior, permission bit 2 as protected, and any other permission bits as unknown. This property explains metadata; the actual editing protection is enforced by the typed value setters.",
+          "tourOrder": 11
+        }
+      ]
+    },
+    "SAM.Game/Stats/AchievementInfo.cs": {
+      "overview": "AchievementInfo stores the current state and display data of one achievement in Manager. It brings together native achievement state, schema metadata, permission bits, and its ListView item so downloaded artwork can update the displayed row. This is editor data created after a game has been selected; it is not a Steam library manifest record.",
+      "sections": [
+        {
+          "title": "Achievement State and Metadata",
+          "lineRange": [
+            28,
+            38
+          ],
+          "explanation": "The ID identifies the achievement in the Steam stats API, while IsAchieved and nullable UnlockTime represent its current state. Permission and the names of the locked and normal icons come from the parsed game schema. Keeping the ListViewItem alongside these values lets Manager associate a row with the achievement being edited.",
+          "tourOrder": 11
+        },
+        {
+          "title": "Forwarding the Image Index",
+          "lineRange": [
+            40,
+            46
+          ],
+          "explanation": "ImageIndex forwards directly to the associated ListViewItem rather than maintaining a second integer field. An asynchronous image download can therefore update the same row through this record. The Item must already be assigned before this property is read or written.",
+          "tourOrder": 11
+        }
+      ]
+    },
+    "SAM.API/Wrappers/SteamUserStats013.cs": {
+      "overview": "SteamUserStats013 is the managed bridge to the native user-statistics interface used by SAM.Game.Manager. It reads and changes statistics and achievements, requests user statistics asynchronously, and asks Steam to persist or reset values. The wrapper relies on NativeWrapper for function-table calls and NativeStrings for the lifetime of native string buffers.",
+      "sections": [
+        {
+          "title": "Reading Typed Statistics",
+          "lineRange": [
+            29,
+            59
+          ],
+          "explanation": "The two GetStatValue overloads select different native function-table entries for integers and floats. Each converts the managed statistic name into a disposable native string handle, obtains the matching delegate, and passes the native object address plus an out value. The one-byte boolean return marshalling matches the native success result.",
+          "tourOrder": 12
+        },
+        {
+          "title": "Writing Typed Statistics",
+          "lineRange": [
+            61,
+            95
+          ],
+          "explanation": "The integer and float SetStatValue overloads mirror the read operations, selecting their corresponding native setter. They return whether the setter succeeded; the separate StoreStats operation later asks Steam to persist the pending changes. The using block keeps the native name valid during the call and releases its handle afterward.",
+          "tourOrder": 12
+        },
+        {
+          "title": "Achievement State and Changes",
+          "lineRange": [
+            97,
+            142
+          ],
+          "explanation": "GetAchievement reads a single achievement state through an out boolean marshalled as one byte. SetAchievement combines two native operations behind one managed method: false calls ClearAchievement, while true calls SetAchievement. Manager can consequently submit a changed checkbox state without choosing between those native entries itself.",
+          "tourOrder": 12
+        },
+        {
+          "title": "Unlock Times and Persistence",
+          "lineRange": [
+            144,
+            172
+          ],
+          "explanation": "GetAchievementAndUnlockTime returns both the achievement state and its native unlock timestamp. Manager uses these together when building achievement display records. StoreStats has no name argument because it commits the pending user-statistics changes for the active game context.",
+          "tourOrder": 12
+        },
+        {
+          "title": "Native Display Metadata",
+          "lineRange": [
+            174,
+            207
+          ],
+          "explanation": "These helpers retrieve an achievement image handle and named display attributes. The display-attribute call marshals both the achievement name and attribute key, then converts the returned pointer into a managed string. They expose native metadata access even though Manager also reads its cached schema and downloads artwork through its own UI path.",
+          "tourOrder": 12
+        },
+        {
+          "title": "Requests and Reset Operations",
+          "lineRange": [
+            209,
+            231
+          ],
+          "explanation": "RequestUserStats accepts a Steam user ID and returns a CallHandle immediately, so completion is handled later rather than by the return value alone. Manager registers a UserStatsReceived callback for that completion path. ResetAllStats passes a flag controlling whether achievements are reset together with statistics.",
+          "tourOrder": 12
+        }
+      ]
+    },
+    "SAM.API/Callbacks/UserStatsReceived.cs": {
+      "overview": "This small callback adapter connects Steam callback ID 1101 to the typed UserStatsReceived payload. Manager registers it with API.Client and subscribes its stats-completion handler to the inherited event. The payload definition and generic callback base contain the data layout and marshalling logic, leaving this file to identify the callback.",
+      "sections": [
+        {
+          "title": "Choose the Typed Payload",
+          "lineRange": [
+            23,
+            26
+          ],
+          "explanation": "The adapter inherits Callback<Types.UserStatsReceived>, so the generic base knows which managed structure to marshal from the native parameter pointer. It does not define another copy of the result fields. This separation keeps callback identification distinct from the binary payload contract.",
+          "tourOrder": 12
+        },
+        {
+          "title": "Identify Client Stats Events",
+          "lineRange": [
+            27,
+            29
+          ],
+          "explanation": "Id selects native callback number 1101, while IsServer false marks this as a client callback. Client.RunCallbacks matches both values before invoking the registered callback. Manager pumps the client callback loop from its Windows Forms timer and receives the inherited OnRun event.",
+          "tourOrder": 12
+        }
+      ]
+    },
+    "SAM.API/Types/UserStatsReceived.cs": {
+      "overview": "This structure defines the data delivered when Steam finishes retrieving user statistics. The callback adapter supplies its identity, while this file supplies the native memory layout and fields. Manager receives this typed value in its completion handler before loading the cached schema and displaying values.",
+      "sections": [
+        {
+          "title": "Preserve the Native Layout",
+          "lineRange": [
+            23,
+            29
+          ],
+          "explanation": "StructLayout requests sequential field order with one-byte packing. This matters because Callback<T> marshals an unmanaged parameter buffer directly into this structure. Reordering fields or allowing a different packing scheme would change how the native bytes are interpreted.",
+          "tourOrder": 12
+        },
+        {
+          "title": "Identify the Request Result",
+          "lineRange": [
+            30,
+            33
+          ],
+          "explanation": "GameId and SteamIdUser identify the game and user associated with the stats event, and Result carries the native outcome code. Manager treats result code 1 as success before continuing its schema and display path. The structure is a passive payload and does not itself issue a request or update the UI.",
+          "tourOrder": 12
+        }
+      ]
+    },
+    "SAM.Picker/SAM.Picker.csproj": {
+      "overview": "This SDK-style project builds the picker Windows executable, including SteamLibraryScanner and the GamePicker form. It targets the Windows/.NET runtime and x86 platform used by the native Steam client bridge, references SAM.API, and configures the picker assets. The project properties do not replace the scanner root-search logic or the requirement to initialize Steam before scanning.",
+      "sections": [
+        {
+          "title": "Identity and Windows Assets",
+          "lineRange": [
+            1,
+            21
+          ],
+          "explanation": "The first property groups set assembly identity, versions, repository metadata, and the Windows icon and application manifest. The picker title and description identify this fork, while the editor retains the inherited product identity. These are build-time properties rather than discovery settings.",
+          "tourOrder": 13
+        },
+        {
+          "title": "Runtime and Output Layout",
+          "lineRange": [
+            22,
+            38
+          ],
+          "explanation": "WinExe produces a Windows application targeting .NET Framework 4.8, with C# 9 and an x86 platform configuration. Debug and release configurations send their outputs to the repository bin and upload folders. Keeping the executables and shared DLL together supports the relative SAM.Game.exe and SAM.Picker.exe launch paths in the programs.",
+          "tourOrder": 13
+        },
+        {
+          "title": "Designer and Resource Metadata",
+          "lineRange": [
+            39,
+            55
+          ],
+          "explanation": "Compile metadata marks the form and custom ListView appropriately for design tools and associates generated resource accessors with Resources.resx. EmbeddedResource metadata selects the resource-code generator. The generated designer source supplies UI construction and event wiring, while resource files supply the images.",
+          "tourOrder": 13
+        },
+        {
+          "title": "Shared API and Resource Support",
+          "lineRange": [
+            56,
+            65
+          ],
+          "explanation": "The ProjectReference builds and references SAM.API, providing the native Steam client implementation used at startup. The resource settings enable preserialized resources and add System.Resources.Extensions 8.0.0. There is no project reference between the two executables; they hand off by starting another process.",
+          "tourOrder": 13
+        }
+      ]
+    },
+    "SAM.Game/SAM.Game.csproj": {
+      "overview": "This SDK-style project builds the per-game achievement editor executable. Its runtime, platform, and output-folder settings align with the picker so the two executables can launch one another and use the same SAM.API DLL. The designer and resource metadata supports the Manager form and its toolbar assets.",
+      "sections": [
+        {
+          "title": "Editor Identity and Assets",
+          "lineRange": [
+            1,
+            21
+          ],
+          "explanation": "These property groups retain the inherited Steam Achievement Manager identity, assembly versions, and upstream repository metadata. The application icon is Blank.ico and app.manifest supplies the Windows application manifest. None of these values select a game; the editor receives the app ID from its command-line argument.",
+          "tourOrder": 13
+        },
+        {
+          "title": "Runtime and Output Layout",
+          "lineRange": [
+            22,
+            38
+          ],
+          "explanation": "WinExe produces a Windows application targeting .NET Framework 4.8, with C# 9 and an x86 platform configuration. Debug and release configurations send their outputs to the repository bin and upload folders. Keeping the executables and shared DLL together supports the relative SAM.Game.exe and SAM.Picker.exe launch paths in the programs.",
+          "tourOrder": 13
+        },
+        {
+          "title": "Designer and Resource Metadata",
+          "lineRange": [
+            39,
+            55
+          ],
+          "explanation": "Compile metadata marks the form and custom ListView appropriately for design tools and associates generated resource accessors with Resources.resx. EmbeddedResource metadata selects the resource-code generator. The generated designer source supplies UI construction and event wiring, while resource files supply the images.",
+          "tourOrder": 13
+        },
+        {
+          "title": "Shared API and Resource Support",
+          "lineRange": [
+            56,
+            65
+          ],
+          "explanation": "The ProjectReference builds and references SAM.API, providing the native Steam client implementation used at startup. The resource settings enable preserialized resources and add System.Resources.Extensions 8.0.0. There is no project reference between the two executables; they hand off by starting another process.",
+          "tourOrder": 13
+        }
+      ]
+    },
+    "SAM.API/SAM.API.csproj": {
+      "overview": "SAM.API is the shared library project consumed by both Windows executables. It targets .NET Framework 4.8 and x86 with C# 9, matching the callers that load the native Steam client. Unlike the executable projects, this file does not declare a Windows entry point or form resources.",
+      "sections": [
+        {
+          "title": "Library Identity and Version",
+          "lineRange": [
+            1,
+            19
+          ],
+          "explanation": "The initial groups set author attribution, assembly versions, icon metadata, and the upstream repository URL. With no WinExe output type declared, this SDK project builds the library referenced by SAM.Picker and SAM.Game. Its client and interop classes are instantiated separately in each process.",
+          "tourOrder": 13
+        },
+        {
+          "title": "Native Interop Build Settings",
+          "lineRange": [
+            20,
+            31
+          ],
+          "explanation": "The target framework, language version, and platform establish net48, C# 9, and x86 for the shared code. Both Debug and Release x86 groups permit unsafe blocks. These build settings accompany the library native pointers, delegates, and vtable marshalling; the runtime still obtains steamclient.dll from the installed Steam path.",
+          "tourOrder": 13
+        }
+      ]
+    },
+    ".appveyor.yml": {
+      "overview": "This AppVeyor configuration defines the inherited Windows release-build and ZIP-packaging workflow. It restores dependencies, builds SAM.sln, stamps project versions, and publishes an archive of the release executables and DLLs. It describes the automated packaging path rather than the runtime local-game scan.",
+      "sections": [
+        {
+          "title": "Build Selection and Environment",
+          "lineRange": [
+            1,
+            17
+          ],
+          "explanation": "The pipeline uses a build-number-based 7.0 version and selects the master branch, skipping tags and selected documentation-only changes. It chooses the Visual Studio 2019 image and a fixed clone folder. These choices establish when and where the solution build runs.",
+          "tourOrder": 13
+        },
+        {
+          "title": "Dependency Preparation and Versions",
+          "lineRange": [
+            19,
+            36
+          ],
+          "explanation": "NuGet cache paths are preserved between builds, and the install step initializes Git submodules recursively. The Release configuration is selected, and dotnet_csproj patches matching project files with the pipeline version. The pipeline therefore may override the versions present in the checked-in project files during CI.",
+          "tourOrder": 13
+        },
+        {
+          "title": "Restore and Build Solution",
+          "lineRange": [
+            38,
+            44
+          ],
+          "explanation": "The build targets SAM.sln with parallel builds and minimal logging. Before the build, nuget restore retrieves the required dependencies. Building the solution includes both executables and the shared API library defined by their project references.",
+          "tourOrder": 13
+        },
+        {
+          "title": "Package and Publish Outputs",
+          "lineRange": [
+            46,
+            52
+          ],
+          "explanation": "After the build, the workflow writes a Git log and creates a ZIP containing the root license, that log, and executables and DLLs from upload. The artifacts pattern exposes matching ZIP files as build artifacts. Packaging colocates the executables and their library so the process-launch and shared-assembly paths can work from the release folder.",
+          "tourOrder": 13
+        }
+      ]
+    },
+    "LICENSE.txt": {
+      "overview": "Permissive license retaining attribution and alteration notices for the Steam Achievement Manager source.",
+      "sections": []
+    },
+    ".gitattributes": {
+      "overview": "Normalizes text line endings in Git; additional merge, binary and document diff rules remain commented examples.",
+      "sections": []
+    },
+    "SAM.API/CallHandle.cs": {
+      "overview": "Defines the ulong-backed CallHandle enum with an Invalid sentinel for native Steam asynchronous call handles.",
+      "sections": []
+    },
+    "SAM.API/ClientInitializeException.cs": {
+      "overview": "Carries a structured ClientInitializeFailure reason and optional diagnostic details when connecting to Steam fails.",
+      "sections": []
+    },
+    "SAM.API/ClientInitializeFailure.cs": {
+      "overview": "Enumerates Steam initialization failures from missing install path through interface creation, user connection and AppID mismatch.",
+      "sections": []
+    },
+    "SAM.API/GlobalSuppressions.cs": {
+      "overview": "Stores assembly-level code analysis suppressions for the API project.",
+      "sections": []
+    },
+    "SAM.API/ICallback.cs": {
+      "overview": "Contract for native callback handlers: callback ID, client/server identity, and pointer-based dispatch.",
+      "sections": []
+    },
+    "SAM.API/INativeWrapper.cs": {
+      "overview": "Contract for binding a managed wrapper to the native Steam interface object address.",
+      "sections": []
+    },
+    "SAM.API/Interfaces/ISteamApps001.cs": {
+      "overview": "Sequential native vtable layout for the legacy SteamApps001 metadata GetAppData function pointer.",
+      "sections": []
+    },
+    "SAM.API/Interfaces/ISteamApps008.cs": {
+      "overview": "Sequential native vtable layout for SteamApps008 subscription, language, installation and DLC operations; picker uses subscription and language methods.",
+      "sections": []
+    },
+    "SAM.API/Interfaces/ISteamUser012.cs": {
+      "overview": "Native SteamUser012 vtable layout for login state, Steam ID and account operations.",
+      "sections": []
+    },
+    "SAM.API/Interfaces/ISteamUserStats013.cs": {
+      "overview": "Native SteamUserStats013 vtable layout for requesting, reading, editing and storing achievements and statistics.",
+      "sections": []
+    },
+    "SAM.API/Interfaces/ISteamUtils005.cs": {
+      "overview": "Native SteamUtils005 vtable layout including active application ID and utility functions.",
+      "sections": []
+    },
+    "SAM.API/LICENSE.txt": {
+      "overview": "Permissive license retaining attribution and alteration notices for the Steam Achievement Manager source.",
+      "sections": []
+    },
+    "SAM.API/NativeClass.cs": {
+      "overview": "Packed native object layout containing the Steam interface virtual-table pointer.",
+      "sections": []
+    },
+    "SAM.API/NativeStrings.cs": {
+      "overview": "Converts managed strings to owned native UTF-8 buffers and decodes null-terminated or bounded native UTF-8 strings.",
+      "sections": []
+    },
+    "SAM.API/SAM.API.csproj.DotSettings": {
+      "overview": "Disables localization inspection in JetBrains tooling for the API project.",
+      "sections": []
+    },
+    "SAM.API/Types/AccountType.cs": {
+      "overview": "Steam account-type enum used when interpreting native Steam identifiers.",
+      "sections": []
+    },
+    "SAM.API/Types/AppDataChanged.cs": {
+      "overview": "Defines the packed Steam app-metadata callback payload containing the app ID and result flag.",
+      "sections": []
+    },
+    "SAM.API/Types/ItemRequestResult.cs": {
+      "overview": "Enumerates legacy item request outcomes such as denied, timeout, and not logged on.",
+      "sections": []
+    },
+    "SAM.API/Types/UserItemsReceived.cs": {
+      "overview": "Defines the packed legacy items callback payload with game ID and item count; it is not used for local discovery.",
+      "sections": []
+    },
+    "SAM.API/Types/UserStatsStored.cs": {
+      "overview": "Defines the packed stats-store result payload; the editor currently does not register its commented-out store callback.",
+      "sections": []
+    },
+    "SAM.API/Wrappers/SteamUser012.cs": {
+      "overview": "Provides login-state and Steam-user-ID queries used when requesting current user statistics.",
+      "sections": []
+    },
+    "SAM.API/Wrappers/SteamUtils005.cs": {
+      "overview": "Wraps Steam utility queries for universe, country, image data, and active app ID; initialization uses the app ID to verify the game context.",
+      "sections": []
+    },
+    "SAM.Game/DoubleBufferedListView.cs": {
+      "overview": "Provides a ListView subclass with double buffering enabled for the achievement editor.",
+      "sections": []
+    },
+    "SAM.Game/GlobalSuppressions.cs": {
+      "overview": "Records project-level static-analysis suppression guidance for the game editor.",
+      "sections": []
+    },
+    "SAM.Game/InvariantShorthand.cs": {
+      "overview": "Provides concise invariant-culture formatting for editor paths, IDs, and download URLs.",
+      "sections": []
+    },
+    "SAM.Game/KeyValueType.cs": {
+      "overview": "Enumerates the binary Valve KeyValues value tags recognized by the statistics-schema reader.",
+      "sections": []
+    },
+    "SAM.Game/LICENSE.txt": {
+      "overview": "States the inherited zlib license and original author attribution for the game editor.",
+      "sections": []
+    },
+    "SAM.Game/Manager.Designer.cs": {
+      "overview": "Generated Windows Forms control layout and event wiring for the achievement/statistics editor, including its callback timer.",
+      "sections": []
+    },
+    "SAM.Game/Manager.resx": {
+      "overview": "Stores editor form metadata and embedded window icon consumed by the generated layout.",
+      "sections": []
+    },
+    "SAM.Game/Resources.Designer.cs": {
+      "overview": "Generated strongly typed accessors for the game editor embedded icon resources.",
+      "sections": []
+    },
+    "SAM.Game/Resources.resx": {
+      "overview": "Defines embedded toolbar and status icons used by the game editor resource accessors.",
+      "sections": []
+    },
+    "SAM.Game/SAM.Game.csproj.DotSettings": {
+      "overview": "Disables localization inspection for the achievement editor in JetBrains tooling.",
+      "sections": []
+    },
+    "SAM.Game/Stats/AchievementDefinition.cs": {
+      "overview": "Holds achievement schema metadata including ID, localized text, icon names, visibility, and permission flags.",
+      "sections": []
+    },
+    "SAM.Game/Stats/FloatStatDefinition.cs": {
+      "overview": "Extends statistic schema metadata with floating point bounds, maximum change, increment-only behavior, and default value.",
+      "sections": []
+    },
+    "SAM.Game/Stats/FloatStatInfo.cs": {
+      "overview": "Tracks original and edited floating point statistics and rejects changes to protected values.",
+      "sections": []
+    },
+    "SAM.Game/Stats/IntStatInfo.cs": {
+      "overview": "Tracks original and edited integer statistics and rejects changes to protected values.",
+      "sections": []
+    },
+    "SAM.Game/Stats/IntegerStatDefinition.cs": {
+      "overview": "Extends statistic schema metadata with integer bounds, maximum change, increment-only and trusted-server settings.",
+      "sections": []
+    },
+    "SAM.Game/Stats/StatFlags.cs": {
+      "overview": "Names the increment-only, protected, and unknown permission bits displayed by statistic models.",
+      "sections": []
+    },
+    "SAM.Game/Stats/StatIsProtectedException.cs": {
+      "overview": "Signals attempts to modify Steam statistics whose permission bits mark them as protected.",
+      "sections": []
+    },
+    "SAM.Game/app.config": {
+      "overview": "Selects the .NET CLR v4 runtime for the achievement editor.",
+      "sections": []
+    },
+    "SAM.Game/app.manifest": {
+      "overview": "Requests asInvoker execution, declares Windows compatibility, and enables DPI awareness for SAM.Game.",
+      "sections": []
+    },
+    "SAM.Picker/GamePicker.resx": {
+      "overview": "Embeds form resources used by the picker designer, including the application icon.",
+      "sections": []
+    },
+    "SAM.Picker/GlobalSuppressions.cs": {
+      "overview": "Stores project-level code analysis suppression scaffolding for the picker.",
+      "sections": []
+    },
+    "SAM.Picker/InvariantShorthand.cs": {
+      "overview": "Formats interpolated strings using invariant culture for stable identifiers and URLs.",
+      "sections": []
+    },
+    "SAM.Picker/LICENSE.txt": {
+      "overview": "Preserves the zlib license and attribution requirements for the picker source.",
+      "sections": []
+    },
+    "SAM.Picker/LogoInfo.cs": {
+      "overview": "Transfers an app ID and downloaded bitmap from the logo worker to the picker UI thread.",
+      "sections": []
+    },
+    "SAM.Picker/MyListView.cs": {
+      "overview": "Adds double buffering and managed scroll notifications to WinForms ListView by translating native window messages.",
+      "sections": []
+    },
+    "SAM.Picker/Resources.Designer.cs": {
+      "overview": "Provides generated strongly typed access to embedded picker toolbar images.",
+      "sections": []
+    },
+    "SAM.Picker/Resources.resx": {
+      "overview": "Maps the Refresh, Filter, Search, and Download toolbar resources to embedded bitmap files.",
+      "sections": []
+    },
+    "SAM.Picker/app.manifest": {
+      "overview": "Requests asInvoker execution, Windows compatibility, and DPI awareness for SAM.Picker.",
+      "sections": []
+    }
+  }
+}
