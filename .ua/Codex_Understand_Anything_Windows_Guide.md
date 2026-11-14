@@ -1,5 +1,18 @@
 # Learning a Codebase with Codex CLI and Understand Anything
 
+## Quick check: is Codex still installed?
+
+Run these three commands first whenever opening a new PowerShell session or troubleshooting a tool that appears to have disappeared:
+
+```powershell
+codex --version
+pnpm --version
+npm list -g --depth=0
+```
+
+`codex --version` checks whether the Codex command is discoverable, `pnpm --version` checks Understand Anything's package manager, and `npm list -g --depth=0` lists globally installed npm packages. If Codex is missing, jump to [How to actually install Codex if your PC forgot Codex was installed](#how-to-actually-install-codex-if-your-pc-forgot-codex-was-installed). After replacing Node.js, follow [Replacing Node.js](#replacing-nodejs).
+
+
 **A Windows PowerShell walkthrough, troubleshooting record, and project retrospective**  
 **Case study:** [Local PC Steam Achievement Manager](https://github.com/zacw-243L/LocalPCSteamAchievementManager)  
 **Session date:** 14 November 2026  
@@ -26,9 +39,12 @@ A useful distinction: Codex can build working *context* about a project during a
 Install **Git**, **Node.js 22 or newer**, and **Codex CLI**. Understand Anything's analysis build requires **pnpm 10 or newer**. Check your tools in PowerShell:
 
 ```powershell
- git --version
- node --version
- npm --version
+git --version
+node --version
+npm --version
+pnpm --version
+codex --version
+npm list -g --depth=0
 ```
 
 Install Codex CLI if necessary:
@@ -45,6 +61,78 @@ Install pnpm and confirm its version:
 npm install -g pnpm@10
 pnpm --version
 ```
+
+### How to actually install Codex if your PC forgot Codex was installed
+
+This happened during the case study. Codex CLI v0.169.0 had already worked, but after Node.js was installed or changed, a fresh PowerShell window reported `codex : The term 'codex' is not recognized`. The npm global directory was on `PATH`, yet `codex.cmd` was absent. That points to a missing global npm command in the *current* Node/npm environment; the earlier Codex session and saved graphs were real.
+
+Start with these checks in a **new, ordinary (non-Administrator) PowerShell window**:
+
+```powershell
+npm list -g --depth=0
+npm config get prefix
+where.exe codex
+Test-Path (Join-Path (npm config get prefix) 'codex.cmd')
+```
+
+If `@openai/codex` is absent from the global package list, or the command shim is missing, install Codex again:
+
+```powershell
+npm.cmd install -g @openai/codex
+codex.cmd --version
+```
+
+Using `.cmd` avoids PowerShell execution-policy interference with `npm.ps1` or `codex.ps1`. After successful installation, `codex --version` should work too. If `codex.cmd --version` works but `codex --version` does not, inspect the PowerShell command resolution with `Get-Command codex -All`; a `.ps1` policy issue may be selecting the script over the `.cmd` launcher.
+
+If Codex is listed as installed but `where.exe codex` finds nothing, check whether npm's global prefix is part of the current session's PATH:
+
+```powershell
+$prefix = npm config get prefix
+$env:Path -split ';' | Where-Object { $_ -eq $prefix }
+& (Join-Path $prefix 'codex.cmd') --version
+```
+
+The direct-path command will only work when `codex.cmd` exists there. If the global prefix is missing from PATH, add that directory through Windows **Environment Variables**, then open a new PowerShell window. Reinstalling Codex is unnecessary when the executable is present and the problem is merely command lookup.
+
+**What remains intact:** reinstalling the npm CLI should leave the Understand Anything checkout (in this case `D:\Utilities\Understand-Anything-Codex`), links under the user profile, Git repositories, and generated `.ua/knowledge-graph.json` files alone. Restart Codex from the repository directory to confirm `$understand` still appears in the available skills.
+
+### Replacing Node.js
+
+A Node.js installation, upgrade, or change of installation method can alter the npm executable, global package prefix, or PATH used by a new terminal. It does **not invariably uninstall** Codex or pnpm. In our session, an earlier terminal could run Codex and the local viewer, while a later PowerShell session initially could not find `node`, `npm`, `pnpm`, or `codex`. After Node.js became available, Codex was still missing from the global command location. That sequence is compatible with differing environments and changed global package availability; we did not prove a single root cause.
+
+Before replacing Node.js, record what the current environment recognizes:
+
+```powershell
+node --version
+npm --version
+npm config get prefix
+npm list -g --depth=0
+where.exe node
+where.exe codex
+```
+
+Install or update Node.js from a consistent source such as the [official LTS installer](https://nodejs.org/en/download) or Windows Package Manager (`winget`). Use the same method for future upgrades where practical. After installation, **close old PowerShell windows and open a fresh one**, then verify:
+
+```powershell
+node --version
+npm --version
+npm list -g --depth=0
+codex --version
+pnpm --version
+```
+
+If npm works but Codex and/or pnpm do not, restore only the missing global tools:
+
+```powershell
+npm.cmd install -g @openai/codex
+npm.cmd install -g pnpm@10
+codex.cmd --version
+pnpm.cmd --version
+```
+
+`pnpm@10` matches the minimum major version used in this case study, and the project requires Node.js 22 or newer for analysis. The working environment later showed Git 2.56.1, Node.js 26.13.1, npm 11.11.0, and pnpm 10.34.9. Codex must be checked separately because `node`, `npm`, and `pnpm` succeeding does not prove it is installed.
+
+For the next project, start a normal PowerShell session in your chosen Git checkout, run the quick checks at the top of this guide, and launch Codex there. This avoids accidentally starting analysis from `C:\Windows\System32`.
 
 ## 3. Install Understand Anything for Codex
 
@@ -272,10 +360,12 @@ A repository-local `.ua/README.md` can explain how to reproduce the graph and us
 | Codex asked to run a generated Node script outside the sandbox | Review the requested script/action, and grant one-time permission if appropriate. |
 | npm returned `EALLOWREMOTE` | Packaged viewer download was blocked by npm policy. The local Vite dashboard fallback worked. |
 | Dashboard URL stopped responding after exiting the server | The local Vite process must be running to serve the viewer; the saved JSON is unaffected. |
+| `node`, `npm`, or `pnpm` became unrecognized in another PowerShell window | Open a fresh session, check `where.exe node`, the npm prefix and PATH, and repair missing prerequisites as needed. |
+| `codex` disappeared after changing Node.js even though it ran earlier | Check `npm list -g --depth=0`, the npm prefix and `codex.cmd`; reinstall `@openai/codex` globally only if missing. |
 
 ## 12. The experiment in one paragraph
 
-The project started with the question of whether Understand Anything could work inside ChatGPT. The workable route was Codex CLI, followed by the Understand Anything Windows installer and Codex's `$understand` skill. Installing the tool on D: while keeping Git projects on C: was valid. A first attempt to relocate an installed checkout failed, and the first graph run hit a missing pnpm/core-build prerequisite. After resolving that, Codex scanned 84 files and generated a full C# knowledge graph, pausing for `.understandignore` review and later requesting permission to read Git metadata. The graph was saved with 265 nodes, 662 edges, seven architectural layers, and 13 tour steps. The packaged viewer download was blocked, so Codex launched a local Vite dashboard on the user's PC instead. The graph and documentation were then added to GitHub. The broader lesson was that agentic analysis produces far more low-level terminal output than a person can comfortably digest, so the graph should be paired with a concise, source-linked written report.
+The project started with the question of whether Understand Anything could work inside ChatGPT. The workable route was Codex CLI, followed by the Understand Anything Windows installer and Codex's `$understand` skill. Installing the tool on D: while keeping Git projects on C: was valid. A first attempt to relocate an installed checkout failed, and the first graph run hit a missing pnpm/core-build prerequisite. After resolving that, Codex scanned 84 files and generated a full C# knowledge graph, pausing for `.understandignore` review and later requesting permission to read Git metadata. The graph was saved with 265 nodes, 662 edges, seven architectural layers, and 13 tour steps. The packaged viewer download was blocked, so Codex launched a local Vite dashboard on the user's PC instead. The graph and documentation were then added to GitHub. The broader lesson was that agentic analysis produces far more low-level terminal output than a person can comfortably digest, so the graph should be paired with a concise, source-linked written report. A later check exposed another lesson: the tools that worked during the initial session were not all discoverable from a subsequent PowerShell environment, and the globally installed Codex command had to be restored after Node.js changes. Version checks and an npm global-package inventory now appear at the top of this guide.
 
 ## References
 
@@ -287,4 +377,4 @@ The project started with the question of whether Understand Anything could work 
 
 ---
 
-*Document status: post-session learning guide, not a verbatim transcript. Specific outputs, errors, and decisions above come from the recorded conversation and the repository documentation available at the time. No local files or GitHub repository contents were changed to produce this standalone guide.*
+*Document status: updated post-session learning guide, not a verbatim transcript. Specific outputs, errors, and decisions above come from the recorded conversation and the repository documentation available at the time. This document revision does not modify the GitHub repository or local project files.*
