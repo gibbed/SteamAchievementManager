@@ -15,11 +15,11 @@ npm list -g --depth=0
 
 **A Windows PowerShell walkthrough, troubleshooting record, and project retrospective**  
 **Case study:** [Local PC Steam Achievement Manager](https://github.com/zacw-243L/LocalPCSteamAchievementManager)  
-**Additional troubleshooting:** SQL Lab7 Python/MySQL project  
-**Session date:** 14 November 2026  
+**Additional troubleshooting:** SQL Lab7 Python/MySQL and Unity Flappy Bird projects  
+**Session dates:** 14–15 November 2026  
 **Tooling used:** OpenAI Codex CLI v0.169.0, Understand Anything, Git, Node.js, pnpm, and a local Vite dashboard
 
-> This guide is based on one completed, hands-on session. Commands and project paths are written for Windows PowerShell. The upstream tool may evolve, so check its [official repository](https://github.com/Egonex-AI/Understand-Anything) if a future version behaves differently.
+> This guide is based on completed, hands-on troubleshooting sessions. Commands and project paths are written for Windows PowerShell. The upstream tool may evolve, so check its [official repository](https://github.com/Egonex-AI/Understand-Anything) if a future version behaves differently.
 
 ## 1. What this workflow does
 
@@ -253,12 +253,68 @@ The practical lesson: **graph generation and viewer startup are two separate ope
 
 | Symptom | Why it mattered | What we did |
 |---|---|---|
-| `spawn EPERM` | Codex's restricted environment blocked a Node/esbuild child process. | Switched to a normal Windows PowerShell terminal. |
+| `spawn EPERM` | Codex's `unelevated` Windows sandbox blocked Node/esbuild child processes. | The manual PowerShell launch worked; later changing `[windows] sandbox` to `"elevated"` allowed Vite to start inside Codex on this PC. |
 | `ReferenceError: __dirname is not defined` | A generated launcher used Vite's runner config-loader, which didn't provide the CommonJS-style variable expected in the plugin config. | Stopped using the generated temporary config. |
 | `ERR_MODULE_NOT_FOUND .../packages/core/src/staleness` | The non-bundled ESM loading path could not resolve the dashboard's TypeScript source import. | Launched Vite using `--configLoader bundle`. |
 | `Knowledge graph freshness could not be verified` | The running dashboard couldn't read Git `HEAD` for the viewed project. | Treated it as an advisory graph-freshness warning, since the graph itself displayed successfully. |
 
 The later `node: module.register() is deprecated` warning was incidental. Neither the Vite errors nor the Git freshness warning demonstrated corruption of the already-generated graph.
+
+#### How to actually fix `spawn EPERM` (Codex Windows sandbox)
+
+**Verified follow-up: 15 November 2026, Unity Flappy Bird project.** After repeated `spawn EPERM` failures in both SQL Lab7 and Unity, we tested the exact same Node.js subprocess outside and inside Codex. **Normal PowerShell succeeded; Codex's `unelevated` Windows sandbox returned `EPERM`.** Approving a one-time run outside the sandbox also succeeded. That isolated the process-creation restriction to Codex's sandbox in this environment, rather than to Git, whether a repository had been cloned, or the saved knowledge graph.
+
+**Step A — Reproduce the failure safely.** Run the following in normal PowerShell, then ask Codex to run it inside its normal sandbox without approving an unsandboxed retry:
+
+```powershell
+node -e "const r=require('node:child_process').spawnSync(process.execPath,['-e','console.log(123)'],{encoding:'utf8'}); console.log({status:r.status,output:r.stdout,error:r.error?.code})"
+```
+
+Our results were:
+
+```text
+Normal PowerShell:      { status: 0, output: '123\n', error: undefined }
+Inside Codex sandbox:  { status: null, output: undefined, error: 'EPERM' }
+```
+
+This test distinguishes a general Node.js installation problem from a restriction imposed on child processes inside Codex. A one-time permission approval can allow an individual command to run outside the sandbox, but it does not change the sandbox behavior for future launches.
+
+**Step B — Back up and inspect Codex's configuration.** In a normal PowerShell window:
+
+```powershell
+Copy-Item "$HOME\.codex\config.toml" "$HOME\.codex\config.toml.before-elevated"
+notepad "$HOME\.codex\config.toml"
+```
+
+Our configuration contained:
+
+```toml
+[windows]
+sandbox = "unelevated"
+```
+
+Change **only that existing setting** to:
+
+```toml
+[windows]
+sandbox = "elevated"
+```
+
+Save the file, close/restart Codex, and allow any supported sandbox initialization that Codex requests. `elevated` is a **Codex Windows sandbox mode**, not an instruction to run every terminal command as Administrator or disable isolation. Its initial provisioning may need administrator approval on some systems. Consult the [Codex Windows sandbox documentation](https://learn.chatgpt.com/docs/windows/windows-sandbox) if setup fails; avoid manually altering Windows permissions or disabling antivirus protection.
+
+We also tested the alternative **MXC** sandbox, but the probe reported `native MXC is unavailable on this executor`. MXC was not the repair used here.
+
+**Step C — Verify the improvement inside Codex.** Repeat the Node.js child-process test *without* granting an out-of-sandbox exception, then invoke:
+
+```text
+$understand-dashboard
+```
+
+After switching to `sandbox = "elevated"`, Codex successfully started the installed **Vite 6.4.2** dashboard (`ready in 765 ms`) and printed a localhost URL with an access token. **That is the observed successful fix for the previously blocked Vite launch.** Opening the URL and seeing your graph remains the final browser-level check. The analysis files were already saved, so no `$understand` regeneration was necessary.
+
+The prebuilt viewer still failed for unrelated reasons during the successful session: npm initially reported a cache-permissions issue, and the retry received **HTTP 404** for the version-pinned release asset. Codex then fell back to the locally installed Vite dashboard, which started. Those download failures can coexist with a successful local viewer launch.
+
+**If `elevated` fails or cannot initialize:** restore the previous configuration with `Copy-Item "$HOME\.codex\config.toml.before-elevated" "$HOME\.codex\config.toml" -Force`, restart Codex, and use the manual PowerShell dashboard launch documented below. Keep the error output for diagnosis. The setting is a **verified fix on the tested Windows setup**, not a universal guarantee for every Codex build or Windows configuration.
 
 #### Step 1: Verify the graph and redacted viewer copy
 
@@ -462,15 +518,14 @@ A repository-local `.ua/README.md` can explain how to reproduce the graph and us
 | Dashboard URL stopped responding after exiting the server | The local Vite process must be running to serve the viewer; the saved JSON is unaffected. |
 | `node`, `npm`, or `pnpm` became unrecognized in another PowerShell window | Open a fresh session, check `where.exe node`, the npm prefix and PATH, and repair missing prerequisites as needed. |
 | `codex` disappeared after changing Node.js even though it ran earlier | Check `npm list -g --depth=0`, the npm prefix and `codex.cmd`; reinstall `@openai/codex` globally only if missing. |
-| SQL Lab7 dashboard failed with `spawn EPERM` | Codex could not spawn the viewer process. Run Vite directly from normal PowerShell; the generated helper was also broken. |
+| SQL Lab7 dashboard failed with `spawn EPERM` | Codex's `unelevated` sandbox blocked child processes. Use the verified `"elevated"` sandbox test above, or run Vite from normal PowerShell as a fallback. |
 | Vite reported `__dirname is not defined` | The generated launcher used an incompatible config runner; bypass it and use Vite with `--configLoader bundle`. |
 | Vite reported missing `packages/core/src/staleness` | The bundled Vite config loader resolved this issue in the SQL Lab7 experiment; verify the module exists first. |
-
 | Dashboard displays `Knowledge graph freshness could not be verified` | Graph viewer can work even when Git HEAD is unavailable; check whether the analyzed folder is a Git working tree. |
 
 ## 12. The experiment in one paragraph
 
-The project started with the question of whether Understand Anything could work inside ChatGPT. The workable route was Codex CLI, followed by the Understand Anything Windows installer and Codex's `$understand` skill. Installing the tool on D: while keeping Git projects on C: was valid. A first attempt to relocate an installed checkout failed, and the first graph run hit a missing pnpm/core-build prerequisite. After resolving that, Codex scanned 84 files and generated a full C# knowledge graph, pausing for `.understandignore` review and later requesting permission to read Git metadata. The graph was saved with 265 nodes, 662 edges, seven architectural layers, and 13 tour steps. The packaged viewer download was blocked, so Codex launched a local Vite dashboard on the user's PC instead. The graph and documentation were then added to GitHub. The broader lesson was that agentic analysis produces far more low-level terminal output than a person can comfortably digest, so the graph should be paired with a concise, source-linked written report. A later check exposed another lesson: the tools that worked during the initial session were not all discoverable from a subsequent PowerShell environment, and the globally installed Codex command had to be restored after Node.js changes. Version checks and an npm global-package inventory now appear at the top of this guide. A subsequent SQL Lab7 experiment encountered Vite dashboard failures (`spawn EPERM`, `__dirname` and missing `staleness` module) after the analysis workflow; the guide now distinguishes saved graph output from viewer startup and records a cautious config/debugging procedure. The subsequent manual PowerShell launch of Vite with `--config vite.config.ts --configLoader bundle` succeeded, opening a redacted SQL Lab7 graph with 224 nodes, 858 edges, four layers, and eight tour steps. A Git HEAD freshness warning remained advisory.
+The project started with the question of whether Understand Anything could work inside ChatGPT. The workable route was Codex CLI, followed by the Understand Anything Windows installer and Codex's `$understand` skill. Installing the tool on D: while keeping Git projects on C: was valid. A first attempt to relocate an installed checkout failed, and the first graph run hit a missing pnpm/core-build prerequisite. After resolving that, Codex scanned 84 files and generated a full C# knowledge graph, pausing for `.understandignore` review and later requesting permission to read Git metadata. The graph was saved with 265 nodes, 662 edges, seven architectural layers, and 13 tour steps. The packaged viewer download was blocked, so Codex launched a local Vite dashboard on the user's PC instead. The graph and documentation were then added to GitHub. The broader lesson was that agentic analysis produces far more low-level terminal output than a person can comfortably digest, so the graph should be paired with a concise, source-linked written report. A later check exposed another lesson: the tools that worked during the initial session were not all discoverable from a subsequent PowerShell environment, and the globally installed Codex command had to be restored after Node.js changes. Version checks and an npm global-package inventory now appear at the top of this guide. A subsequent SQL Lab7 experiment encountered Vite dashboard failures (`spawn EPERM`, `__dirname` and missing `staleness` module) after the analysis workflow; the guide now distinguishes saved graph output from viewer startup and records a cautious config/debugging procedure. The subsequent manual PowerShell launch of Vite with `--config vite.config.ts --configLoader bundle` succeeded, opening a redacted SQL Lab7 graph with 224 nodes, 858 edges, four layers, and eight tour steps. A Git HEAD freshness warning remained advisory. A further Unity experiment isolated `spawn EPERM` to Codex's `unelevated` Windows sandbox using a direct Node.js subprocess test. Changing `[windows] sandbox` to `"elevated"` allowed Codex to start the installed Vite dashboard, even though the optional prebuilt-viewer download still failed.
 
 ## References
 
