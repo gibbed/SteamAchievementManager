@@ -26,21 +26,6 @@ This is a modernized fork of [gibbed's Steam Achievement Manager (SAM)](https://
 ![GitHub Contributors](https://img.shields.io/github/contributors/BrenoFariasdaSilva/Steam-Achievement-Manager-Unlock-All)
 ![GitHub Created At](https://img.shields.io/github/created-at/BrenoFariasdaSilva/Steam-Achievement-Manager-Unlock-All)
 ![wakatime](https://wakatime.com/badge/github/BrenoFariasdaSilva/Steam-Achievement-Manager-Unlock-All.svg)
-
-</div>
-
-<div align="center">
-
-![GitHub Code Size in Bytes](https://img.shields.io/github/languages/code-size/BrenoFariasdaSilva/Steam-Achievement-Manager-Unlock-All)
-![GitHub Commits](https://img.shields.io/github/commit-activity/t/BrenoFariasdaSilva/Steam-Achievement-Manager-Unlock-All/master)
-![GitHub Last Commit](https://img.shields.io/github/last-commit/BrenoFariasdaSilva/Steam-Achievement-Manager-Unlock-All)
-![GitHub Forks](https://img.shields.io/github/forks/BrenoFariasdaSilva/Steam-Achievement-Manager-Unlock-All)
-![GitHub Language Count](https://img.shields.io/github/languages/count/BrenoFariasdaSilva/Steam-Achievement-Manager-Unlock-All)
-![GitHub License](https://img.shields.io/github/license/BrenoFariasdaSilva/Steam-Achievement-Manager-Unlock-All)
-![GitHub Stars](https://img.shields.io/github/stars/BrenoFariasdaSilva/Steam-Achievement-Manager-Unlock-All)
-![GitHub Contributors](https://img.shields.io/github/contributors/BrenoFariasdaSilva/Steam-Achievement-Manager-Unlock-All)
-![GitHub Created At](https://img.shields.io/github/created-at/BrenoFariasdaSilva/Steam-Achievement-Manager-Unlock-All)
-![wakatime](https://wakatime.com/badge/github/BrenoFariasdaSilva/Steam-Achievement-Manager-Unlock-All.svg)
 [![GitHub Repository Size](https://img.shields.io/github/repo-size/BrenoFariasdaSilva/Steam-Achievement-Manager-Unlock-All)](https://github.com/BrenoFariasdaSilva/Steam-Achievement-Manager-Unlock-All)
 [![Open Issues](https://img.shields.io/github/issues/BrenoFariasdaSilva/Steam-Achievement-Manager-Unlock-All)](https://github.com/BrenoFariasdaSilva/Steam-Achievement-Manager-Unlock-All/issues)
 [![Closed Issues](https://img.shields.io/github/issues-closed/BrenoFariasdaSilva/Steam-Achievement-Manager-Unlock-All)](https://github.com/BrenoFariasdaSilva/Steam-Achievement-Manager-Unlock-All/issues?q=is%3Aissue+is%3Aclosed)
@@ -50,7 +35,6 @@ This is a modernized fork of [gibbed's Steam Achievement Manager (SAM)](https://
 [![Merged PRs](https://img.shields.io/github/issues-search/BrenoFariasdaSilva/Steam-Achievement-Manager-Unlock-All?query=is%3Apr%20is%3Amerged&label=merged%20PRs&color=blue)](https://github.com/BrenoFariasdaSilva/Steam-Achievement-Manager-Unlock-All/pulls?q=is%3Apr+is%3Amerged)
 ![Language](https://img.shields.io/badge/Language-C%23-512BD4)
 ![Platform](https://img.shields.io/badge/Platform-Windows-0078D4)
-
 ![Repobeats Statistics](https://repobeats.axiom.co/api/embed/f833f8caf83561972596ad8ce7aee46c5e58a164.svg)
 
 </div>
