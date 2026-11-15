@@ -56,4 +56,10 @@
   <ItemGroup>
     <ProjectReference Include="..\SAM.API\SAM.API.csproj" />
   </ItemGroup>
+  <PropertyGroup>
+  <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
+  </PropertyGroup>
+  <ItemGroup>
+  <PackageReference Include="System.Resources.Extensions" Version="8.0.0" />
+  </ItemGroup>
 </Project>

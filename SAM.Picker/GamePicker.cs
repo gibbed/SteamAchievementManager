@@ -98,44 +98,33 @@ namespace SAM.Picker
 
         private void DoDownloadList(object sender, DoWorkEventArgs e)
         {
-            this._PickerStatusLabel.Text = "Downloading game list...";
-
-            byte[] bytes;
-            using (WebClient downloader = new())
-            {
-                bytes = downloader.DownloadData(new Uri("https://gib.me/sam/games.xml"));
-            }
-
-            List<KeyValuePair<uint, string>> pairs = new();
-            using (MemoryStream stream = new(bytes, false))
-            {
-                XPathDocument document = new(stream);
-                var navigator = document.CreateNavigator();
-                var nodes = navigator.Select("/games/game");
-                while (nodes.MoveNext() == true)
-                {
-                    string type = nodes.Current.GetAttribute("type", "");
-                    if (string.IsNullOrEmpty(type) == true)
-                    {
-                        type = "normal";
-                    }
-                    pairs.Add(new((uint)nodes.Current.ValueAsLong, type));
-                }
-            }
-
-            this._PickerStatusLabel.Text = "Checking game ownership...";
-            foreach (var kv in pairs)
-            {
-                this.AddGame(kv.Key, kv.Value);
-            }
+            // Discover only locally installed Steam games. No request to gib.me is made.
+            e.Result = SteamLibraryScanner.GetInstalledGames();
         }
 
         private void OnDownloadList(object sender, RunWorkerCompletedEventArgs e)
         {
-            if (e.Error != null || e.Cancelled == true)
+            if (e.Cancelled)
             {
-                this.AddDefaultGames();
-                MessageBox.Show(e.Error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                this._PickerStatusLabel.Text = "Local game scan cancelled.";
+            }
+            else if (e.Error != null)
+            {
+                this._PickerStatusLabel.Text = "Local game scan failed.";
+                MessageBox.Show(
+                    this,
+                    "Could not scan local Steam libraries: " + e.Error.Message,
+                    "Local Steam library",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+            }
+            else if (e.Result is List<SteamLibraryScanner.InstalledGame> installedGames)
+            {
+                // Steam client API calls and UI updates remain on the UI thread.
+                foreach (var game in installedGames)
+                {
+                    this.AddGame(game.AppId, "normal", game.Name);
+                }
             }
 
             this.RefreshGames();
@@ -399,7 +388,7 @@ namespace SAM.Picker
             return this._SteamClient.SteamApps008.IsSubscribedApp(id);
         }
 
-        private void AddGame(uint id, string type)
+        private void AddGame(uint id, string type, string localName = null)
         {
             if (this._Games.ContainsKey(id) == true)
             {
@@ -412,7 +401,8 @@ namespace SAM.Picker
             }
 
             GameInfo info = new(id, type);
-            info.Name = this._SteamClient.SteamApps001.GetAppData(info.Id, "name");
+            string steamName = this._SteamClient.SteamApps001.GetAppData(info.Id, "name");
+            info.Name = string.IsNullOrWhiteSpace(steamName) ? localName : steamName;
             this._Games.Add(id, info);
         }
 
@@ -421,11 +411,6 @@ namespace SAM.Picker
             this._Games.Clear();
             this._RefreshGamesButton.Enabled = false;
             this._ListWorker.RunWorkerAsync();
-        }
-
-        private void AddDefaultGames()
-        {
-            this.AddGame(480, "normal"); // Spacewar
         }
 
         private void OnTimer(object sender, EventArgs e)
