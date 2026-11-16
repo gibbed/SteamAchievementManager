@@ -1,0 +1,33 @@
+name: Bug report
+description: Something does not work as expected
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      placeholder: "7.1.1"
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: "Windows 11 24H2"
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Open game ...\n2. Click ..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What happened and what you expected
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error message or screenshot
